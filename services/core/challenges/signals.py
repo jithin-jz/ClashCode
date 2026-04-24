@@ -2,6 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import UserProgress
 from certificates.services import CertificateService
+from learning.tasks import update_leaderboard_cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,3 +60,11 @@ def auto_generate_certificate(sender, instance, created, **kwargs):
             f"Unexpected error generating certificate for {user.username}: {e}",
             exc_info=True,
         )
+
+@receiver(post_save, sender=UserProgress)
+def trigger_leaderboard_update_on_progress(sender, instance, created, **kwargs):
+    """
+    Trigger real-time leaderboard update when a challenge is completed.
+    """
+    if instance.status == UserProgress.Status.COMPLETED:
+        update_leaderboard_cache.delay()

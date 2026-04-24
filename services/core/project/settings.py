@@ -395,10 +395,6 @@ CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True  # Always persist error tracebac
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 CELERY_BEAT_SCHEDULE = {
-    "update-leaderboard-every-5-minutes": {
-        "task": "learning.tasks.update_leaderboard_cache",
-        "schedule": 300.0,  # 5 minutes
-    },
     "cleanup-celery-results-daily": {
         "task": "project.tasks.cleanup_old_task_results",
         "schedule": 60 * 60 * 24,  # Every 24 hours

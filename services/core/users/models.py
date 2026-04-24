@@ -194,3 +194,12 @@ def create_user_profile(sender, instance, created, **kwargs):
             provider_id=f"local_{instance.id}",
             bio="",
         )
+
+@receiver(post_save, sender=UserProfile)
+def trigger_leaderboard_update_on_profile(sender, instance, **kwargs):
+    """
+    Trigger real-time leaderboard update when a user profile is updated (XP, avatar, etc).
+    """
+    # Import inside to avoid circular dependencies
+    from learning.tasks import update_leaderboard_cache
+    update_leaderboard_cache.delay()

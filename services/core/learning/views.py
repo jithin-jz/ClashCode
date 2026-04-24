@@ -302,6 +302,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         try:
             remaining_xp = ChallengeService.purchase_ai_assist(request.user, challenge)
             progress.refresh_from_db()
+            
             return Response(
                 {
                     "status": "purchased",
