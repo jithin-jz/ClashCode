@@ -107,9 +107,44 @@ services:
       - CORE_SERVICE_URL=http://core:8000
       - CHROMA_SERVER_HOST=chroma
       - CHROMA_SERVER_HTTP_PORT=8000
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - core
       - chroma
+      - redis
+    networks:
+      - default
+
+  # ---------------- CELERY WORKERS ----------------
+  worker:
+    build: ./core
+    restart: unless-stopped
+    command: celery -A project worker --loglevel=info
+    env_file: ./core/.env
+    environment:
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+
+  beat:
+    build: ./core
+    restart: unless-stopped
+    command: celery -A project beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: ./core/.env
+    environment:
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - default
 
