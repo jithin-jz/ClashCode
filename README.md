@@ -1,51 +1,69 @@
 # 🏰 CLASHCODE
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-1.2.0-green.svg)
+![Architecture](https://img.shields.io/badge/architecture-microservices-orange.svg)
+![Status](https://img.shields.io/badge/status-production--ready-green.svg)
 
-**CLASHCODE** is a comprehensive, gamified coding platform designed to help developers master their skills through interactive challenges, community engagement, and AI-powered tutoring.
+**CLASHCODE** is an industrial-grade, gamified coding platform designed for competitive programming, mastery-based progression, and AI-assisted tutoring.
 
-## 🏗️ Architecture
+Engineered with a "Clinical Architect" philosophy, the platform utilizes strict Service-View separation, zero-layout-shift UI systems, and secure containerized code execution.
 
-The platform uses a modular microservices architecture. For development, we run infrastructure (databases) in Docker and application services locally on the host.
+---
+
+## 🏗️ System Architecture
+
+CLASHCODE is built on a scalable, language-agnostic microservices architecture orchestrated by Docker Compose and reverse-proxied by Nginx.
 
 ```mermaid
 graph TD
-    Client[Frontend: React] --> Gateway[Nginx Gateway :80]
+    Client[Frontend: React 19] --> Gateway[Nginx Gateway :80]
+    
     Gateway --> Core[Core: Django :8000]
     Gateway --> Chat[Chat: FastAPI :8001]
     Gateway --> AI[AI: FastAPI :8002]
+    Gateway --> Executor[Executor: FastAPI :8003]
     
-    subgraph Infrastructure (Docker)
-        Gateway
+    subgraph Infrastructure
         Core --> DB[(PostgreSQL)]
-        Core --> Redis[(Redis)]
-        Chat --> CDB[(PostgreSQL Chat)]
+        Core --> Redis[(Redis Cache)]
         Chat --> Dynamo[(DynamoDB Local)]
         AI --> Chroma[(ChromaDB)]
     end
     
-    Core --> Celery[Celery Worker/Beat]
+    subgraph Async Processing
+        Core -.-> Celery[Celery Worker/Beat]
+    end
 ```
 
-## 📂 Services & Tech Stack
+### ⚙️ Core Technical Pillars
 
-| Service | Technology | Description |
-|---|---|---|
-| **[Frontend](frontend/)** | React 19, Zustand, Tailwind | Production-optimized UI for the Code Arena. |
-| **[Core API](services/core/)** | Django 5, DRF, Celery | Business Logic, Auth, Store, and Rewards. |
-| **[Chat Service](services/chat/)** | FastAPI, WebSockets | Real-time messaging and notifications. |
-| **[AI Tutor](services/ai/)** | FastAPI, LangChain | RAG-based AI assistant for code help. |
+1.  **Strict Service-View Split**: The Django Core acts purely as a presentation layer via `views.py` controllers, delegating all database transactions, API requests, and business logic to isolated `services.py` modules.
+2.  **Sandboxed Execution Engine**: Python code submitted by users is pre-validated via AST constraints and then evaluated inside ephemeral, network-isolated Docker containers to prevent malicious host breakouts.
+3.  **Ledger-Grade Audit Trails**: Systems like `xpoint` (XP Management) and `authentication` utilize immutable transaction logs to track every point earned and every sensitive account action.
+4.  **Data-Driven Level Management**: Challenges and progression logic are decoupled from code, stored as Markdown/YAML files in `challenges/content/`, and seamlessly loaded into PostgreSQL via custom management commands.
+5.  **Clinical Frontend Architecture**: Built on React 19 and Vite. Utilizes the automated `boneyard-js` skeleton framework to guarantee zero-layout-shift (ZLS) loading states and Framer Motion for premium micro-animations.
 
 ---
 
-## 🚀 Production-Style Docker Run
+## 📂 Services Overview
 
-The production path is container-first: nginx, the built frontend, Django, FastAPI services, Celery, databases, Redis, Chroma, DynamoDB Local, and the Python-only executor all run on the private Compose network. Only nginx is published to the host.
+| Service | Technology | Primary Function |
+|---|---|---|
+| **[Frontend](frontend/)** | React 19, Zustand, Tailwind | The Code Arena UI. Implements ZLS loading, animated auth flows, and Monaco editor integration. |
+| **[Core API](services/core/)** | Django 5, DRF, Celery | The backbone. Handles Authentication, Profiles, the Store, Payments (Razorpay), and Level orchestration. |
+| **[Chat Service](services/chat/)** | FastAPI, WebSockets | Highly concurrent real-time messaging, presence tracking, and DynamoDB message persistence. |
+| **[AI Tutor](services/ai/)** | FastAPI, LangChain | RAG-based AI assistant providing contextual hints and code analysis via ChromaDB vector retrieval. |
+| **[Executor](services/executor/)** | FastAPI, Docker SDK | The secure code evaluator. Supports host-level fallback and strict Docker containerization. |
 
-### 1. Configure Secrets
+---
 
-Copy the example files and replace every placeholder with real production values.
+## 🚀 Deployment (Production-First)
+
+CLASHCODE is designed to run in a highly isolated Docker environment. Only the Nginx Gateway exposes a public port. Databases and internal services communicate strictly via Docker's private bridge network.
+
+### 1. Environment Configuration
+
+Copy the example environment files and replace placeholders with your production credentials (e.g., `SECRET_KEY`, JWT keys, Razorpay keys, Firebase Admin credentials).
 
 ```bash
 cp services/.env.example services/.env
@@ -54,19 +72,19 @@ cp services/chat/.env.example services/chat/.env
 cp services/ai/.env.example services/ai/.env
 ```
 
-Required production values include `SECRET_KEY`, database password, JWT keys, OAuth credentials, SMTP credentials, payment keys, `INTERNAL_API_KEY`, and `INTERNAL_SIGNING_SECRET`.
+### 2. Launch the Stack
 
-### 2. Start The Stack
+Initialize the entire platform, including building all custom microservice images:
 
 ```bash
 docker compose -f services/docker-compose.yml up -d --build
 ```
 
-The gateway is available on `http://localhost` by default, or the port configured by `NGINX_HTTP_PORT`.
+The platform is now securely accessible via your configured `NGINX_HTTP_PORT` (default: `http://localhost`).
 
-## 🛠️ Local Frontend Development
+### 3. Local UI Development
 
-For UI-only development, you can still run Vite locally with `VITE_API_URL=/api` while the Docker stack is running:
+For frontend development against a running production backend:
 
 ```bash
 cd frontend
@@ -74,7 +92,15 @@ npm install
 npm run dev
 ```
 
-Do not expose Postgres, Redis, Chroma, DynamoDB, or the executor directly in production. For stronger sandboxing, install gVisor on the Docker host and set `CONTAINER_RUNTIME=runsc` in `services/.env`.
+*(Note: Ensure `VITE_API_URL` correctly points to your backend gateway).*
+
+---
+
+## 🔒 Security Posture
+
+*   **Token Rotation**: Implements strict JWT Refresh Token Rotation and Redis-backed blacklisting.
+*   **Execution Sandboxing**: Untrusted code is executed without network access using non-root users inside disposable containers. gVisor (`runsc`) support is available for hardened kernel-level isolation.
+*   **Infrastructure Obfuscation**: Databases (Postgres, Redis, Chroma) are completely inaccessible from the host machine.
 
 ---
 
