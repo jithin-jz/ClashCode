@@ -3,6 +3,8 @@ import re
 import subprocess
 import sys
 import tempfile
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from pathlib import Path
 from typing import Optional
 
@@ -31,6 +33,17 @@ DANGEROUS_IMPORT_PATTERN = re.compile(
     r"(os|subprocess|socket|shutil|pathlib|ctypes|multiprocessing|threading|asyncio|"
     r"http|urllib|requests|ftplib|telnetlib|ssl|sys)\b"
 )
+
+# Sentry initialization
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        environment=os.getenv("ENVIRONMENT", "development"),
+        integrations=[FastApiIntegration()],
+    )
 
 app = FastAPI(title="CLASHCODE Python Executor", version="1.0")
 

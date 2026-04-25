@@ -10,6 +10,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables
 load_dotenv(BASE_DIR / ".env", override=False)
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+
+# Sentry Configuration
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            RedisIntegration(),
+        ],
+        # Performance Monitoring
+        traces_sample_rate=1.0 if os.getenv("DEBUG", "false").lower() == "true" else 0.2,
+        # Capture User PII
+        send_default_pii=True,
+        environment=os.getenv("ENVIRONMENT", "development" if os.getenv("DEBUG", "false").lower() == "true" else "production"),
+    )
+
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
@@ -416,10 +438,30 @@ CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True  # Always persist error tracebac
 # Celery Beat
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
+# Task Routing
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_QUEUES = {
+    "default": {"exchange": "default", "routing_key": "default"},
+    "ai": {"exchange": "ai", "routing_key": "ai"},
+    "background": {"exchange": "background", "routing_key": "background"},
+}
+
+CELERY_TASK_ROUTES = {
+    "learning.tasks.generate_ai_hint_task": {"queue": "ai"},
+    "learning.tasks.generate_ai_analysis_task": {"queue": "ai"},
+    "learning.tasks.update_leaderboard_cache": {"queue": "background"},
+    "learning.tasks.prewarm_ai_rag_task": {"queue": "background"},
+    "project.tasks.cleanup_old_task_results": {"queue": "background"},
+}
+
 CELERY_BEAT_SCHEDULE = {
     "cleanup-celery-results-daily": {
         "task": "project.tasks.cleanup_old_task_results",
         "schedule": 60 * 60 * 24,  # Every 24 hours
+    },
+    "prewarm-ai-rag-every-6-hours": {
+        "task": "learning.tasks.prewarm_ai_rag_task",
+        "schedule": 60 * 60 * 6,  # Every 6 hours
     },
 }
 

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { notify } from "./notification";
+import { SLog } from "./logger";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -114,6 +115,15 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // Log critical errors to centralized SLog
+    if (!error.response || error.response.status >= 500) {
+      SLog.error("API critical failure", error, {
+        url: originalRequest?.url,
+        status: error.response?.status,
+        method: originalRequest?.method,
+      });
     }
 
     return Promise.reject(error);

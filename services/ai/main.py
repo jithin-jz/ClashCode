@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_chroma import Chroma
+from langchain_core.documents import Document
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 # Local imports
@@ -29,6 +30,20 @@ from prompts import (
 
 # Configure Logging
 from logger_config import setup_logging
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+# Sentry Configuration
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[FastApiIntegration()],
+        # Performance Monitoring
+        traces_sample_rate=1.0 if settings.DEBUG else 0.2,
+        # Capture User PII
+        send_default_pii=True,
+        environment=settings.ENVIRONMENT,
+    )
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -248,6 +263,74 @@ async def get_rag_context(
     except Exception as e:
         logger.warning(f"RAG Search failed: {e}. Proceeding without extra context.")
     return "\n\n".join(similar_docs) if similar_docs else "No similar patterns found."
+
+
+@app.post("/index")
+async def index_challenges(
+    http_request: Request,
+    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+):
+    """
+    Internal endpoint to trigger re-indexing of all challenges from Core.
+    This ensures the RAG context is up-to-date and "pre-warmed".
+    """
+    if not _authorize_internal_request(
+        path=http_request.url.path,
+        api_key=x_internal_api_key,
+        timestamp=x_internal_timestamp,
+        signature=x_internal_signature,
+    ):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    logger.info("Starting challenge indexing (RAG pre-warming)...")
+
+    # 1. Fetch all challenges from Core
+    path = "/api/challenges/internal-list/"
+    url = f"{settings.CORE_SERVICE_URL}{path}"
+    headers = _build_internal_headers(path)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                logger.error(f"Failed to fetch challenges for indexing: {resp.text}")
+                return {"status": "error", "detail": "Core service fetch failed"}
+            challenges = resp.json()
+        except Exception as e:
+            logger.error(f"Error connecting to Core for indexing: {e}")
+            return {"status": "error", "detail": str(e)}
+
+    # 2. Initialize Vector DB
+    vdb = get_vector_db()
+    if vdb is None:
+        return {"status": "error", "detail": "Vector DB initialization failed"}
+
+    # 3. Create LangChain Documents
+    docs = []
+    for c in challenges:
+        content = (
+            f"Title: {c.get('title')}\n"
+            f"Description: {c.get('description')}\n"
+            f"Initial Code:\n{c.get('initial_code')}\n"
+        )
+        docs.append(
+            Document(
+                page_content=content,
+                metadata={"slug": c.get("slug"), "type": "challenge_context"},
+            )
+        )
+
+    # 4. Add to Vector DB (runs in background thread to avoid blocking)
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, lambda: vdb.add_documents(docs))
+        logger.info(f"Successfully indexed {len(docs)} challenges.")
+        return {"status": "ok", "indexed_count": len(docs)}
+    except Exception as e:
+        logger.error(f"Failed to add documents to Chroma: {e}")
+        return {"status": "error", "detail": "Chroma storage failed"}
 
 
 # --- Routes ---

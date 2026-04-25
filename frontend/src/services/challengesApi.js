@@ -1,35 +1,44 @@
 import api from "./api";
+import { socketService } from "./socketService";
 
 let aiAnalyzeUnavailable = false;
 let aiAnalyzeUnavailableUntil = 0;
-const AI_TASK_POLL_INTERVAL_MS = 1000;
+const AI_TASK_POLL_INTERVAL_MS = 2000; // Increased interval for fallback
 const AI_TASK_POLL_TIMEOUT_MS = 90000;
 
+/**
+ * Waits for an AI task result using WebSockets with a polling fallback.
+ */
 const waitForAITaskResult = async (taskId) => {
-  const startedAt = Date.now();
+  try {
+    // Primary: Try WebSocket
+    return await socketService.waitForTask(taskId, AI_TASK_POLL_TIMEOUT_MS);
+  } catch (err) {
+    // If WS times out or fails, fallback to polling
+    console.warn("[API] WebSocket failed, falling back to polling for taskId:", taskId);
+    
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < AI_TASK_POLL_TIMEOUT_MS) {
+      const response = await api.get(`/challenges/ai-tasks/${taskId}/status/`);
+      const payload = response.data || {};
 
-  while (Date.now() - startedAt < AI_TASK_POLL_TIMEOUT_MS) {
-    const response = await api.get(`/challenges/ai-tasks/${taskId}/status/`);
-    const payload = response.data || {};
+      if (payload.status === "success") {
+        return payload.result || {};
+      }
 
-    if (payload.status === "success") {
-      return payload.result || {};
+      if (payload.status === "failed") {
+        const pollErr = new Error(payload.error || "AI task failed (Poll)");
+        pollErr.response = { status: 503, data: payload };
+        throw pollErr;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, AI_TASK_POLL_INTERVAL_MS));
     }
 
-    if (payload.status === "failed") {
-      const err = new Error(payload.error || "AI task failed");
-      err.response = { status: 503, data: payload };
-      throw err;
-    }
-
-    await new Promise((resolve) => {
-      setTimeout(resolve, AI_TASK_POLL_INTERVAL_MS);
-    });
+    const timeoutErr = new Error("AI task timed out (Poll Fallback)");
+    timeoutErr.response = { status: 504 };
+    throw timeoutErr;
   }
-
-  const err = new Error("AI task timed out");
-  err.response = { status: 504 };
-  throw err;
 };
 
 export const challengesApi = {
@@ -74,32 +83,22 @@ export const challengesApi = {
     }
 
     const payload = { user_code };
-    const candidatePaths = [
-      `/challenges/${slug}/ai-analyze/`,
-      `/challenges/${slug}/ai_analyze/`,
-      `/challenges/${slug}/analyze/`,
-    ];
+    const path = `/challenges/${slug}/ai-analyze/`;
 
-    let lastError;
-    for (const path of candidatePaths) {
-      try {
-        const response = await api.post(path, payload);
-        if (response.status === 202 && response.data?.task_id) {
-          return waitForAITaskResult(response.data.task_id);
-        }
-        return response.data;
-      } catch (err) {
-        const statusCode = err?.response?.status;
-        // Retry only for not-found/route mismatch; throw immediately for auth/server errors.
-        if (statusCode !== 404) {
-          throw err;
-        }
-        lastError = err;
+    try {
+      const response = await api.post(path, payload);
+      if (response.status === 202 && response.data?.task_id) {
+        return waitForAITaskResult(response.data.task_id);
       }
+      return response.data;
+    } catch (err) {
+      const statusCode = err?.response?.status;
+      if (statusCode === 404) {
+        aiAnalyzeUnavailable = true;
+        aiAnalyzeUnavailableUntil = Date.now() + 60000; // retry backend after 60s
+      }
+      throw err;
     }
-    aiAnalyzeUnavailable = true;
-    aiAnalyzeUnavailableUntil = Date.now() + 60000; // retry backend after 60s
-    throw lastError || new Error("AI analyze endpoint not found");
   },
   create: async (data) => {
     const response = await api.post("/challenges/", data);

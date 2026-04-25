@@ -5,6 +5,8 @@ import time
 from hashlib import sha256
 
 import requests
+import redis
+import json
 
 from celery import shared_task
 from django.contrib.auth import get_user_model
@@ -13,12 +15,36 @@ from django.db.models import Count, Q
 
 from challenges.models import UserProgress
 from users.models import UserProfile
+from project.circuit_breaker import RedisCircuitBreaker
+
+ai_cb = RedisCircuitBreaker("ai_service", failure_threshold=3, recovery_timeout=60)
 
 logger = logging.getLogger(__name__)
 LEADERBOARD_CACHE_KEY = "leaderboard_data"
 LEADERBOARD_CACHE_TIMEOUT = 60 * 10
 AI_HINT_CACHE_TIMEOUT = 60 * 60 * 24 * 30
 AI_ANALYSIS_CACHE_TIMEOUT = 60 * 60
+
+
+def _publish_task_result(user_id: int, task_id: str, task_type: str, result: dict):
+    """Publish task result to Redis for real-time WebSocket notification."""
+    try:
+        redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+        r = redis.from_url(redis_url)
+        channel = f"notifications_{user_id}"
+        r.publish(
+            channel,
+            json.dumps(
+                {
+                    "type": "task_completed",
+                    "task_id": task_id,
+                    "task_type": task_type,
+                    "result": result,
+                }
+            ),
+        )
+    except Exception as e:
+        logger.error(f"Failed to publish task result to Redis: {e}")
 
 
 def _build_internal_headers(path: str) -> dict[str, str]:
@@ -119,6 +145,16 @@ def generate_ai_hint_task(
     headers = _build_internal_headers("/hints")
     cache_key = f"ai_hint:{user_id}:{challenge_id}:level:{hint_level}"
 
+    if not ai_cb.is_available():
+        logger.warning(f"Circuit Breaker OPEN for {ai_cb.name}. Aborting hint request.")
+        result = {
+            "ok": False,
+            "error": "AI Service currently unavailable (Circuit Open)",
+            "status_code": 503,
+        }
+        _publish_task_result(user_id, generate_ai_hint_task.request.id, "hint", result)
+        return result
+
     try:
         resp = requests.post(
             f"{ai_url}/hints",
@@ -139,14 +175,24 @@ def generate_ai_hint_task(
             cache.set(cache_key, hint_text, timeout=AI_HINT_CACHE_TIMEOUT)
         body.setdefault("hint_level", hint_level)
         body.setdefault("max_hints", 3)
-        return {"ok": True, "payload": body}
+        body.setdefault("max_hints", 3)
+        body.setdefault("max_hints", 3)
+        result = {"ok": True, "payload": body}
+        ai_cb.record_success()
+        _publish_task_result(user_id, generate_ai_hint_task.request.id, "hint", result)
+        return result
     except requests.exceptions.RequestException as exc:
+        ai_cb.record_failure()
         logger.error("AI hint task failed: %s", exc)
-        return {"ok": False, "error": "AI Service Unavailable", "status_code": 503}
+        result = {"ok": False, "error": "AI Service Unavailable", "status_code": 503}
+        _publish_task_result(user_id, generate_ai_hint_task.request.id, "hint", result)
+        return result
 
 
-@shared_task
-def generate_ai_analysis_task(challenge_id: int, challenge_slug: str, user_code: str):
+@shared_task(bind=True)
+def generate_ai_analysis_task(
+    self, user_id: int, challenge_id: int, challenge_slug: str, user_code: str
+):
     ai_url = os.getenv("AI_SERVICE_URL", "http://ai:8002")
     payload = {
         "user_code": user_code or "",
@@ -154,6 +200,16 @@ def generate_ai_analysis_task(challenge_id: int, challenge_slug: str, user_code:
     }
     headers = _build_internal_headers("/analyze")
     cache_key = _analysis_cache_key(challenge_id, user_code)
+
+    if not ai_cb.is_available():
+        logger.warning(f"Circuit Breaker OPEN for {ai_cb.name}. Aborting analysis request.")
+        result = {
+            "ok": False,
+            "error": "AI Service currently unavailable (Circuit Open)",
+            "status_code": 503,
+        }
+        _publish_task_result(user_id, self.request.id, "analysis", result)
+        return result
 
     try:
         resp = requests.post(
@@ -171,7 +227,37 @@ def generate_ai_analysis_task(challenge_id: int, challenge_slug: str, user_code:
 
         body = resp.json()
         cache.set(cache_key, body, timeout=AI_ANALYSIS_CACHE_TIMEOUT)
-        return {"ok": True, "payload": body}
+        result = {"ok": True, "payload": body}
+        ai_cb.record_success()
+        _publish_task_result(user_id, self.request.id, "analysis", result)
+        return result
     except requests.exceptions.RequestException as exc:
+        ai_cb.record_failure()
         logger.error("AI analysis task failed: %s", exc)
-        return {"ok": False, "error": "AI Service Unavailable", "status_code": 503}
+        result = {"ok": False, "error": "AI Service Unavailable", "status_code": 503}
+        _publish_task_result(user_id, self.request.id, "analysis", result)
+        return result
+
+
+@shared_task
+def prewarm_ai_rag_task():
+    """
+    Triggers the AI service to re-index all challenges from Core.
+    Ensures that the RAG vector database is up-to-date.
+    """
+    ai_url = os.getenv("AI_SERVICE_URL", "http://ai:8002")
+    headers = _build_internal_headers("/index")
+    logger.info("Triggering AI RAG pre-warming task...")
+
+    try:
+        resp = requests.post(f"{ai_url}/index", headers=headers, timeout=120)
+        if resp.status_code == 200:
+            data = resp.json()
+            logger.info(f"AI RAG pre-warmed successfully. Indexed {data.get('indexed_count')} challenges.")
+            return {"status": "success", "data": data}
+        else:
+            logger.error(f"AI RAG pre-warming failed with status {resp.status_code}: {resp.text}")
+            return {"status": "error", "code": resp.status_code}
+    except Exception as e:
+        logger.error(f"AI RAG pre-warming request failed: {e}")
+        return {"status": "error", "message": str(e)}

@@ -4,6 +4,7 @@ import useChallengesStore from "./useChallengesStore";
 import useNotificationStore from "./useNotificationStore";
 import { notify } from "../services/notification";
 import { isBoneyard } from "../utils/isBoneyard";
+import { SLog } from "../services/logger";
 
 // Helper function to open OAuth in a popup window
 const openOAuthPopup = (url, name = "OAuth Login") => {
@@ -113,6 +114,7 @@ const useAuthStore = create((set, get) => ({
           error: null,
           isInitialized: true,
         });
+        SLog.setUser(response.data);
         return response.data;
       } catch {
         set({
@@ -121,6 +123,7 @@ const useAuthStore = create((set, get) => ({
           loading: false,
           isInitialized: true,
         });
+        SLog.setUser(null);
         return null;
       } finally {
         set({
@@ -252,7 +255,7 @@ const useAuthStore = create((set, get) => ({
         loading: false,
         error: null,
       });
-
+      SLog.setUser(user);
       return true;
     } catch (error) {
       set({
@@ -362,7 +365,7 @@ const useAuthStore = create((set, get) => ({
         isOtpLoading: false,
         error: null,
       });
-
+      SLog.setUser(user);
       return true;
     } catch (error) {
       set({
@@ -399,6 +402,7 @@ const useAuthStore = create((set, get) => ({
       lastAuthCheck: null,
       authCheckPromise: null,
     });
+    SLog.setUser(null);
   },
 
   deleteAccount: async () => {

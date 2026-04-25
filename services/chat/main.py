@@ -1,6 +1,8 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, Request
 from fastapi.responses import JSONResponse
 import os, json, jwt, asyncio, logging
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from decimal import Decimal
 import redis.asyncio as redis
 from dotenv import load_dotenv
@@ -31,6 +33,18 @@ def json_dumps(obj: Any) -> str:
 
 
 load_dotenv()
+
+# Sentry initialization
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        environment=os.getenv("ENVIRONMENT", "development"),
+        integrations=[FastApiIntegration()],
+    )
+    logger.info("Sentry initialized for Chat service")
 
 # --------------------------------------------------
 # Config
@@ -661,8 +675,47 @@ async def chat_ws(ws: WebSocket, room: str):
         )
         await redis_client.publish(channel_key(room), leave.model_dump_json())
 
+    except Exception as e:
+        logger.error(f"Error in chat websocket: {e}")
+        await manager.disconnect(ws, room)
 
-@app.websocket("/ws/notifications")
+
+@app.websocket("/ws/tasks/")
+async def tasks_ws(ws: WebSocket):
+    """
+    Dedicated websocket for real-time task notifications.
+    Standardized to handle AI hints and analysis status updates.
+    """
+    # Authenticate
+    token = ws.query_params.get("token") or ws.cookies.get(JWT_ACCESS_COOKIE_NAME)
+    if not token:
+        # Check Authorization header (though browser WebSockets don't easily support this)
+        auth = ws.headers.get("authorization")
+        if auth and auth.lower().startswith("bearer "):
+            token = auth.split(" ", 1)[1]
+
+    payload = verify_jwt(token or "")
+    if not payload:
+        logger.warning("Unauthenticated task WS attempt")
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    user_id = int(payload.get("user_id"))
+    logger.info(f"Task Hub connected for user {user_id}")
+
+    await notification_manager.connect(ws, user_id)
+    try:
+        while True:
+            # We don't expect messages from client here, just keep connection alive
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        await notification_manager.disconnect(ws, user_id)
+    except Exception as e:
+        logger.error(f"Error in task hub websocket: {e}")
+        await notification_manager.disconnect(ws, user_id)
+
+
+@app.websocket("/ws/notifications/")
 async def notifications_ws(ws: WebSocket):
     # ---- Auth ----
     token = get_token(ws)
@@ -688,4 +741,7 @@ async def notifications_ws(ws: WebSocket):
             # Just wait for messages or disconnection
             await ws.receive_text()
     except WebSocketDisconnect:
+        await notification_manager.disconnect(ws, user_id)
+    except Exception as e:
+        logger.error(f"Error in notifications websocket: {e}")
         await notification_manager.disconnect(ws, user_id)

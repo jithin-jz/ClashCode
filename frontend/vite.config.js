@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 function getPackageName(id) {
   const match = id.split(/node_modules[\\/]/)[1];
@@ -23,6 +24,10 @@ export default defineConfig({
     boneyardPlugin({
       routes: ["/login", "/home", "/profile", "/achievements", "/store"],
       debug: true,
+    }),
+    sentryVitePlugin({
+      org: "clashcode",
+      project: "frontend",
     }),
   ],
   resolve: {
@@ -55,12 +60,11 @@ export default defineConfig({
             return "vendor-motion";
           if (pkg.startsWith("@radix-ui/")) return "vendor-radix";
           if (pkg === "emoji-picker-react") return "vendor-emoji";
-          if (
-            pkg === "react-markdown" ||
-            pkg.startsWith("remark-") ||
-            pkg.startsWith("rehype-")
-          ) {
+          if (pkg === "react-markdown" || pkg.startsWith("remark-") || pkg.startsWith("rehype-")) {
             return "vendor-markdown";
+          }
+          if (pkg === "@sentry/react" || pkg.startsWith("@sentry/")) {
+            return "vendor-sentry";
           }
           return "vendor";
         },

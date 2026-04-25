@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # Security
     CORS_ORIGINS: Union[str, List[str]]
 
+    # Observability
+    SENTRY_DSN: Optional[str] = Field(default=None, alias="SENTRY_DSN")
+    DEBUG: bool = Field(default=False)
+    ENVIRONMENT: str = Field(default="production")
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @field_validator("CORS_ORIGINS", mode="before")
