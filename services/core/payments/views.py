@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 from xpoint.services import XPService
 from .models import Payment
 from .serializers import CreateOrderSerializer, VerifyPaymentSerializer
-from auth.throttles import StoreRateThrottle
+from authentication.throttles import StoreRateThrottle
 
 try:
     import razorpay

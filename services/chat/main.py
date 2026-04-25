@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os, json, jwt, asyncio, logging
 import sentry_sdk
@@ -51,6 +52,14 @@ if SENTRY_DSN:
 # --------------------------------------------------
 
 app = FastAPI(title="Chat Service")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # JWT Configuration (RS256 - asymmetric)
 ALGORITHM = os.getenv("JWT_ALGORITHM", "RS256").upper()
@@ -155,9 +164,16 @@ def serialize_dynamo_message(room: str, item: dict) -> dict:
 
 def get_token(request: Request | WebSocket) -> str | None:
     token = None
+    # Check Authorization header (standard REST/older WS)
     auth = request.headers.get("authorization")
     if auth and auth.lower().startswith("bearer "):
         token = auth.split(" ", 1)[1]
+    
+    # Check query parameters (standard for browser WebSockets)
+    if not token and hasattr(request, "query_params"):
+        token = request.query_params.get("token")
+        
+    # Check cookies
     if not token:
         token = request.cookies.get(JWT_ACCESS_COOKIE_NAME)
     return token
@@ -326,6 +342,7 @@ notification_manager = NotificationManager()
 
 
 @app.websocket("/ws/chat/{room}")
+@app.websocket("/ws/chat/{room}/")
 async def chat_ws(ws: WebSocket, room: str):
     # ---- room validation ----
     if room != "global":
@@ -680,6 +697,7 @@ async def chat_ws(ws: WebSocket, room: str):
         await manager.disconnect(ws, room)
 
 
+@app.websocket("/ws/tasks")
 @app.websocket("/ws/tasks/")
 async def tasks_ws(ws: WebSocket):
     """
@@ -715,6 +733,7 @@ async def tasks_ws(ws: WebSocket):
         await notification_manager.disconnect(ws, user_id)
 
 
+@app.websocket("/ws/notifications")
 @app.websocket("/ws/notifications/")
 async def notifications_ws(ws: WebSocket):
     # ---- Auth ----

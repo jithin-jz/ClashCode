@@ -10,6 +10,7 @@ const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     const [scope, animate] = useAnimate();
 
     const start = useCallback(async () => {
+      if (!scope.current) return;
       await animate(
         ".logout-arrow, .logout-arrow-bottom",
         {
@@ -20,6 +21,7 @@ const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
           ease: "easeInOut",
         },
       );
+      if (!scope.current) return;
       animate(
         ".logout-door",
         {
@@ -33,6 +35,7 @@ const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     }, [animate]);
 
     const stop = useCallback(() => {
+      if (!scope.current) return;
       animate(
         ".logout-arrow, .logout-arrow-bottom, .logout-door",
         { x: 0 },

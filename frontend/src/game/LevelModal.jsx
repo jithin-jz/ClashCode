@@ -27,6 +27,7 @@ const LevelModal = ({ selectedLevel, onClose }) => {
       <DialogContent
         className="sm:max-w-[340px] p-0 overflow-hidden rounded-lg border border-white/20 bg-[#050505] text-white shadow-2xl"
         showClose={false}
+        aria-describedby={undefined}
       >
         <div className="p-5">
           {/* Header */}
@@ -53,15 +54,15 @@ const LevelModal = ({ selectedLevel, onClose }) => {
 
           <div className="space-y-4">
             {/* Title Area */}
-            <div className="px-1">
-              <h2 className="text-xl font-bold tracking-tight text-white mb-1 uppercase font-mono">
+            <DialogHeader className="px-1">
+              <DialogTitle className="text-xl font-bold tracking-tight text-white mb-1 uppercase font-mono">
                 {levelTitle}
-              </h2>
+              </DialogTitle>
               <p className="text-[11px] text-white/50 font-medium leading-relaxed">
                 Analyze patterns, clear test cases, and earn rewards to advance
                 through the core.
               </p>
-            </div>
+            </DialogHeader>
 
             {/* Stats Row */}
             <div className="grid grid-cols-2 gap-2">

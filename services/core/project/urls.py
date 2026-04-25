@@ -13,7 +13,7 @@ urlpatterns = [
     path("", ServiceIndexView.as_view(), name="service-index"),
     path("health/", HealthCheckView.as_view(), name="health-check"),
     path("admin/", admin.site.urls),
-    path("api/auth/", include("auth.urls")),
+    path("api/auth/", include("authentication.urls")),
     path("api/rewards/", include("rewards.urls")),
     path("api/profiles/", include("users.urls")),
     path("api/payments/", include("payments.urls")),

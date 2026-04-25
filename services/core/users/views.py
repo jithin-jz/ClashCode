@@ -71,10 +71,24 @@ class CurrentUserView(APIView):
     serializer_class = UserSerializer
 
     def get(self, request):
-        return Response(
-            UserSerializer(request.user, context={"request": request}).data,
-            status=status.HTTP_200_OK,
-        )
+        user_data = UserSerializer(request.user, context={"request": request}).data
+        
+        if getattr(settings, "JWT_RETURN_TOKENS_IN_BODY", False):
+            # Extract tokens from the request if possible
+            access_token = request.COOKIES.get(settings.JWT_ACCESS_COOKIE_NAME)
+            if not access_token:
+                auth_header = request.headers.get("Authorization", "")
+                if auth_header.startswith("Bearer "):
+                    access_token = auth_header.split(" ")[1]
+            
+            refresh_token = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
+            
+            if access_token:
+                user_data["access_token"] = access_token
+            if refresh_token:
+                user_data["refresh_token"] = refresh_token
+                
+        return Response(user_data, status=status.HTTP_200_OK)
 
 
 class ProfileUpdateView(APIView):

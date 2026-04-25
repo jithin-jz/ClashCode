@@ -16,7 +16,7 @@ from challenges.serializers import ChallengeAdminSerializer, ChallengePublicSeri
 from challenges.services import ChallengeService
 from challenges.execution import PistonExecutionService
 from project.internal_auth import authorize_internal_request
-from auth.throttles import CodeExecutionRateThrottle
+from authentication.throttles import CodeExecutionRateThrottle
 from .tasks import (
     LEADERBOARD_CACHE_KEY,
     LEADERBOARD_CACHE_TIMEOUT,
@@ -49,108 +49,115 @@ def _store_ai_task_meta(task_id: str, user_id: int, task_type: str) -> None:
 def _task_status_label(async_result: AsyncResult) -> str:
     if async_result.status in {"PENDING", "RECEIVED"}:
         return "queued"
-    if async_result.status in {"STARTED", "RETRY"}:
-        return "running"
+    if async_result.status == "STARTED":
+        return "processing"
     if async_result.status == "SUCCESS":
-        task_result = async_result.result
-        if isinstance(task_result, dict) and task_result.get("ok"):
-            return "success"
+        return "success"
+    if async_result.status in {"FAILURE", "REVOKED"}:
         return "failed"
-    return "failed"
+    return async_result.status.lower()
 
 
-def _build_ai_result_response(task_result):
-    if isinstance(task_result, dict) and task_result.get("ok"):
-        return Response(task_result.get("payload", {}), status=status.HTTP_200_OK)
+def _build_ai_result_response(task_result: dict) -> Response:
+    if not task_result or not isinstance(task_result, dict):
+        return Response(
+            {"error": "AI task returned invalid result"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
-    error = "AI task failed"
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    if isinstance(task_result, dict):
-        error = task_result.get("error", error)
-        status_code = int(task_result.get("status_code", status_code))
+    if not task_result.get("ok"):
+        return Response(
+            {"error": task_result.get("error", "AI generation failed")},
+            status=task_result.get("status_code", status.HTTP_503_SERVICE_UNAVAILABLE),
+        )
 
-    return Response({"error": error}, status=status_code)
+    return Response(task_result.get("payload", {}), status=status.HTTP_200_OK)
 
 
 class ChallengeViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for interacting with coding challenges.
+    ViewSet for Challenge model.
+    Provides standard CRUD for admins and limited views for authenticated users.
     """
 
-    queryset = Challenge.objects.all()
-    serializer_class = ChallengePublicSerializer
     lookup_field = "slug"
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try lookup by slug (default)
+        obj = queryset.filter(slug=lookup_value).first()
+        if obj:
+            return obj
+
+        if lookup_value.isdigit():
+            # Try lookup by order (primary frontend use case)
+            obj = queryset.filter(order=int(lookup_value)).first()
+            if obj:
+                return obj
+
+            # Try lookup by ID
+            obj = queryset.filter(id=int(lookup_value)).first()
+            if obj:
+                return obj
+
+        # Fallback to slug (default behavior)
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(queryset, slug=lookup_value)
+
     def get_queryset(self):
-        queryset = Challenge.objects.all()
-        user = getattr(self.request, "user", None)
-        if user and user.is_authenticated and not user.is_staff:
-            queryset = queryset.filter(
-                Q(created_for_user__isnull=True) | Q(created_for_user=user)
-            )
-        return queryset
+        if self.request.user.is_staff:
+            return Challenge.objects.all().order_by("order")
+        return Challenge.objects.filter(is_published=True).order_by("order")
 
     def get_serializer_class(self):
-        if self.action in [
-            "create",
-            "update",
-            "partial_update",
-            "destroy",
-            "internal_list",
-            "internal_context",
-        ]:
+        if self.request.user.is_staff:
             return ChallengeAdminSerializer
         return ChallengePublicSerializer
 
     def get_permissions(self):
-        if self.action in ["internal_context", "internal_list"]:
-            permission_classes = [AllowAny]
-        elif self.action in ["create", "update", "partial_update", "destroy"]:
-            permission_classes = [IsAdminUser]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-
-    @extend_schema(
-        request=ChallengeAdminSerializer,
-        responses={201: ChallengeAdminSerializer, 403: OpenApiTypes.OBJECT},
-        description="Create a new challenge (Admin only).",
-    )
-    def create(self, request, *args, **kwargs):
-        if not request.user.is_staff:
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
-        return super().create(request, *args, **kwargs)
-
-    @extend_schema(
-        request=None,
-        responses={200: ChallengeAdminSerializer(many=True), 403: OpenApiTypes.OBJECT},
-        description="Internal endpoint to list all challenges for indexing (Requires INTERNAL_API_KEY).",
-    )
-    @decorators.action(detail=False, methods=["get"], url_path="internal-list")
-    def internal_list(self, request):
-        if not authorize_internal_request(request):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
-
-        challenges = Challenge.objects.all()
-        serializer = ChallengeAdminSerializer(challenges, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        """
+        Permissions for different actions.
+        User-facing actions require authentication.
+        Management actions require staff privileges.
+        Internal actions bypass DRF auth (checked via authorize_internal_request).
+        """
+        user_actions = [
+            "list",
+            "retrieve",
+            "submit",
+            "execute",
+            "purchase_ai_assist",
+            "ai_hint",
+            "ai_analyze",
+            "task_status",
+        ]
+        internal_actions = ["internal_context"]
+        
+        if self.action in internal_actions:
+            return [AllowAny()]
+        if self.action in user_actions:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
     @extend_schema(
         responses={200: ChallengePublicSerializer(many=True)},
-        description="List all available challenges with user-specific progress annotations.",
+        description="List all published challenges for the user with their current progress.",
     )
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        annotated_challenges = ChallengeService.get_annotated_challenges(
-            request.user, queryset
-        )
-
+        queryset = self.get_queryset()
+        # Use get_annotated_challenges to fetch progress for all items at once
+        annotated_queryset = ChallengeService.get_annotated_challenges(request.user, queryset)
+        
         data = []
-        for item in annotated_challenges:
+        for item in annotated_queryset:
             serializer = self.get_serializer(item)
             challenge_data = serializer.data
-            challenge_data["status"] = item.user_status
-            challenge_data["stars"] = item.user_stars
+            # Annotated fields are available on the instance
+            challenge_data["status"] = getattr(item, "user_status", "LOCKED")
+            challenge_data["stars"] = getattr(item, "user_stars", 0)
             data.append(challenge_data)
 
         return Response(data, status=status.HTTP_200_OK)
@@ -177,15 +184,15 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     @extend_schema(
         request=inline_serializer(
             name="ChallengeSubmissionRequest",
-        fields={
+            fields={
                 "code": serializers.CharField(required=True),
             },
         ),
         responses={
-            200: OpenApiTypes.OBJECT,
+            202: OpenApiTypes.OBJECT,
             400: OpenApiTypes.OBJECT,
         },
-        description="Submit code and update challenge progress after server-side validation.",
+        description="Submit code for validation. Returns a task_id for real-time result tracking.",
     )
     @decorators.action(
         detail=True, methods=["post"], throttle_classes=[CodeExecutionRateThrottle]
@@ -207,28 +214,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             "task_id": task.id
         }, status=status.HTTP_202_ACCEPTED)
 
-
-        full_code = f"{user_code}\n\n{challenge.test_code}"
-        execution_result = PistonExecutionService.execute_code("python", full_code)
-        run_data = execution_result.get("run", {})
-        exit_code = run_data.get("code", -1)
-        stderr = run_data.get("stderr", "")
-
-        passed = (exit_code == 0) and not stderr
-        if not passed:
-            return Response(
-                {
-                    "status": "failed",
-                    "error": "Server-side validation failed.",
-                    "stdout": run_data.get("stdout"),
-                    "stderr": stderr,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        result = ChallengeService.process_submission(request.user, challenge, passed)
-        return Response(result, status=status.HTTP_200_OK)
-
     @extend_schema(
         request=inline_serializer(
             name="ChallengeExecuteRequest",
@@ -237,7 +222,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             },
         ),
         responses={
-            200: OpenApiTypes.OBJECT,
+            202: OpenApiTypes.OBJECT,
         },
         description="Execute code server-side against challenge test cases without submitting.",
     )
@@ -255,22 +240,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             "status": "pending",
             "task_id": task.id
         }, status=status.HTTP_202_ACCEPTED)
-
-
-        full_code = f"{user_code}\n\n{challenge.test_code}"
-        execution_result = PistonExecutionService.execute_code("python", full_code)
-        run_data = execution_result.get("run", {})
-        
-        exit_code = run_data.get("code", -1)
-        stderr = run_data.get("stderr", "")
-        
-        return Response({
-            "passed": (exit_code == 0) and not stderr,
-            "stdout": run_data.get("stdout", ""),
-            "stderr": stderr,
-            "exit_code": exit_code,
-            "output": run_data.get("output", "")
-        }, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=None,
@@ -438,6 +407,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             return Response(cached_analysis, status=status.HTTP_200_OK)
 
         async_result = generate_ai_analysis_task.delay(
+            user_id=request.user.id,
             challenge_id=challenge.id,
             challenge_slug=challenge.slug,
             user_code=user_code,

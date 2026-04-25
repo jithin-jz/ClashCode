@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from .models import StoreItem, Purchase
 from .serializers import StoreItemSerializer
 from xpoint.services import XPService
-from auth.throttles import StoreRateThrottle
+from authentication.throttles import StoreRateThrottle
 
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile

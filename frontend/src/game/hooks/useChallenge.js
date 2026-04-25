@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { challengesApi } from "../../services/challengesApi";
 import useAuthStore from "../../stores/useAuthStore";
@@ -41,10 +41,12 @@ export const useChallenge = (id) => {
     enabled: !!id,
   });
 
+  const initializedChallengeId = useRef(null);
+
   // Sync initial code when challenge loads
   useEffect(() => {
-    if (challenge) {
-      setCode(challenge.initial_code || "");
+    if (challenge && initializedChallengeId.current !== challenge.id) {
+      setCode(challenge.user_code || challenge.initial_code || "");
       useChallengesStore.getState().upsertChallenge(challenge);
       
       // Reset workspace state for new challenge
@@ -54,6 +56,8 @@ export const useChallenge = (id) => {
       setOutput([]);
       setLastRunPassed(false);
       setCompletionData(null);
+      
+      initializedChallengeId.current = challenge.id;
     }
   }, [challenge]);
 

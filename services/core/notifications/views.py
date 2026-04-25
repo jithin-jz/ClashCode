@@ -8,7 +8,7 @@ from drf_spectacular.utils import (
     extend_schema,
     inline_serializer,
 )
-from auth.throttles import NotificationRateThrottle
+from authentication.throttles import NotificationRateThrottle
 from .models import Notification, FCMToken
 from .serializers import NotificationSerializer, FCMTokenSerializer
 

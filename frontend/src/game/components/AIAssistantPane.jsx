@@ -270,9 +270,9 @@ const AIAssistantPane = ({
               </span>
             </button>
             {userXp !== undefined && userXp < nextCost && (
-              <p className="text-[9px] text-red-900 text-center font-bold uppercase tracking-tighter">
+              <div className="text-[9px] text-red-900 text-center font-bold uppercase tracking-tighter">
                 Insufficient <Gem size={8} className="inline text-red-400" />
-              </p>
+              </div>
             )}
           </div>
         ) : (

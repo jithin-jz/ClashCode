@@ -1,9 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
-from auth.services import AuthService
-from auth.models import EmailOTP
-from auth.utils import hash_otp
+from authentication.services import AuthService
+from authentication.models import EmailOTP
+from authentication.utils import hash_otp
 from django.core.cache import cache
 from users.models import UserProfile
 
@@ -14,8 +14,8 @@ class AuthServiceTest(TestCase):
         self.otp_code = "123456"
         cache.clear()
 
-    @patch("auth.services.generate_tokens")
-    @patch("auth.services.send_welcome_email_task.delay")
+    @patch("authentication.services.generate_tokens")
+    @patch("authentication.services.send_welcome_email_task.delay")
     def test_verify_otp_success_new_user(self, mock_welcome_task, mock_generate_tokens):
         # 1. Setup: Create a valid OTP record in the DB
         EmailOTP.objects.create(
@@ -50,7 +50,7 @@ class AuthServiceTest(TestCase):
         self.assertIsNone(user)
         self.assertEqual(error_data["error"], "Invalid or expired OTP.")
 
-    @patch("auth.services.generate_tokens")
+    @patch("authentication.services.generate_tokens")
     def test_verify_otp_existing_user(self, mock_generate_tokens):
         # Setup: Pre-create the user and the OTP
         User.objects.create_user(username="existing", email=self.email)
@@ -67,7 +67,7 @@ class AuthServiceTest(TestCase):
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(user.email, self.email)
 
-    @patch("auth.tasks.fetch_oauth_avatar_task.delay")
+    @patch("authentication.tasks.fetch_oauth_avatar_task.delay")
     def test_create_profile_queues_avatar_download(self, mock_avatar_task):
         user = User.objects.create_user(
             username="oauth-user", email="oauth@example.com"

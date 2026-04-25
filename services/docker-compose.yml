@@ -89,6 +89,8 @@ services:
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
              gunicorn --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-60} project.wsgi:application"
+    volumes:
+      - ./core:/app
     environment:
       DB_HOST: db
       DB_NAME: ${POSTGRES_DB:-clashcode_db}
@@ -179,7 +181,7 @@ services:
   worker:
     build: ./core
     restart: unless-stopped
-    command: celery -A project worker --loglevel=info
+    command: celery -A project worker --loglevel=info -Q default,ai,background
     env_file: ./core/.env
     environment:
       DB_HOST: db

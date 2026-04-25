@@ -107,15 +107,26 @@ const useAuthStore = create((set, get) => ({
 
       try {
         const response = await authAPI.getCurrentUser();
+        const user = response.data;
         set({
-          user: response.data,
+          user,
           isAuthenticated: true,
           loading: false,
           error: null,
           isInitialized: true,
+          lastAuthCheck: Date.now(),
         });
-        SLog.setUser(response.data);
-        return response.data;
+
+        // Save tokens to localStorage for WebSocket services if present
+        if (response.data.access_token) {
+          localStorage.setItem("clashcode_access_token", response.data.access_token);
+        }
+        if (response.data.refresh_token) {
+          localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+        }
+
+        SLog.setUser(user);
+        return user;
       } catch {
         set({
           user: null,
@@ -255,6 +266,15 @@ const useAuthStore = create((set, get) => ({
         loading: false,
         error: null,
       });
+      
+      // Save tokens to localStorage for WebSocket services if present
+      if (response.data.access_token) {
+        localStorage.setItem("clashcode_access_token", response.data.access_token);
+      }
+      if (response.data.refresh_token) {
+        localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+      }
+
       SLog.setUser(user);
       return true;
     } catch (error) {
@@ -365,6 +385,15 @@ const useAuthStore = create((set, get) => ({
         isOtpLoading: false,
         error: null,
       });
+
+      // Save tokens to localStorage for WebSocket services if present
+      if (response.data.access_token) {
+        localStorage.setItem("clashcode_access_token", response.data.access_token);
+      }
+      if (response.data.refresh_token) {
+        localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+      }
+
       SLog.setUser(user);
       return true;
     } catch (error) {
@@ -382,6 +411,10 @@ const useAuthStore = create((set, get) => ({
     } catch {
       // Continue with logout even if API fails
     }
+
+    // Clear tokens from localStorage
+    localStorage.removeItem("clashcode_access_token");
+    localStorage.removeItem("clashcode_refresh_token");
 
     // Clear caches
     useChallengesStore.getState().clearCache();

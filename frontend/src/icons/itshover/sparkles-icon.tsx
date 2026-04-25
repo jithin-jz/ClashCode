@@ -10,6 +10,7 @@ const SparklesIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     const [scope, animate] = useAnimate();
 
     const start = useCallback(async () => {
+      if (!scope.current) return;
       // main sparkle
       animate(
         ".sparkle-main",
@@ -41,6 +42,7 @@ const SparklesIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     }, [animate]);
 
     const stop = useCallback(() => {
+      if (!scope.current) return;
       animate(".sparkle-main", { rotate: 0, scale: 1 }, { duration: 0.25 });
       animate(
         ".sparkle-top",

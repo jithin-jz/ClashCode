@@ -38,6 +38,9 @@ class Challenge(models.Model):
         help_text="Target completion time for 3-star rating (10 minutes default)",
     )
 
+    is_published = models.BooleanField(
+        default=True, help_text="If false, only staff can see this challenge"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
