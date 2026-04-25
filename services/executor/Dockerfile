@@ -10,7 +10,13 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy source code
 COPY main.py /app/
+COPY api/ /app/api/
+COPY core/ /app/core/
+COPY models/ /app/models/
+COPY services/ /app/services/
+COPY utils/ /app/utils/
 
 USER executor
 
