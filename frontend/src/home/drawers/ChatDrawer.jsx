@@ -316,6 +316,7 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                   markAsRead={markAsRead}
                   searchResults={searchResults}
                   isSearching={isSearching}
+                  isSearchMode={showSearch && searchQuery.length > 0}
                 />
               </div>
             </main>

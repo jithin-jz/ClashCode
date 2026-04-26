@@ -11,6 +11,7 @@ import {
   CheckCheck,
   X,
   Check,
+  Search,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 
@@ -157,6 +158,7 @@ const MessageList = ({
   markAsRead,
   searchResults = [],
   isSearching = false,
+  isSearchMode = false,
 }) => {
   const scrollRef = React.useRef(null);
 
@@ -270,7 +272,7 @@ const MessageList = ({
     );
   }
 
-  const displayedMessages = searchResults.length > 0 ? searchResults : messages;
+  const displayedMessages = isSearchMode ? searchResults : messages;
 
   return (
     <div
@@ -301,21 +303,21 @@ const MessageList = ({
         </div>
       )}
 
-      {messages.length === 0 && (
+      {displayedMessages.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-center py-20 px-6">
           <div className="relative mb-8">
             <div className="absolute -inset-4 bg-gradient-to-tr from-emerald-500/20 to-purple-500/20 rounded-full blur-2xl opacity-50" />
             <div className="w-20 h-20 bg-white/[0.02] backdrop-blur-sm rounded-[2.5rem] flex items-center justify-center border border-white/[0.05] shadow-2xl relative z-10">
-              <MessageCircle size={32} className="text-neutral-800" />
+              <Search size={32} className="text-neutral-800" />
             </div>
           </div>
           <p className="text-neutral-400 text-xs font-black uppercase tracking-[0.4em] mb-3">
-            Silence in Transmission
+            {isSearchMode ? "No matches found" : "Silence in Transmission"}
           </p>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <p className="text-neutral-600 text-[10px] font-bold uppercase tracking-widest">
-              Awaiting signal...
+              {isSearchMode ? "Try a different query" : "Awaiting signal..."}
             </p>
           </div>
         </div>
