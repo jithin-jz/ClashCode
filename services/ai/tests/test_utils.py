@@ -1,4 +1,4 @@
-from main import sanitize_guidance_output
+from utils.sanitizer import sanitize_guidance_output
 
 
 def test_sanitize_hint_removes_code_blocks():

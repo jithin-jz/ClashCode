@@ -30,9 +30,9 @@ def test_unauthorized_analyze():
 
 
 @pytest.mark.asyncio
-@patch("main.fetch_challenge_context")
-@patch("main.get_rag_context")
-@patch("llm_factory.LLMFactory")
+@patch("api.routes.fetch_challenge_context")
+@patch("core.ai_logic.get_rag_context")
+@patch("core.ai_logic.LLMFactory")
 async def test_generate_hint_success(mock_factory, mock_rag, mock_fetch):
     mock_fetch.return_value = {"title": "Test", "description": "Test"}
     mock_rag.return_value = "RAG"
@@ -53,9 +53,9 @@ async def test_generate_hint_success(mock_factory, mock_rag, mock_fetch):
 
 
 @pytest.mark.asyncio
-@patch("main.fetch_challenge_context")
-@patch("main.get_rag_context")
-@patch("llm_factory.LLMFactory")
+@patch("api.routes.fetch_challenge_context")
+@patch("core.ai_logic.get_rag_context")
+@patch("core.ai_logic.LLMFactory")
 async def test_analyze_code_success(mock_factory, mock_rag, mock_fetch):
     mock_fetch.return_value = {
         "title": "T",
