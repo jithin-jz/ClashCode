@@ -187,8 +187,8 @@ export const Clock = adapt(ClockIcon);
 export const ExternalLink = adapt(ExternalLinkIcon);
 export const ChevronRight = adapt(ArrowBigRightIcon);
 export const Info = adapt(TriangleAlertIcon);
-export const FileText = adapt(FileDescriptionIcon);
-export const Settings = adapt(GearIcon);
+
+
 
 
 
