@@ -1,23 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Users, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Skeleton } from "boneyard-js/react";
 import { Button } from "../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "../components/ui/dialog";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Card } from "../components/ui/card";
 
 // Components
 import CreatePostDialog from "../posts/CreatePostDialog";
@@ -28,6 +14,9 @@ import ProfileInfo from "./components/ProfileInfo";
 import ReferralSection from "./components/ReferralSection";
 import EditProfileForm from "./components/EditProfileForm";
 import UserListDialog from "./components/UserListDialog";
+import UserNotFound from "./components/UserNotFound";
+import DeleteAccountDialog from "./components/DeleteAccountDialog";
+import SuggestionsSidebar from "./components/SuggestionsSidebar";
 
 // Hooks
 import { useProfile } from "../hooks/useProfile";
@@ -82,25 +71,7 @@ const Profile = () => {
   }, [isEditing]);
 
   if (userNotFound) {
-    return (
-      <div className="h-screen w-full bg-[#000000] text-white flex flex-col items-center justify-center gap-6">
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-xl bg-[#1a1a1a] border border-white/10 flex items-center justify-center mx-auto mb-6">
-            <Users size={40} className="text-neutral-500" />
-          </div>
-          <h1 className="text-2xl font-semibold mb-2">User Not Found</h1>
-          <p className="text-neutral-400 mb-6 text-sm">
-            This user may have changed their username or doesn't exist.
-          </p>
-          <Button
-            onClick={() => navigate("/home")}
-            className="bg-white text-black hover:bg-zinc-200"
-          >
-            Back to Home
-          </Button>
-        </div>
-      </div>
-    );
+    return <UserNotFound onBackHome={() => navigate("/home")} />;
   }
 
   return (
@@ -131,13 +102,12 @@ const Profile = () => {
                     />
                   </div>
                 </Card>
+                {/* Referrals (if own profile) */}
+                {isOwnProfile && <ReferralSection />}
               </div>
 
               {/* Middle Column - Feed/Edit */}
-              <div
-                ref={editSectionRef}
-                className="lg:col-span-6 space-y-6 min-w-0"
-              >
+              <div ref={editSectionRef} className="lg:col-span-6 space-y-6 min-w-0">
                 {isEditing && isOwnProfile ? (
                   <EditProfileForm
                     editForm={editForm}
@@ -146,15 +116,12 @@ const Profile = () => {
                     uploadingBanner={uploadingBanner}
                     handleImageUpload={handleImageUpload}
                     setDeleteDialogOpen={setDeleteDialogOpen}
-                    handleSaveProfile={handleSaveProfile}
+                    handleSaveProfile={() => handleSaveProfile(editForm)}
                     savingProfile={savingProfile}
                   />
                 ) : (
                   <>
-                    <ContributionGraph
-                      data={contributionData}
-                      loading={loadingContributions}
-                    />
+                    <ContributionGraph data={contributionData} loading={loadingContributions} />
                     <div className="flex items-center justify-between mb-4 mt-8">
                       <h3 className="text-xl font-black italic text-white flex items-center gap-3">
                         <span className="w-1.5 h-6 bg-emerald-500 rounded-full" />
@@ -173,54 +140,18 @@ const Profile = () => {
                         </Button>
                       )}
                     </div>
-                    <PostGrid
-                      username={profileUser?.username}
-                      refreshTrigger={refreshPosts}
-                    />
+                    <PostGrid username={profileUser?.username} refreshTrigger={refreshPosts} />
                   </>
                 )}
               </div>
 
               {/* Right Column - Suggestions */}
               <div className="lg:col-span-2 space-y-6 hidden lg:block">
-                {isOwnProfile && suggestedUsers.length > 0 && (
-                  <Card className="bg-[#0a0a0a]/60 border-[#404040]/20 backdrop-blur-sm">
-                    <CardHeader className="p-3 border-b border-white/5">
-                      <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500/80">
-                        Suggested For You
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3 space-y-3">
-                      {suggestedUsers.slice(0, 5).map((u) => (
-                        <div
-                          key={u.username}
-                          className="flex items-center justify-between gap-3 group cursor-pointer"
-                          onClick={() => navigate(`/profile/${u.username}`)}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <Avatar className="h-9 w-9 border border-white/5">
-                              <AvatarImage
-                                src={u.avatar_url || u.profile?.avatar_url}
-                                alt={u.username}
-                                className="object-cover"
-                              />
-                              <AvatarFallback className="bg-zinc-800 text-[10px] font-bold text-white">
-                                {u.username?.[0]?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <div className="text-xs font-bold text-white truncate">
-                                {u.username}
-                              </div>
-                              <div className="text-[10px] text-neutral-500 truncate">
-                                Suggested for you
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                {isOwnProfile && (
+                  <SuggestionsSidebar
+                    users={suggestedUsers}
+                    onUserClick={(u) => navigate(`/profile/${u}`)}
+                  />
                 )}
               </div>
             </div>
@@ -243,33 +174,11 @@ const Profile = () => {
           onSuccess={() => setRefreshPosts((prev) => prev + 1)}
         />
 
-        {/* Delete Confirmation */}
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent className="bg-[#141414] border-[#404040]/30 text-white max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="text-red-500">Delete Account</DialogTitle>
-              <DialogDescription className="text-neutral-400">
-                This action is permanent. All your battles, scores, and profile
-                data will be purged.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 mt-4">
-              <Button
-                variant="ghost"
-                onClick={() => setDeleteDialogOpen(false)}
-                className="text-neutral-400 hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmDeleteAccount}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Permanently Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DeleteAccountDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={confirmDeleteAccount}
+        />
       </div>
     </Skeleton>
   );
