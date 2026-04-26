@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useLocation,
+  Outlet,
 } from "react-router-dom";
 
 // Components (loaded immediately)
@@ -80,191 +81,181 @@ const AppContent = memo(() => {
   return (
     <>
       <Toaster />
-      <MainLayout>
-        <Routes>
-          {/* Public Landing */}
-          <Route
-            path="/"
-            element={
-              user ? (
-                <Navigate to="/home" replace />
-              ) : (
-                <Suspense fallback={<LandingSkeleton />}>
-                  <LandingPage />
-                </Suspense>
-              )
-            }
-          />
+      <Routes>
+        {/* Public Landing */}
+        <Route
+          path="/"
+          element={
+            user ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <Suspense fallback={<LandingSkeleton />}>
+                <LandingPage />
+              </Suspense>
+            )
+          }
+        />
 
-          {/* Authenticated Home */}
+        {/* Authentication - Public Only */}
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <Suspense fallback={<LoginSkeleton />}>
+                <Login />
+              </Suspense>
+            </PublicOnlyRoute>
+          }
+        />
+
+        {/* OAuth Callbacks */}
+        <Route
+          path="/auth/github/callback"
+          element={
+            <Suspense fallback={<LoginSkeleton />}>
+              <OAuthCallback provider="github" />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/auth/google/callback"
+          element={
+            <Suspense fallback={<LoginSkeleton />}>
+              <OAuthCallback provider="google" />
+            </Suspense>
+          }
+        />
+
+        {/* Public Certificate Verification */}
+        <Route
+          path="/verify/:certificateId"
+          element={
+            <Suspense fallback={<GenericSkeleton />}>
+              <CertificateVerification />
+            </Suspense>
+          }
+        />
+
+        {/* Protected Routes wrapped in MainLayout */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Suspense fallback={<GenericSkeleton />}>
+                  <Outlet />
+                </Suspense>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        >
           <Route
             path="/home"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<HomeSkeleton />}>
-                  <Home />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Authentication - Public Only */}
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <Suspense fallback={<LoginSkeleton />}>
-                  <Login />
-                </Suspense>
-              </PublicOnlyRoute>
-            }
-          />
-
-          {/* OAuth Callbacks */}
-          <Route
-            path="/auth/github/callback"
-            element={
-              <Suspense fallback={<LoginSkeleton />}>
-                <OAuthCallback provider="github" />
+              <Suspense fallback={<HomeSkeleton />}>
+                <Home />
               </Suspense>
             }
           />
-          <Route
-            path="/auth/google/callback"
-            element={
-              <Suspense fallback={<LoginSkeleton />}>
-                <OAuthCallback provider="google" />
-              </Suspense>
-            }
-          />
-
-          {/* Admin Dashboard - Admin Only */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminRoute>
-                <Suspense fallback={<AdminSkeleton />}>
-                  <AdminDashboard />
-                </Suspense>
-              </AdminRoute>
-            }
-          />
-
-          {/* Protected Routes */}
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<ProfileSkeleton />}>
-                  <Profile />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<ProfileSkeleton />}>
+                <Profile />
+              </Suspense>
             }
           />
           <Route
             path="/profile/:username"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<ProfileSkeleton />}>
-                  <Profile />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/level/:id"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<ChallengeWorkspaceSkeleton />}>
-                  <ChallengeWorkspace />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<ProfileSkeleton />}>
+                <Profile />
+              </Suspense>
             }
           />
           <Route
             path="/shop"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<BuyXpSkeleton />}>
-                  <BuyXpPage />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<BuyXpSkeleton />}>
+                <BuyXpPage />
+              </Suspense>
             }
           />
-
           <Route
             path="/buy-xp"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<BuyXpSkeleton />}>
-                  <BuyXpPage />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<BuyXpSkeleton />}>
+                <BuyXpPage />
+              </Suspense>
             }
           />
-
           <Route
             path="/game"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<GenericSkeleton />}>
-                  <GameRedirectPage />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<GenericSkeleton />}>
+                <GameRedirectPage />
+              </Suspense>
             }
           />
-
           <Route
             path="/store"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<MarketplaceSkeleton />}>
-                  <MarketplacePage />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<MarketplaceSkeleton />}>
+                <MarketplacePage />
+              </Suspense>
             }
           />
-
           <Route
             path="/achievements"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<AchievementsSkeleton />}>
-                  <AchievementsPage />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Public Certificate Verification */}
-          <Route
-            path="/verify/:certificateId"
-            element={
-              <Suspense fallback={<GenericSkeleton />}>
-                <CertificateVerification />
+              <Suspense fallback={<AchievementsSkeleton />}>
+                <AchievementsPage />
               </Suspense>
             }
           />
+        </Route>
 
-          {/* Fallback */}
-          <Route
-            path="/admin"
-            element={<Navigate to="/admin/dashboard" replace />}
-          />
-
-          {/* 404 Route */}
-          <Route
-            path="*"
-            element={
-              <Suspense fallback={<GenericSkeleton />}>
-                <NotFound />
+        {/* Workspace Routes (Separate Layouts) */}
+        <Route
+          path="/level/:id"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<ChallengeWorkspaceSkeleton />}>
+                <ChallengeWorkspace />
               </Suspense>
-            }
-          />
-        </Routes>
-      </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Dashboard - Admin Only */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AdminDashboard />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/dashboard" replace />}
+        />
+
+        {/* 404 Route */}
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<GenericSkeleton />}>
+              <NotFound />
+            </Suspense>
+          }
+        />
+      </Routes>
     </>
   );
+
 });
 
 AppContent.displayName = "AppContent";
