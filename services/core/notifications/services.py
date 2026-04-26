@@ -2,6 +2,7 @@ import logging
 from django.contrib.contenttypes.models import ContentType
 from .models import Notification, FCMToken
 from .utils import send_fcm_push
+from .tasks import send_push_notification_task
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,6 @@ class NotificationService:
         )
 
         if push:
-            # Import task here to avoid circular dependency
-            from .tasks import send_push_notification_task
             title = push_title or "New Notification"
             body = push_body or f"{actor.username} {verb}"
             send_push_notification_task.delay(recipient.id, title, body)

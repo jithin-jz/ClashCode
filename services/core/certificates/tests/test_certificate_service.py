@@ -12,11 +12,12 @@ class CertificateServiceTest(TestCase):
             username="testuser", email="test@example.com", password="pass"
         )
 
-    @patch("certificates.services.LEVELS", [{"order": i} for i in range(1, 4)])
     def test_get_required_challenges(self):
+        # Create 3 challenges
+        for i in range(1, 4):
+            Challenge.objects.create(order=i, title=f"C{i}", slug=f"c{i}", xp_reward=10)
         self.assertEqual(CertificateService.get_required_challenges(), 3)
 
-    @patch("certificates.services.LEVELS", [{"order": i} for i in range(1, 4)])
     def test_get_completed_count(self):
         # Create 3 required challenges
         for i in range(1, 4):
@@ -40,7 +41,6 @@ class CertificateServiceTest(TestCase):
         )
         self.assertEqual(CertificateService.get_completed_count(self.user), 3)
 
-    @patch("certificates.services.LEVELS", [{"order": i} for i in range(1, 4)])
     def test_is_eligible(self):
         # Create challenges
         for i in range(1, 4):
@@ -59,7 +59,6 @@ class CertificateServiceTest(TestCase):
 
         self.assertTrue(CertificateService.is_eligible(self.user))
 
-    @patch("certificates.services.LEVELS", [{"order": i} for i in range(1, 4)])
     def test_get_or_create_certificate(self):
         # Create and complete challenges
         for i in range(1, 4):
@@ -82,7 +81,6 @@ class CertificateServiceTest(TestCase):
         cert2 = CertificateService.get_or_create_certificate(self.user)
         self.assertEqual(cert.id, cert2.id)
 
-    @patch("certificates.services.LEVELS", [{"order": i} for i in range(1, 4)])
     def test_get_eligibility_status(self):
         # Create 3 challenges
         for i in range(1, 4):

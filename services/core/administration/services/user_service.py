@@ -65,6 +65,7 @@ class UserService:
                 raise AdminValidationError("Cannot delete the last active superuser account.")
 
         old_username = user.username
+        old_email = user.email
         user.username = f"deleted_{user.id}_{timezone.now().timestamp()}"
         user.email = f"deleted_{user.id}@clashcode.internal"
         user.first_name = "Deleted"
@@ -81,6 +82,8 @@ class UserService:
             admin=admin_user,
             action="SOFT_DELETE_USER",
             request=request,
+            target_username=old_username,
+            target_email=old_email,
             details={"original_username": old_username, "reason": reason}
         )
         return f"User {old_username} has been soft-deleted."

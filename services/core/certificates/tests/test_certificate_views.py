@@ -83,4 +83,4 @@ class CertificateViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["eligible"])
-        self.assertEqual(response.data["completed"], 5)
+        self.assertEqual(response.data["completed_challenges"], 5)

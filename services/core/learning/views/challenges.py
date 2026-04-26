@@ -39,7 +39,7 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
+class ChallengeViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Challenge model.
     Provides read-only access for published challenges and administrative CRUD for staff.
@@ -64,7 +64,7 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
             "list", "retrieve", "submit", "execute", 
             "purchase_ai_assist", "ai_hint", "ai_analyze", "task_status",
         ]
-        internal_actions = ["internal_context"]
+        internal_actions = ["internal_context", "internal_list"]
         
         if self.action in internal_actions:
             return [AllowAny()]
@@ -147,6 +147,14 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({"error": "Code content is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         task = submit_code_task.delay(request.user.id, challenge.id, user_code)
+        
+        if task.ready():
+            try:
+                res = task.get()
+                return _build_ai_result_response(res)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         return Response({"status": "pending", "task_id": task.id}, status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(
@@ -160,6 +168,14 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
         user_code = request.data.get("code", "")
         
         task = execute_code_task.delay(request.user.id, challenge.id, user_code)
+
+        if task.ready():
+            try:
+                res = task.get()
+                return _build_ai_result_response(res)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response({"status": "pending", "task_id": task.id}, status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(
@@ -199,6 +215,8 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
 
         try:
             hint_level = int(request.data.get("hint_level", 1))
+            if not (1 <= hint_level <= 3):
+                return Response({"error": "hint_level must be between 1 and 3."}, status=status.HTTP_400_BAD_REQUEST)
         except (TypeError, ValueError):
             return Response({"error": "hint_level must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -216,6 +234,13 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
             user_code=request.data.get("user_code", ""), hint_level=hint_level, user_xp=user.profile.xp
         )
         _store_ai_task_meta(async_result.id, user.id, "hint")
+
+        if async_result.ready():
+            try:
+                result = async_result.get()
+                return _build_ai_result_response(result)
+            except Exception as e:
+                return Response({"status": "failed", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"task_id": async_result.id, "status": "queued"}, status=status.HTTP_202_ACCEPTED)
 
@@ -287,3 +312,24 @@ class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
             "initial_code": challenge.initial_code,
             "test_code": challenge.test_code,
         }, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        responses={200: ChallengeContextResponseSerializer(many=True)},
+        description="INTERNAL: List all challenges with full context. Protected by API key.",
+    )
+    @decorators.action(detail=False, methods=["get"], url_path="internal-list")
+    def internal_list(self, request):
+        if not authorize_internal_request(request):
+            return Response({"error": "Unauthorized internal request."}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = Challenge.objects.all().order_by("order")
+        data = []
+        for challenge in queryset:
+            data.append({
+                "slug": challenge.slug,
+                "challenge_title": challenge.title,
+                "description": challenge.description,
+                "initial_code": challenge.initial_code,
+                "test_code": challenge.test_code,
+            })
+        return Response(data, status=status.HTTP_200_OK)

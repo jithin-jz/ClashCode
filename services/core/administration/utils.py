@@ -51,15 +51,15 @@ def _parse_datetime_filter(value, end_of_day=False):
 def _analytics_cache_key(prefix, request):
     return f"admin_analytics:{prefix}:{request.get_full_path()}"
 
-def log_admin_action(admin, action, request=None, target_user=None, details=None):
+def log_admin_action(admin, action, request=None, target_user=None, details=None, target_username=None, target_email=None):
     """Helper to record administrative actions in the audit log."""
     AdminAuditLog.objects.create(
         admin=admin,
         admin_username=admin.username if admin else "system",
         action=action,
         target_user=target_user,
-        target_username=target_user.username if target_user else "",
-        target_email=target_user.email if target_user else "",
+        target_username=target_username or (target_user.username if target_user else ""),
+        target_email=target_email or (target_user.email if target_user else ""),
         details=details or {},
         actor_ip=_request_ip(request) if request else None,
         user_agent=(request.headers.get("User-Agent", "")[:512] if request else ""),

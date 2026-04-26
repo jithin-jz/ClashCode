@@ -374,7 +374,7 @@ REST_FRAMEWORK = {
             "THROTTLE_BURST_RATE", "10/second"
         ),  # Short burst protection
         "code_execution": os.getenv(
-            "THROTTLE_CODE_EXECUTION_RATE", "12/minute"
+            "THROTTLE_CODE_EXECUTION_RATE", "100/minute"
         ),  # Sandbox-backed code run/submission endpoints
     },
 }
@@ -534,3 +534,8 @@ if "test" in sys.argv:
     CELERY_RESULT_BACKEND = "cache+memory://"
     # Use memory email backend
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    # Use local storage for tests to avoid Cloudinary calls
+    STORAGES["default"] = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+    # Disable internal signature for easier testing
+    INTERNAL_REQUIRE_SIGNATURE = False
+    os.environ["INTERNAL_SIGNING_SECRET"] = ""

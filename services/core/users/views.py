@@ -135,7 +135,7 @@ class FollowToggleView(APIView):
                 "is_following": is_following,
                 "follower_count": followers,
                 "following_count": following,
-            }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_201_CREATED if is_following else status.HTTP_200_OK)
 
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST if "yourself" in str(e) else status.HTTP_404_NOT_FOUND)

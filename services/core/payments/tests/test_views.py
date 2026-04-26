@@ -15,7 +15,7 @@ class PaymentViewTests(APITestCase):
         self.verify_url = reverse("verify-payment")
         self.create_order_url = reverse("create-order")
 
-    @patch("payments.views._get_razorpay_client")
+    @patch("payments.services.PaymentService.get_razorpay_client")
     def test_create_order_success(self, mock_get_client):
         # Mocking the Razorpay client and order creation
         mock_client = MagicMock()
@@ -32,7 +32,7 @@ class PaymentViewTests(APITestCase):
         self.assertEqual(Payment.objects.count(), 1)
         self.assertEqual(Payment.objects.first().xp_amount, 100)
 
-    @patch("payments.views._get_razorpay_client")
+    @patch("payments.services.PaymentService.get_razorpay_client")
     def test_create_order_invalid_amount(self, mock_get_client):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(
@@ -40,8 +40,8 @@ class PaymentViewTests(APITestCase):
         )  # Not in map
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch("payments.views._get_razorpay_client")
-    @patch("payments.views.XPService.add_xp")
+    @patch("payments.services.PaymentService.get_razorpay_client")
+    @patch("payments.services.XPService.add_xp")
     def test_verify_payment_success(self, mock_add_xp, mock_get_client):
         # Setup mock
         mock_client = MagicMock()
@@ -72,8 +72,8 @@ class PaymentViewTests(APITestCase):
         self.assertEqual(payment.status, "success")
         mock_add_xp.assert_called_once()
 
-    @patch("payments.views._get_razorpay_client")
-    @patch("payments.views.XPService.add_xp")
+    @patch("payments.services.PaymentService.get_razorpay_client")
+    @patch("payments.services.XPService.add_xp")
     def test_rejects_verification_for_other_users_order(
         self, mock_add_xp, mock_get_client
     ):
@@ -104,8 +104,8 @@ class PaymentViewTests(APITestCase):
         self.assertEqual(payment.status, "pending")
         mock_add_xp.assert_not_called()
 
-    @patch("payments.views._get_razorpay_client")
-    @patch("payments.views.XPService.add_xp", return_value=200)
+    @patch("payments.services.PaymentService.get_razorpay_client")
+    @patch("payments.services.XPService.add_xp", return_value=200)
     def test_idempotent_success_does_not_recredit_xp(
         self, mock_add_xp, mock_get_client
     ):

@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 
 class AuthViewTests(APITestCase):
-    @patch("auth.services.AuthService.request_otp")
+    @patch("authentication.services.AuthService.request_otp")
     def test_request_otp_endpoint(self, mock_request_otp):
         url = reverse("otp_request")  # Ensure this matches your urls.py name
         data = {"email": "user@example.com"}
@@ -17,7 +17,7 @@ class AuthViewTests(APITestCase):
         self.assertEqual(response.data["message"], "OTP sent successfully")
         mock_request_otp.assert_called_with("user@example.com")
 
-    @patch("auth.services.AuthService.verify_otp")
+    @patch("authentication.services.AuthService.verify_otp")
     def test_verify_otp_endpoint_success(self, mock_verify):
         # Create a real user to avoid serialization issues with MagicMock
         user = User.objects.create_user(username="testuser", email="user@example.com")

@@ -46,9 +46,13 @@ def admin_exception_handler(exc, context):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    # Add a unique Request ID to the response for tracking
-    request_id = getattr(context['request'], 'request_id', 'N/A')
-    if response:
+    # Normalize DRF's 'detail' key to 'error' for consistency in our admin API
+    if response is not None and isinstance(response.data, dict):
+        if "detail" in response.data and "error" not in response.data:
+            response.data["error"] = response.data.pop("detail")
+        
+        # Add a unique Request ID to the response for tracking
+        request_id = getattr(context['request'], 'request_id', 'N/A')
         response.data['request_id'] = request_id
 
     return response
