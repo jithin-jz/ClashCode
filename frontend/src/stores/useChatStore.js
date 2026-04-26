@@ -300,7 +300,7 @@ const useChatStore = create((set, get) => ({
 
   // Auto-load ALL history from DynamoDB
   autoLoadAllHistory: async () => {
-    const { currentRoom, messages } = get();
+    const currentRoom = get().currentRoom;
     if (!currentRoom) return;
 
     try {
@@ -309,7 +309,7 @@ const useChatStore = create((set, get) => ({
       let lastTimestamp = null;
       let hasMore = true;
       let pageCount = 0;
-      const maxPages = 10; // Prevent infinite loading (10 pages * 50 = 500 messages)
+      const maxPages = 50; // Load up to 2500 messages automatically
 
       while (hasMore && pageCount < maxPages) {
         const url = lastTimestamp
@@ -319,29 +319,37 @@ const useChatStore = create((set, get) => ({
         const response = await api.get(url);
         const data = response.data;
 
+        if (!data.messages || data.messages.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        // Each batch is oldest-to-newest. Prepend batches to maintain order.
         allMessages = [...data.messages, ...allMessages];
         lastTimestamp = data.last_timestamp;
         hasMore = data.has_more;
         pageCount++;
+
+        // Small delay to prevent blocking the UI thread too much
+        if (pageCount % 5 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
       }
 
       // Merge with existing messages, avoiding duplicates
       if (allMessages.length > 0) {
         set((state) => {
           const existingTimestamps = new Set(
-            state.messages.map((msg) => msg.timestamp),
+            state.messages.map((m) => m.timestamp),
           );
           const newMessages = allMessages.filter(
             (msg) => !existingTimestamps.has(msg.timestamp),
           );
 
           if (newMessages.length > 0) {
-            console.log(
-              `Loaded ${newMessages.length} old messages from history`,
-            );
             return {
               messages: [...newMessages, ...state.messages],
-              lastTimestamp: lastTimestamp,
+              lastTimestamp: lastTimestamp || state.lastTimestamp,
               hasMore: hasMore,
             };
           }
@@ -349,7 +357,7 @@ const useChatStore = create((set, get) => ({
         });
       }
     } catch (err) {
-      console.error("Failed to auto-load history", err);
+      console.error("Failed to auto-load history:", err);
     }
   },
 

@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from services.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/chat")
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
