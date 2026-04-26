@@ -1,4 +1,5 @@
 import React from "react";
+import { AlertTriangle, RefreshCw, Home, ChevronRight } from "lucide-react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -16,11 +17,6 @@ class ErrorBoundary extends React.Component {
       error,
       errorInfo,
     });
-
-    // TODO: Log to error tracking service (Sentry)
-    // if (window.Sentry) {
-    //   window.Sentry.captureException(error);
-    // }
   }
 
   render() {
@@ -28,60 +24,69 @@ class ErrorBoundary extends React.Component {
 
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-[#1a1a1a] to-gray-900">
-          <div className="max-w-md w-full mx-4">
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-red-500/30 rounded-lg p-8 shadow-2xl">
-              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full">
-                <svg
-                  className="w-8 h-8 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+        <div className="min-h-screen flex items-center justify-center bg-[#050505] font-sans selection:bg-red-500/30">
+          {/* Subtle Background Glows */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-500/10 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="relative z-10 max-w-xl w-full mx-6">
+            <div className="bg-[#0A0A0A]/80 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black">
+              {/* Animated Icon */}
+              <div className="flex items-center justify-center w-20 h-20 mx-auto mb-8 relative">
+                <div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full animate-pulse" />
+                <div className="relative flex items-center justify-center w-full h-full bg-red-500/10 border border-red-500/20 rounded-2xl">
+                  <AlertTriangle size={36} className="text-red-500" />
+                </div>
               </div>
 
-              <h1 className="text-2xl font-bold text-white text-center mb-2">
-                Oops! Something went wrong
-              </h1>
-
-              <p className="text-gray-300 text-center mb-6">
-                We're sorry for the inconvenience. The application encountered
-                an unexpected error.
-              </p>
+              <div className="text-center space-y-3 mb-10">
+                <h1 className="text-3xl font-bold text-white tracking-tight">
+                  System Interruption
+                </h1>
+                <p className="text-neutral-400 text-sm leading-relaxed max-w-xs mx-auto">
+                  A runtime exception was detected. Our automated protocols have isolated the issue.
+                </p>
+              </div>
 
               {isDev && this.state.error && (
-                <details className="mb-6 bg-gray-900/50 rounded p-4 text-sm">
-                  <summary className="cursor-pointer text-red-400 font-semibold mb-2">
-                    Error Details (Dev Mode)
-                  </summary>
-                  <pre className="text-gray-400 overflow-auto text-xs">
-                    {this.state.error.toString()}
-                    {this.state.errorInfo &&
-                      this.state.errorInfo.componentStack}
-                  </pre>
-                </details>
+                <div className="mb-8 rounded-2xl border border-white/5 bg-black/40 overflow-hidden">
+                  <details className="group">
+                    <summary className="flex items-center justify-between cursor-pointer p-4 text-xs font-bold text-red-400/80 uppercase tracking-widest hover:bg-white/[0.02] transition-colors">
+                      <span className="flex items-center gap-2">
+                        <ChevronRight size={14} className="group-open:rotate-90 transition-transform" />
+                        Diagnostic Data (Dev Mode)
+                      </span>
+                    </summary>
+                    <div className="px-4 pb-4 mt-1">
+                      <pre className="text-[10px] font-mono text-neutral-500 overflow-auto max-h-48 ds-scrollbar leading-relaxed">
+                        <span className="text-red-400/60 font-bold block mb-2">{this.state.error.toString()}</span>
+                        {this.state.errorInfo && this.state.errorInfo.componentStack}
+                      </pre>
+                    </div>
+                  </details>
+                </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => (window.location.href = "/")}
-                  className="flex-1 bg-[#ffa116] hover:bg-[#ff8f00] text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                  className="group flex items-center justify-center gap-2 bg-white text-black font-bold py-3.5 px-6 rounded-2xl transition-all hover:bg-neutral-200 active:scale-95"
                 >
-                  Go Home
+                  <Home size={18} />
+                  <span>Go Home</span>
                 </button>
                 <button
                   onClick={() => window.location.reload()}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                  className="group flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white font-bold py-3.5 px-6 rounded-2xl transition-all hover:bg-white/10 active:scale-95"
                 >
-                  Reload Page
+                  <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                  <span>Reload Session</span>
                 </button>
+              </div>
+
+              <div className="mt-8 text-center">
+                <p className="text-[10px] text-neutral-600 uppercase tracking-[0.2em] font-medium">
+                  Protocol: Error_Recovery_v4.2
+                </p>
               </div>
             </div>
           </div>
