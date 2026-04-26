@@ -35,6 +35,7 @@ class SocketService {
 
       this.socket = new WebSocket(this.url);
 
+      this.socket.onopen = () => {
         console.info("[WS] Connected successfully");
         this.isConnected = true;
         this.reconnectAttempts = 0;
