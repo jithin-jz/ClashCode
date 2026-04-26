@@ -183,11 +183,12 @@ const AdminUserDetailsDrawer = ({
                       value={roleValue}
                       onChange={handleRoleChange}
                       disabled={savingRole}
-                      className="appearance-none bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-neutral-300 hover:bg-white/10 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20"
+                      style={{ colorScheme: "dark" }}
+                      className="appearance-none bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-neutral-200 hover:bg-white/15 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20"
                     >
-                      <option value="user">User</option>
-                      <option value="staff">Staff</option>
-                      <option value="superuser">Superuser</option>
+                      <option value="user" className="bg-[#0A0A0A] text-white">User</option>
+                      <option value="staff" className="bg-[#0A0A0A] text-white">Staff</option>
+                      <option value="superuser" className="bg-[#0A0A0A] text-white">Superuser</option>
                     </select>
                     <Shield size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
                   </div>
