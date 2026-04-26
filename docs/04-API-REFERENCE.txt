@@ -1,0 +1,789 @@
+================================================================================
+CLASHCODE - API REFERENCE
+================================================================================
+
+BASE INFORMATION
+================================================================================
+Base URL: https://api.your-domain.com
+API Version: v1
+Authentication: JWT Bearer Token or HttpOnly Cookies
+Content-Type: application/json
+
+All API responses follow this format:
+{
+  "data": { ... },
+  "error": null
+}
+
+Error response:
+{
+  "error": {
+    "code": "API_ERROR",
+    "message": "Description",
+    "request_id": "uuid"
+  }
+}
+
+================================================================================
+AUTHENTICATION API
+================================================================================
+
+1. GET OAUTH URL (GitHub)
+--------------------------
+GET /api/auth/github/?state={random_string}
+
+Response:
+{
+  "auth_url": "https://github.com/login/oauth/authorize?..."
+}
+
+2. GITHUB CALLBACK
+-------------------
+POST /api/auth/github/callback/
+Content-Type: application/json
+
+Body:
+{
+  "code": "github_oauth_code"
+}
+
+Response: JWT tokens in cookies or body
+
+3. GET OAUTH URL (Google)
+--------------------------
+GET /api/auth/google/?state={random_string}
+
+Response:
+{
+  "auth_url": "https://accounts.google.com/o/oauth2/auth?..."
+}
+
+4. GOOGLE CALLBACK
+-------------------
+POST /api/auth/google/callback/
+Content-Type: application/json
+
+Body:
+{
+  "code": "google_oauth_code"
+}
+
+5. REQUEST OTP
+---------------
+POST /api/auth/otp/request/
+Content-Type: application/json
+
+Body:
+{
+  "email": "user@example.com"
+}
+
+Rate Limit: 5 requests per minute
+
+6. VERIFY OTP
+--------------
+POST /api/auth/otp/verify/
+Content-Type: application/json
+
+Body:
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+
+Response:
+{
+  "access": "jwt_access_token",
+  "refresh": "jwt_refresh_token"
+}
+
+7. REFRESH TOKEN
+-----------------
+POST /api/auth/refresh/
+
+Note: Refresh token sent automatically via HttpOnly cookie
+
+8. LOGOUT
+----------
+POST /api/auth/logout/
+
+Invalidates current tokens
+
+================================================================================
+USER PROFILE API
+================================================================================
+
+1. GET CURRENT USER
+--------------------
+GET /api/profiles/user/
+Authorization: Bearer {token}
+
+Response:
+{
+  "id": "uuid",
+  "username": "coder123",
+  "email": "user@example.com",
+  "avatar": "https://...",
+  "bio": "Developer",
+  "xp": 2450,
+  "level": 12,
+  "badges": ["badge1", "badge2"],
+  "followers_count": 150,
+  "following_count": 89
+}
+
+2. GET USER BY USERNAME
+------------------------
+GET /api/profiles/users/{username}/
+
+Response: Same as above (public profile)
+
+3. UPDATE PROFILE
+------------------
+PATCH /api/profiles/user/update/
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+
+Body:
+{
+  "bio": "New bio",
+  "avatar": <file>
+}
+
+4. FOLLOW USER
+---------------
+POST /api/profiles/users/{username}/follow/
+Authorization: Bearer {token}
+
+5. GET FOLLOWERS
+-----------------
+GET /api/profiles/users/{username}/followers/
+
+6. GET FOLLOWING
+-----------------
+GET /api/profiles/users/{username}/following/
+
+7. GET CONTRIBUTION HISTORY
+----------------------------
+GET /api/profiles/users/{username}/stats/contributions/
+
+Response:
+{
+  "contributions": [
+    {"date": "2024-03-01", "count": 5}
+  ],
+  "total": 342,
+  "streak": 15
+}
+
+8. GET SUGGESTED USERS
+-----------------------
+GET /api/profiles/users/suggestions/
+
+9. REDEEM REFERRAL
+-------------------
+POST /api/profiles/user/redeem-referral/
+Authorization: Bearer {token}
+
+Body:
+{
+  "code": "REFERRAL123"
+}
+
+10. DELETE ACCOUNT
+-------------------
+DELETE /api/auth/user/delete/
+Authorization: Bearer {token}
+
+================================================================================
+CHALLENGES API
+================================================================================
+
+1. LIST CHALLENGES
+-------------------
+GET /api/challenges/
+Authorization: Bearer {token}
+
+Query Parameters:
+- level: Filter by difficulty (1-5)
+- topic: Filter by topic
+- status: completed, attempted, not_started
+- page: Page number
+
+Response:
+{
+  "count": 60,
+  "next": "/api/challenges/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "level_001_python-001",
+      "title": "Hello World",
+      "difficulty": 1,
+      "topic": "basics",
+      "stars_earned": 3,
+      "completed": true
+    }
+  ]
+}
+
+2. GET CHALLENGE DETAILS
+-------------------------
+GET /api/challenges/{challenge_id}/
+Authorization: Bearer {token}
+
+Response:
+{
+  "id": "level_001_python-001",
+  "title": "Hello World",
+  "description": "# Task\n\nWrite...",
+  "starter_code": "def solution():\n    pass",
+  "test_cases": [...],
+  "difficulty": 1,
+  "topic": "basics",
+  "target_time_seconds": 300,
+  "xp_reward": 50
+}
+
+3. SUBMIT SOLUTION
+-------------------
+POST /api/challenges/{challenge_id}/submit/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "code": "def solution():\n    print('Hello World')"
+}
+
+Rate Limit: 12 requests per minute
+
+Response:
+{
+  "status": "success",
+  "test_cases_passed": 5,
+  "test_cases_total": 5,
+  "execution_time_ms": 45,
+  "stars_earned": 3,
+  "xp_gained": 50,
+  "output": "Hello World"
+}
+
+4. GET AI HINT
+---------------
+POST /api/challenges/{challenge_id}/hint/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "hint_level": 1
+}
+
+Response:
+{
+  "hint": "Try using a loop to iterate...",
+  "level": 1
+}
+
+================================================================================
+CODE EXECUTION API
+================================================================================
+
+1. EXECUTE CODE
+----------------
+POST /api/learning/execute/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "code": "print('test')",
+  "stdin": ""
+}
+
+Rate Limit: 12 requests per minute
+
+Response:
+{
+  "success": true,
+  "stdout": "test\n",
+  "stderr": "",
+  "exit_code": 0,
+  "execution_time_ms": 23
+}
+
+================================================================================
+STORE & PAYMENTS API
+================================================================================
+
+1. GET STORE ITEMS
+-------------------
+GET /api/store/items/
+Authorization: Bearer {token}
+
+Response:
+[
+  {
+    "id": "theme_dark_neon",
+    "name": "Dark Neon Theme",
+    "category": "theme",
+    "price": 500,
+    "description": "Cyberpunk theme",
+    "owned": false
+  }
+]
+
+2. PURCHASE ITEM
+-----------------
+POST /api/store/buy/{item_id}/
+Authorization: Bearer {token}
+
+Response:
+{
+  "success": true,
+  "new_balance": 1950,
+  "item": "theme_dark_neon"
+}
+
+3. EQUIP ITEM
+--------------
+POST /api/store/equip/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "item_id": "theme_dark_neon"
+}
+
+4. UNEQUIP ITEM
+----------------
+POST /api/store/unequip/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "category": "theme"
+}
+
+5. GET PURCHASED ITEMS
+-----------------------
+GET /api/store/purchased/
+Authorization: Bearer {token}
+
+6. CREATE PAYMENT ORDER
+------------------------
+POST /api/payments/create-order/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "amount": 500
+}
+
+Response:
+{
+  "order_id": "order_abc123",
+  "amount": 500,
+  "currency": "INR",
+  "signature": "hmac_signature"
+}
+
+7. VERIFY PAYMENT
+------------------
+POST /api/payments/verify-payment/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "razorpay_payment_id": "pay_abc123",
+  "razorpay_order_id": "order_abc123",
+  "razorpay_signature": "signature"
+}
+
+================================================================================
+SOCIAL FEATURES API
+================================================================================
+
+1. GET POSTS FEED
+------------------
+GET /api/posts/
+Authorization: Bearer {token}
+
+Response:
+[
+  {
+    "id": "post_uuid",
+    "user": {
+      "username": "coder123",
+      "avatar": "..."
+    },
+    "content": "Just completed level 50!",
+    "image": "https://...",
+    "likes_count": 25,
+    "created_at": "2024-03-15T10:00:00Z"
+  }
+]
+
+2. CREATE POST
+---------------
+POST /api/posts/
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+
+Body:
+{
+  "content": "New post text",
+  "image": <file>
+}
+
+3. UPDATE POST
+---------------
+PATCH /api/posts/{post_id}/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "content": "Updated text"
+}
+
+4. DELETE POST
+---------------
+DELETE /api/posts/{post_id}/
+Authorization: Bearer {token}
+
+5. LIKE POST
+-------------
+POST /api/posts/{post_id}/like/
+Authorization: Bearer {token}
+
+================================================================================
+NOTIFICATIONS API
+================================================================================
+
+1. GET NOTIFICATIONS
+---------------------
+GET /api/notifications/
+Authorization: Bearer {token}
+
+Query Parameters:
+- page: Page number
+- unread_only: true/false
+
+Response:
+{
+  "count": 25,
+  "results": [
+    {
+      "id": "uuid",
+      "type": "challenge_completed",
+      "message": "You earned 50 XP",
+      "read": false,
+      "created_at": "2024-03-15T14:30:00Z"
+    }
+  ]
+}
+
+2. MARK AS READ
+----------------
+POST /api/notifications/{notification_id}/mark_read/
+Authorization: Bearer {token}
+
+3. MARK ALL AS READ
+--------------------
+POST /api/notifications/mark_all_read/
+Authorization: Bearer {token}
+
+4. CLEAR ALL NOTIFICATIONS
+---------------------------
+DELETE /api/notifications/clear_all/
+Authorization: Bearer {token}
+
+5. REGISTER FCM TOKEN
+----------------------
+POST /api/notifications/fcm-tokens/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "token": "firebase_device_token"
+}
+
+================================================================================
+AI ASSISTANT API
+================================================================================
+
+1. GET CODE ANALYSIS
+---------------------
+POST /ai/analyze/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "code": "def factorial(n):\n    ...",
+  "challenge_id": "level_025_python-025"
+}
+
+Response:
+{
+  "analysis": {
+    "complexity": "O(n) time, O(n) space",
+    "suggestions": ["Add input validation"],
+    "best_practices": ["Use type hints"],
+    "score": 85
+  }
+}
+
+2. GET CONTEXTUAL HINT
+-----------------------
+POST /ai/hint/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "challenge_id": "level_025_python-025",
+  "user_code": "def solution():\n    pass",
+  "hint_level": 2
+}
+
+================================================================================
+CHAT API
+================================================================================
+
+1. WEBSOCKET CONNECTION
+------------------------
+URL: wss://api.your-domain.com/ws/chat/
+
+JavaScript Example:
+const ws = new WebSocket('wss://domain/ws/chat/');
+
+ws.onopen = () => {
+  // Authenticate
+  ws.send(JSON.stringify({
+    type: 'auth',
+    token: 'jwt_token'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log('New message:', message);
+};
+
+// Send message
+ws.send(JSON.stringify({
+  type: 'message',
+  room_id: 'general',
+  content: 'Hello!'
+}));
+
+2. GET CHAT HISTORY
+--------------------
+GET /chat/history/{room_id}?last_timestamp={iso_date}&limit=50
+Authorization: Bearer {token}
+
+Response:
+{
+  "messages": [
+    {
+      "id": "msg_uuid",
+      "user": {
+        "username": "coder123",
+        "avatar": "..."
+      },
+      "content": "Hello everyone!",
+      "timestamp": "2024-03-15T10:05:00Z"
+    }
+  ],
+  "has_more": true,
+  "next_cursor": "2024-03-15T09:50:00Z"
+}
+
+================================================================================
+ADMIN API
+================================================================================
+
+Requires: Admin role
+
+1. GET ADMIN STATS
+-------------------
+GET /api/admin/stats/
+Authorization: Bearer {token}
+
+Response:
+{
+  "total_users": 15420,
+  "active_users_today": 892,
+  "total_challenges_completed": 45230,
+  "total_xp_distributed": 1250000,
+  "revenue_this_month": 45000
+}
+
+2. GET USERS LIST
+------------------
+GET /api/admin/users/?page=1&role=standard
+Authorization: Bearer {token}
+
+3. GET USER DETAILS
+--------------------
+GET /api/admin/users/{username}/details/
+Authorization: Bearer {token}
+
+4. UPDATE USER ROLE
+--------------------
+PATCH /api/admin/users/{username}/role/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "role": "moderator"
+}
+
+5. BLOCK/UNBLOCK USER
+----------------------
+POST /api/admin/users/{username}/toggle-block/
+Authorization: Bearer {token}
+
+6. DELETE USER
+---------------
+DELETE /api/admin/users/{username}/delete/
+Authorization: Bearer {token}
+
+7. CREATE USER NOTE
+--------------------
+POST /api/admin/users/{username}/notes/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "note": "User reported for spam"
+}
+
+8. GET AUDIT LOGS
+------------------
+GET /api/admin/audit-logs/?actor=admin&limit=50
+Authorization: Bearer {token}
+
+9. SEND BROADCAST
+------------------
+POST /api/admin/notifications/broadcast/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Body:
+{
+  "message": "System maintenance tonight",
+  "target_roles": ["standard", "moderator"]
+}
+
+10. GET CHALLENGE ANALYTICS
+-----------------------------
+GET /api/admin/analytics/challenges/
+Authorization: Bearer {token}
+
+11. GET SYSTEM HEALTH
+----------------------
+GET /api/admin/system/health/
+Authorization: Bearer {token}
+
+================================================================================
+ACHIEVEMENTS API
+================================================================================
+
+1. GET ACHIEVEMENTS
+--------------------
+GET /api/achievements/
+Authorization: Bearer {token}
+
+Response:
+[
+  {
+    "id": "uuid",
+    "name": "First Steps",
+    "description": "Complete your first challenge",
+    "icon": "trophy.png",
+    "unlocked": true,
+    "unlocked_at": "2024-03-01T10:00:00Z"
+  }
+]
+
+================================================================================
+CERTIFICATES API
+================================================================================
+
+1. VERIFY CERTIFICATE
+----------------------
+GET /api/certificates/verify/{certificate_id}/
+
+Response:
+{
+  "valid": true,
+  "user": "coder123",
+  "achievement": "Completed Level 60",
+  "issued_at": "2024-03-15T10:00:00Z"
+}
+
+2. GENERATE CERTIFICATE
+------------------------
+POST /api/certificates/generate/
+Authorization: Bearer {token}
+
+Response:
+{
+  "certificate_id": "CERT-123456",
+  "url": "/verify/CERT-123456"
+}
+
+================================================================================
+RATE LIMITS
+================================================================================
+
+Endpoint Type              Rate Limit
+--------------------------- -------------------------
+General API                100 requests/minute (user)
+Anonymous                  20 requests/minute
+Code Execution             12 requests/minute
+OTP Requests               5 requests/minute
+Store Purchases            30 requests/minute
+Notifications              180 requests/minute
+Authentication             10 requests/minute
+
+================================================================================
+ERROR CODES
+================================================================================
+
+Code              HTTP Status    Description
+----------------- -------------- ----------------------------------
+API_ERROR         400            Bad request
+AUTH_FAILED       401            Authentication failed
+PERMISSION_DENIED 403            Insufficient permissions
+NOT_FOUND         404            Resource not found
+RATE_LIMITED      429            Too many requests
+SERVER_ERROR      500            Internal server error
+
+================================================================================
+INTERACTIVE DOCUMENTATION
+================================================================================
+
+When running the server, visit:
+http://localhost/api/docs/
+
+This provides:
+- Complete OpenAPI schema
+- Try-it-out functionality
+- Request/response examples
+- Authentication testing
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

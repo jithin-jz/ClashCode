@@ -1,0 +1,637 @@
+================================================================================
+CLASHCODE - DEPLOYMENT GUIDE
+================================================================================
+
+PRODUCTION DEPLOYMENT CHECKLIST
+================================================================================
+
+Prerequisites:
+[ ] Domain name registered
+[ ] SSL certificate obtained
+[ ] Server provisioned (Ubuntu 22.04+)
+[ ] Docker installed
+[ ] All environment variables configured
+[ ] Database backup system ready
+[ ] Monitoring system configured
+[ ] Team notified of deployment
+
+================================================================================
+SERVER SETUP
+================================================================================
+
+1. INITIAL SERVER CONFIGURATION
+================================
+
+SSH to server:
+ssh user@your-server-ip
+
+Update system:
+sudo apt update && sudo apt upgrade -y
+
+Install dependencies:
+sudo apt install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    software-properties-common
+
+Install Docker:
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+Add user to docker group:
+sudo usermod -aG docker $USER
+newgrp docker
+
+Install Docker Compose Plugin:
+sudo apt install docker-compose-plugin -y
+
+Verify installation:
+docker --version
+docker compose version
+
+================================================================================
+SSL CERTIFICATE SETUP
+================================================================================
+
+2. INSTALL CERTBOT
+===================
+
+sudo apt install certbot python3-certbot-nginx -y
+
+3. OBTAIN SSL CERTIFICATE
+===========================
+
+sudo certbot certonly --standalone -d your-domain.com -d www.your-domain.com
+
+Follow prompts to complete.
+
+Certificate location:
+/etc/letsencrypt/live/your-domain.com/fullchain.pem
+/etc/letsencrypt/live/your-domain.com/privkey.pem
+
+Auto-renewal (already configured by certbot):
+sudo certbot renew --dry-run
+
+================================================================================
+ENVIRONMENT CONFIGURATION
+================================================================================
+
+4. CLONE REPOSITORY
+====================
+
+cd /opt
+sudo git clone https://github.com/your-org/CLASHCODE.git
+cd CLASHCODE
+sudo chown -R $USER:$USER .
+
+5. CONFIGURE ENVIRONMENT FILES
+================================
+
+Copy templates:
+cp services/.env.example services/.env
+cp services/core/.env.example services/core/.env
+cp services/chat/.env.example services/chat/.env
+cp services/ai/.env.example services/ai/.env
+cp frontend/.env.example frontend/.env
+
+6. GENERATE PRODUCTION KEYS
+=============================
+
+Generate SECRET_KEY:
+openssl rand -base64 48
+
+Generate JWT keys:
+openssl genrsa -out jwt_private.pem 4096
+openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+
+Convert to base64 for .env:
+cat jwt_private.pem | base64 -w 0
+cat jwt_public.pem | base64 -w 0
+
+7. CRITICAL PRODUCTION SETTINGS
+=================================
+
+services/core/.env:
+---------------------
+DEBUG=False
+SECRET_KEY=<strong-random-key>
+ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+FRONTEND_URL=https://your-domain.com
+BACKEND_URL=https://your-domain.com
+CORS_ALLOWED_ORIGINS=https://your-domain.com
+CSRF_TRUSTED_ORIGINS=https://your-domain.com
+
+POSTGRES_PASSWORD=<strong-password-32-chars>
+
+JWT_COOKIE_SECURE=True
+JWT_COOKIE_SAMESITE=Lax
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.your-provider.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=noreply@your-domain.com
+EMAIL_HOST_PASSWORD=<smtp-password>
+
+GITHUB_CLIENT_ID=<your-github-client-id>
+GITHUB_CLIENT_SECRET=<your-github-client-secret>
+GOOGLE_CLIENT_ID=<your-google-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+
+RAZORPAY_KEY_ID=<your-razorpay-key-id>
+RAZORPAY_KEY_SECRET=<your-razorpay-key-secret>
+
+CLOUDINARY_CLOUD_NAME=<your-cloudinary-name>
+CLOUDINARY_API_KEY=<your-cloudinary-key>
+CLOUDINARY_API_SECRET=<your-cloudinary-secret>
+
+INTERNAL_API_KEY=<long-random-string-64-chars>
+INTERNAL_SIGNING_SECRET=<long-random-string-64-chars>
+INTERNAL_REQUIRE_SIGNATURE=True
+
+SENTRY_DSN=https://your-sentry-dsn
+
+frontend/.env:
+----------------
+VITE_API_URL=/api
+VITE_WS_URL=/ws/chat
+VITE_NOTIFICATIONS_WS_URL=/ws/notifications
+VITE_AI_URL=/ai
+
+================================================================================
+NGINX CONFIGURATION FOR PRODUCTION
+================================================================================
+
+8. UPDATE NGINX CONFIG
+========================
+
+Edit nginx/nginx.conf for production:
+
+Add SSL configuration:
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com www.your-domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    
+    # ... rest of config
+}
+
+Redirect HTTP to HTTPS:
+server {
+    listen 80;
+    server_name your-domain.com www.your-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+Update frontend location:
+location / {
+    # In production, serve static files or proxy to frontend container
+    root /opt/CLASHCODE/frontend/dist;
+    try_files $uri $uri/ /index.html;
+}
+
+================================================================================
+BUILD FRONTEND FOR PRODUCTION
+================================================================================
+
+9. BUILD FRONTEND
+==================
+
+cd frontend
+
+Install dependencies:
+npm install
+
+Build for production:
+npm run build
+
+Output in dist/ folder
+
+================================================================================
+DEPLOY SERVICES
+================================================================================
+
+10. START SERVICES
+===================
+
+Navigate to services:
+cd /opt/CLASHCODE/services
+
+Build and start:
+docker compose up -d --build
+
+This will:
+- Build all Docker images
+- Create containers
+- Start all services
+- Run migrations automatically
+- Collect static files
+
+11. VERIFY DEPLOYMENT
+======================
+
+Check all services:
+docker compose ps
+
+All should show "Up" and "healthy"
+
+View logs:
+docker compose logs -f --tail=100
+
+12. INITIALIZE DATABASE
+========================
+
+Run migrations (if not auto-run):
+docker compose exec core python manage.py migrate
+
+Create superuser:
+docker compose exec core python manage.py createsuperuser
+
+Load challenge content:
+docker compose exec core python manage.py load_challenges
+
+Collect static files:
+docker compose exec core python manage.py collectstatic --noinput
+
+13. TEST DEPLOYMENT
+====================
+
+Test HTTPS:
+curl https://your-domain.com/health/
+
+Test API:
+curl https://your-domain.com/api/challenges/
+
+Test Admin:
+Open browser: https://your-domain.com/admin/
+
+Test Frontend:
+Open browser: https://your-domain.com/
+
+================================================================================
+MONITORING SETUP
+================================================================================
+
+14. SENTRY CONFIGURATION
+==========================
+
+Create Sentry project:
+1. Go to https://sentry.io
+2. Create new project
+3. Get DSN
+4. Add to .env files
+
+Verify Sentry working:
+docker compose logs core | grep Sentry
+docker compose logs ai | grep Sentry
+
+15. LOG AGGREGATION
+====================
+
+Option 1: ELK Stack (Elasticsearch, Logstash, Kibana)
+Option 2: Grafana Loki
+Option 3: Cloud provider (AWS CloudWatch, GCP Stackdriver)
+
+Configure JSON logging:
+In settings.py, set structured logging format
+
+16. METRICS MONITORING
+=======================
+
+Install Prometheus + Grafana:
+
+Create prometheus.yml:
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'core'
+    static_configs:
+      - targets: ['core:8000']
+  
+  - job_name: 'chat'
+    static_configs:
+      - targets: ['chat:8001']
+
+Add to docker-compose.yml:
+prometheus:
+  image: prom/prometheus
+  volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  ports:
+    - "9090:9090"
+
+grafana:
+  image: grafana/grafana
+  volumes:
+    - grafana_data:/var/lib/grafana
+  ports:
+    - "3000:3000"
+
+================================================================================
+BACKUP SYSTEM
+================================================================================
+
+17. AUTOMATED BACKUPS
+======================
+
+Create backup script:
+/opt/CLASHCODE/scripts/backup.sh
+
+#!/bin/bash
+BACKUP_DIR="/backups/clashcode"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p $BACKUP_DIR
+
+# Database backup
+docker compose exec db pg_dump -U clashcode clashcode_db | gzip > $BACKUP_DIR/db_$TIMESTAMP.sql.gz
+
+# Redis backup
+docker compose exec redis redis-cli BGSAVE
+docker cp clashcode-redis-1:/data/dump.rdb $BACKUP_DIR/redis_$TIMESTAMP.rdb
+
+# Keep last 7 days
+find $BACKUP_DIR -name "*.gz" -mtime +7 -delete
+find $BACKUP_DIR -name "*.rdb" -mtime +7 -delete
+
+echo "Backup completed: $TIMESTAMP" >> $BACKUP_DIR/backup.log
+
+Make executable:
+chmod +x /opt/CLASHCODE/scripts/backup.sh
+
+Add to crontab:
+crontab -e
+
+0 2 * * * /opt/CLASHCODE/scripts/backup.sh
+
+18. TEST BACKUP RESTORE
+========================
+
+Restore database:
+gunzip -c db_20260426_020000.sql.gz | docker compose exec -T db psql -U clashcode -d clashcode_db
+
+Verify:
+docker compose exec core python manage.py dbshell
+> \dt
+
+================================================================================
+SCALING CONFIGURATION
+================================================================================
+
+19. HORIZONTAL SCALING
+=======================
+
+Scale Celery workers:
+docker compose up -d --scale worker=3
+
+Scale chat service:
+docker compose up -d --scale chat=2
+
+Verify:
+docker compose ps
+
+20. RESOURCE LIMITS
+====================
+
+Update docker-compose.yml:
+services:
+  core:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+  
+  worker:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+
+================================================================================
+SECURITY HARDENING
+================================================================================
+
+21. FIREWALL CONFIGURATION
+============================
+
+Install UFW:
+sudo apt install ufw -y
+
+Configure firewall:
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw enable
+
+Verify:
+sudo ufw status
+
+22. FAIL2BAN
+=============
+
+Install:
+sudo apt install fail2ban -y
+
+Configure:
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+
+Enable SSH protection:
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+
+23. REGULAR UPDATES
+====================
+
+Update Docker images monthly:
+cd /opt/CLASHCODE/services
+docker compose pull
+docker compose up -d --build
+
+Update system packages:
+sudo apt update && sudo apt upgrade -y
+
+================================================================================
+DEPLOYMENT WORKFLOW
+================================================================================
+
+CONTINUOUS DEPLOYMENT (Recommended)
+====================================
+
+1. Developer pushes to main branch
+2. CI/CD pipeline runs tests
+3. If tests pass, build Docker images
+4. Push images to registry
+5. Deploy to staging
+6. Run integration tests
+7. Deploy to production
+8. Run smoke tests
+9. Notify team
+
+MANUAL DEPLOYMENT
+==================
+
+1. Test locally
+2. Commit and push
+3. SSH to production server
+4. Pull latest code
+5. Build and deploy
+6. Verify deployment
+7. Monitor for issues
+
+================================================================================
+ROLLBACK PROCEDURE
+================================================================================
+
+IF SOMETHING GOES WRONG:
+
+1. Stop services:
+docker compose stop
+
+2. Checkout previous version:
+cd /opt/CLASHCODE
+git checkout <previous-commit>
+
+3. Rebuild and restart:
+docker compose up -d --build
+
+4. Restore database (if needed):
+gunzip -c backup.sql.gz | docker compose exec -T db psql -U clashcode -d clashcode_db
+
+5. Verify rollback:
+docker compose ps
+curl https://your-domain.com/health/
+
+================================================================================
+POST-DEPLOYMENT CHECKLIST
+================================================================================
+
+Immediate (0-1 hour):
+[ ] All services healthy
+[ ] HTTPS working
+[ ] Frontend loads
+[ ] API responds
+[ ] Admin accessible
+[ ] Login works
+[ ] Code execution works
+[ ] Chat connects
+[ ] Notifications received
+[ ] Error logs clean
+[ ] Sentry receiving events
+
+Short-term (1-24 hours):
+[ ] Monitor error rates
+[ ] Check response times
+[ ] Verify backups running
+[ ] Test all critical flows
+[ ] Monitor resource usage
+[ ] Check database performance
+[ ] Verify WebSocket stability
+[ ] Test payment flow
+
+Long-term (1-7 days):
+[ ] Review error logs
+[ ] Analyze user feedback
+[ ] Optimize slow queries
+[ ] Adjust resource limits
+[ ] Update documentation
+[ ] Plan next release
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: 502 Bad Gateway
+Solution:
+1. docker compose ps (check services)
+2. docker compose logs core
+3. docker compose restart nginx
+4. Check SSL certificates
+
+Problem: Database connection refused
+Solution:
+1. docker compose ps db
+2. docker compose logs db
+3. Check POSTGRES_PASSWORD in .env
+4. docker compose restart db
+
+Problem: High memory usage
+Solution:
+1. docker stats
+2. Increase server RAM
+3. Optimize container limits
+4. Restart memory-heavy services
+
+Problem: SSL certificate expired
+Solution:
+sudo certbot renew
+sudo systemctl reload nginx
+
+Problem: Code execution timeout
+Solution:
+1. Check executor logs
+2. Increase timeout in .env
+3. Check resource limits
+4. Restart executor
+
+================================================================================
+MAINTENANCE SCHEDULE
+================================================================================
+
+Daily:
+- Monitor error logs
+- Check service health
+- Review user reports
+
+Weekly:
+- Review audit logs
+- Check backup status
+- Analyze metrics
+- Update documentation
+
+Monthly:
+- Update Docker images
+- Rotate secrets (if needed)
+- Performance review
+- Security audit
+- Database optimization
+
+Quarterly:
+- Penetration testing
+- Disaster recovery test
+- Team security training
+- Architecture review
+
+Annually:
+- Full security audit
+- Major version upgrades
+- Infrastructure review
+- Compliance check
+
+================================================================================
+CONTACT & SUPPORT
+================================================================================
+
+DevOps Team: devops@your-domain.com
+Emergency: +1-XXX-XXX-XXXX
+Slack: #deployment-alerts
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

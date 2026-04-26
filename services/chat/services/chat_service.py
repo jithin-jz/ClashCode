@@ -28,10 +28,16 @@ class ChatService:
 
         # 1. Send History
         try:
-            messages = await dynamo_client.get_messages(room, limit=50)
+            result = await dynamo_client.get_messages(room, limit=50)
+            messages = result.get("items", [])
             if messages:
                 history_data = [serialize_dynamo_message(room, msg) for msg in reversed(messages)]
-                await ws.send_text(json_dumps({"type": "history", "messages": history_data}))
+                last_key = result.get("last_evaluated_key")
+                await ws.send_text(json_dumps({
+                    "type": "history", 
+                    "messages": history_data,
+                    "last_timestamp": last_key.get("timestamp") if last_key else None
+                }))
         except Exception as e:
             logger.error(f"Failed to load history for room {room}: {e}")
 
@@ -91,6 +97,9 @@ class ChatService:
         
         if incoming.action in ("pin", "unpin"):
             return await ChatService._handle_pin(room, username, incoming)
+
+        if incoming.action == "read":
+            return await ChatService._handle_read(room, username, user_id, incoming)
 
         # Default: Standard Message
         return await ChatService._handle_standard_message(room, user_id, username, avatar_url, incoming)
@@ -152,6 +161,19 @@ class ChatService:
         return {"ok": True}
 
     @staticmethod
+    async def _handle_read(room: str, username: str, user_id: int, incoming: IncomingMessage):
+        if not incoming.target_timestamp:
+            return {"error": "target_timestamp required"}
+        
+        result = await dynamo_client.mark_as_read(room, incoming.target_timestamp, username)
+        if result.get("ok"):
+            await redis_client.publish(channel_key(room), json_dumps({
+                "type": "chat_read", "timestamp": incoming.target_timestamp,
+                "username": username, "user_id": user_id, "room": room
+            }))
+        return result
+
+    @staticmethod
     async def _handle_standard_message(room: str, user_id: int, username: str, avatar_url: str, incoming: IncomingMessage):
         message = ChatMessageSchema(
             room=room, message=incoming.message, user_id=user_id,
@@ -177,17 +199,18 @@ class ChatService:
         return {"ok": True}
 
     @staticmethod
-    async def get_history(room: str, limit: int = 50, offset: int = 0) -> Dict[str, Any]:
-        """Retrieves paginated message history for a room."""
-        fetch_limit = limit + max(offset, 0)
-        messages = await dynamo_client.get_messages(room, limit=fetch_limit)
-        paged_messages = messages[offset : offset + limit]
+    async def get_history(room: str, limit: int = 50, last_timestamp: str | None = None) -> Dict[str, Any]:
+        """Retrieves paginated message history for a room using a cursor (last_timestamp)."""
+        result = await dynamo_client.get_messages(room, limit=limit, last_timestamp=last_timestamp)
+        messages = result.get("items", [])
+        last_key = result.get("last_evaluated_key")
 
         return {
             "messages": [
                 serialize_dynamo_message(room, msg)
-                for msg in reversed(paged_messages)
+                for msg in reversed(messages)
             ],
-            "has_more": len(messages) > offset + len(paged_messages),
+            "last_timestamp": last_key.get("timestamp") if last_key else None,
+            "has_more": last_key is not None,
             "source": "dynamodb",
         }

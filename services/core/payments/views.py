@@ -1,5 +1,5 @@
 import logging
-from rest_framework import views, status, permissions
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiTypes
 
@@ -14,7 +14,7 @@ from .services import PaymentService
 
 logger = logging.getLogger(__name__)
 
-class CreateOrderView(views.APIView):
+class CreateOrderView(generics.GenericAPIView):
     """
     API View to create a Razorpay order for purchasing XP.
     """
@@ -52,7 +52,7 @@ class CreateOrderView(views.APIView):
             return Response({"error": "An unexpected error occurred while creating the order."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class VerifyPaymentView(views.APIView):
+class VerifyPaymentView(generics.GenericAPIView):
     """
     API View to verify Razorpay payment signatures and award XP.
     """

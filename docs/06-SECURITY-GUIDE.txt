@@ -1,0 +1,665 @@
+================================================================================
+CLASHCODE - SECURITY GUIDE
+================================================================================
+
+SECURITY OVERVIEW
+================================================================================
+
+CLASHCODE implements defense-in-depth security with multiple layers:
+1. Network security (Nginx gateway, firewall)
+2. Application security (authentication, validation)
+3. Execution security (sandboxed code execution)
+4. Data security (encryption, access control)
+5. Infrastructure security (container isolation)
+
+================================================================================
+AUTHENTICATION SECURITY
+================================================================================
+
+JWT TOKEN SYSTEM
+=================
+
+Token Types:
+- Access Token: Short-lived (15 minutes)
+- Refresh Token: Long-lived (7 days), HttpOnly cookie
+
+Security Features:
+✓ Token rotation on each refresh
+✓ Redis-backed token blacklisting
+✓ Automatic logout on suspicious activity
+✓ Secure cookie attributes (HttpOnly, Secure, SameSite)
+
+Token Storage:
+- Frontend: Access token in memory (not localStorage)
+- Backend: Refresh token in HttpOnly cookie
+- Blacklist: Revoked tokens in Redis with TTL
+
+Best Practices:
+- Never store tokens in localStorage
+- Always use HTTPS in production
+- Implement token refresh queue
+- Clear tokens on logout
+
+Rate Limiting:
+- 10 auth requests per minute
+- Prevents brute force attacks
+- Redis-backed counters
+
+
+OAUTH 2.0 SECURITY
+===================
+
+State Parameter:
+- Random string generated per request
+- Prevents CSRF attacks
+- Validated on callback
+
+Email Bridging:
+- Prevents duplicate accounts
+- Links OAuth to existing email
+- Requires email verification
+
+Security Measures:
+✓ Validate state parameter
+✓ Verify OAuth token with provider
+✓ Sanitize user data from provider
+✓ Rate limit OAuth callbacks
+
+
+OTP SECURITY
+=============
+
+Generation:
+- 6-digit numeric code
+- Cryptographically secure random
+- Stored in Redis with 5-min TTL
+
+Rate Limiting:
+- Max 5 verification attempts per email
+- Max 5 OTP requests per hour
+- Prevents SMS/email bombing
+
+Delivery:
+- SMTP with TLS
+- Template-based emails
+- No sensitive data in email
+
+Validation:
+- Case-insensitive
+- Single-use only
+- Deleted after use
+
+================================================================================
+CODE EXECUTION SECURITY
+================================================================================
+
+MULTI-LAYER PROTECTION
+=======================
+
+Layer 1: AST Validation
+-------------------------
+Purpose: Block dangerous code before execution
+
+Blocked Operations:
+✗ import os
+✗ import sys
+✗ import subprocess
+✗ import socket
+✗ import requests
+✗ exec()
+✗ eval()
+✗ compile()
+✗ __import__()
+
+Allowed:
+✓ Standard library (math, collections, etc.)
+✓ Basic Python constructs
+✓ Function definitions
+✓ Class definitions
+
+Implementation:
+- Parse code into Abstract Syntax Tree
+- Walk AST nodes
+- Check for prohibited operations
+- Reject if dangerous code detected
+
+
+Layer 2: Docker Container Isolation
+-------------------------------------
+Container Configuration:
+- Base image: Minimal Python (slim)
+- No network access (--network=none)
+- Read-only filesystem
+- Non-root user (UID 10001)
+- Temporary directory with noexec
+
+Resource Limits:
+- Memory: 128MB maximum
+- CPU: 1.0 cores maximum
+- Processes: 128 maximum (pids-limit)
+- Time: 5 seconds timeout
+- Output: 32KB maximum
+
+Security Options:
+- no-new-privileges:true
+- All capabilities dropped (cap_drop: ALL)
+- Read-only root filesystem
+- tmpfs for /tmp (size=64m, noexec, nosuid, nodev)
+
+
+Layer 3: gVisor Runtime (Optional)
+------------------------------------
+What is gVisor?
+- Application kernel for containers
+- Intercepts syscalls
+- Provides isolation from host kernel
+
+Enable gVisor:
+1. Install gVisor on Docker host
+2. Set in .env: CONTAINER_RUNTIME=runsc
+3. Restart executor service
+
+Benefits:
+- Kernel-level isolation
+- Prevents kernel exploits
+- Additional security layer
+
+Trade-offs:
+- Slight performance overhead
+- Some syscalls not supported
+
+
+Layer 4: Network Isolation
+----------------------------
+Container has NO network access:
+- Cannot make HTTP requests
+- Cannot connect to databases
+- Cannot access internal services
+- Cannot exfiltrate data
+
+Prevents:
+- Data theft
+- Lateral movement
+- DDoS attacks
+- Crypto mining
+
+================================================================================
+API SECURITY
+================================================================================
+
+RATE LIMITING
+==============
+
+Endpoint Limits:
+- General API: 100 req/min (authenticated)
+- Anonymous: 20 req/min
+- Code Execution: 12 req/min
+- OTP Requests: 5 req/min
+- Store Purchases: 30 req/min
+- Notifications: 180 req/min
+- Authentication: 10 req/min
+
+Implementation:
+- Redis-backed counters
+- Sliding window algorithm
+- Per-user and per-IP limits
+- Custom throttle classes
+
+Response on Limit:
+HTTP 429 Too Many Requests
+{
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "Too many requests. Please wait X seconds.",
+    "request_id": "uuid"
+  }
+}
+
+
+CORS CONFIGURATION
+===================
+
+Development:
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+Production:
+CORS_ALLOWED_ORIGINS=https://your-domain.com
+
+Settings:
+- Specific origins (not wildcard)
+- Credentials allowed (for cookies)
+- Specific methods (GET, POST, PUT, DELETE)
+- Specific headers allowed
+
+
+CSRF PROTECTION
+================
+
+Django CSRF:
+- Enabled for session-based auth
+- Token required for state-changing requests
+- Verified on POST, PUT, PATCH, DELETE
+
+Cookie Protection:
+- SameSite=Lax (or Strict)
+- Prevents cross-site requests
+- Works with HttpOnly cookies
+
+JWT + CSRF:
+- JWT for API auth
+- CSRF token for browser sessions
+- Dual protection
+
+
+INPUT VALIDATION
+=================
+
+Django REST Framework:
+- Serializer validation
+- Type checking
+- Length limits
+- Format validation
+
+Examples:
+- Email format validation
+- Password strength requirements
+- Username length limits
+- File size limits
+
+Sanitization:
+- HTML escaped in responses
+- SQL injection prevented (ORM)
+- XSS blocked (React auto-escape)
+
+================================================================================
+DATA SECURITY
+================================================================================
+
+PASSWORD SECURITY
+==================
+
+Storage:
+- Hashed with PBKDF2 (Django default)
+- Salt per password
+- Work factor: 100,000 iterations
+
+Never Store:
+✗ Plain text passwords
+✗ Reversible encryption
+✗ Weak hashes (MD5, SHA1)
+
+Policy:
+- Minimum 8 characters
+- Mix of uppercase, lowercase, numbers
+- No common passwords
+- Check against breach database (optional)
+
+
+DATABASE SECURITY
+==================
+
+PostgreSQL:
+- Strong password required
+- Only accessible from Docker network
+- No host port exposure
+- Encrypted connections (production)
+
+Access Control:
+- Dedicated database user (clashcode)
+- Limited privileges
+- No superuser access for app
+
+Backup Security:
+- Encrypted backups
+- Access restricted
+- Regular testing
+- Offsite storage
+
+
+SENSITIVE DATA
+===============
+
+Environment Variables:
+- Never commit .env files
+- Use .env.example templates
+- Rotate secrets regularly
+- Use secrets manager (production)
+
+What to Protect:
+✓ SECRET_KEY (Django)
+✓ JWT_PRIVATE_KEY
+✓ POSTGRES_PASSWORD
+✓ API keys (Razorpay, GitHub, Google)
+✓ SMTP credentials
+✓ Cloudinary credentials
+✓ Firebase credentials
+✓ Internal service keys
+
+In Code:
+- No hardcoded secrets
+- Use environment variables
+- Scan commits for leaks
+- Use pre-commit hooks
+
+================================================================================
+INFRASTRUCTURE SECURITY
+================================================================================
+
+NGINX SECURITY HEADERS
+========================
+
+Added Headers:
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+Purpose:
+- Prevent MIME sniffing
+- Block clickjacking
+- Control referrer information
+- Restrict browser features
+
+Additional:
+- server_tokens off (hide version)
+- client_max_body_size 10m (limit uploads)
+- SSL configuration (production)
+
+
+CONTAINER SECURITY
+===================
+
+Best Practices:
+✓ Non-root users
+✓ Minimal base images
+✓ Read-only filesystems
+✓ Resource limits
+✓ Health checks
+✓ Regular updates
+✓ No unnecessary packages
+
+Dockerfile Security:
+- Multi-stage builds
+- Pin versions
+- No secrets in layers
+- .dockerignore files
+
+Network Security:
+- Docker bridge network
+- No host networking
+- Internal DNS only
+- Port exposure minimal
+
+
+INTERNAL SERVICE AUTH
+======================
+
+Service-to-Service:
+- INTERNAL_API_KEY
+- INTERNAL_SIGNING_SECRET
+- HMAC signature verification
+
+Implementation:
+1. Request includes signature
+2. Signature = HMAC(secret + payload)
+3. Backend verifies signature
+4. Reject if invalid
+
+Prevents:
+- Unauthorized service access
+- Man-in-the-middle attacks
+- Request tampering
+
+================================================================================
+FRONTEND SECURITY
+================================================================================
+
+XSS PREVENTION
+===============
+
+React Auto-Escape:
+- JSX content automatically escaped
+- Prevents script injection
+- Safe by default
+
+Dangerous Patterns:
+✗ dangerouslySetInnerHTML (avoid)
+✗ eval() in JavaScript
+✗ innerHTML assignment
+✗ Script tag injection
+
+If Needed:
+- Use DOMPurify library
+- Sanitize before rendering
+- Whitelist allowed tags
+
+
+HTTPONLY COOKIES
+=================
+
+Refresh Token Cookie:
+- HttpOnly: true (no JavaScript access)
+- Secure: true (HTTPS only, production)
+- SameSite: Lax (or Strict)
+- Path: /
+
+Benefits:
+- Cannot be stolen via XSS
+- Automatic with requests
+- Protected from CSRF (SameSite)
+
+
+CONTENT SECURITY POLICY
+========================
+
+Recommended CSP:
+Content-Security-Policy: 
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https:;
+  connect-src 'self' wss: https:;
+  font-src 'self';
+
+Purpose:
+- Restrict resource loading
+- Prevent inline scripts
+- Block unauthorized domains
+- Mitigate XSS impact
+
+================================================================================
+AUDIT LOGGING
+================================================================================
+
+WHAT IS LOGGED
+================
+
+Admin Actions:
+✓ User role changes
+✓ User blocks/deletions
+✓ Broadcast notifications
+✓ System configuration changes
+✓ Data exports
+
+Authentication:
+✓ Login attempts
+✓ Failed logins
+✓ Password changes
+✓ Token refreshes
+✓ Logout events
+
+Code Execution:
+✓ Submission attempts
+✓ Execution results
+✓ Failures and errors
+✓ Resource usage
+
+Financial:
+✓ Payment attempts
+✓ Purchase transactions
+✓ XP transactions (immutable ledger)
+✓ Refund requests
+
+AUDIT LOG FORMAT
+=================
+
+{
+  "id": "uuid",
+  "actor": {
+    "user_id": "uuid",
+    "username": "admin123",
+    "ip_address": "192.168.1.1",
+    "user_agent": "Mozilla/5.0..."
+  },
+  "action": "user_role_changed",
+  "target": {
+    "type": "User",
+    "id": "uuid",
+    "username": "coder123"
+  },
+  "details": {
+    "old_role": "standard",
+    "new_role": "moderator"
+  },
+  "request_id": "x-request-id-uuid",
+  "timestamp": "2026-04-26T10:30:00Z"
+}
+
+Access:
+- Admin dashboard
+- API endpoint (admin only)
+- Export to CSV
+- Filter and search
+
+================================================================================
+SECURITY BEST PRACTICES
+================================================================================
+
+FOR DEVELOPERS
+================
+
+1. Never commit secrets
+   - Use .env files
+   - Add to .gitignore
+   - Use pre-commit hooks
+
+2. Keep dependencies updated
+   - Run npm audit regularly
+   - Update Python packages
+   - Use Dependabot/Renovate
+
+3. Validate all input
+   - Client-side AND server-side
+   - Never trust user input
+   - Use serializers/validators
+
+4. Use parameterized queries
+   - Django ORM handles this
+   - No raw SQL
+   - Prevents SQL injection
+
+5. Implement rate limiting
+   - Protect all endpoints
+   - Use Redis counters
+   - Set appropriate limits
+
+6. Log security events
+   - Failed logins
+   - Unauthorized access
+   - Suspicious activity
+   - Use structured logging
+
+7. Test security features
+   - Penetration testing
+   - Security code review
+   - Automated scanning
+   - Regular audits
+
+
+FOR ADMINS
+===========
+
+1. Use strong passwords
+   - Minimum 16 characters
+   - Password manager
+   - Enable 2FA (if available)
+
+2. Monitor audit logs
+   - Review daily
+   - Set up alerts
+   - Investigate anomalies
+
+3. Regular backups
+   - Test restore process
+   - Offsite storage
+   - Encryption at rest
+
+4. Rotate secrets
+   - Every 90 days
+   - After team member leaves
+   - After suspected breach
+
+5. Keep systems updated
+   - Security patches
+   - Docker image updates
+   - OS updates
+
+6. Limit access
+   - Principle of least privilege
+   - Role-based access
+   - Regular access review
+
+7. Incident response plan
+   - Document procedures
+   - Practice regularly
+   - Communication plan
+
+================================================================================
+SECURITY CHECKLIST
+================================================================================
+
+Pre-Launch:
+[ ] All secrets in environment variables
+[ ] Strong passwords configured
+[ ] HTTPS enabled
+[ ] CORS configured correctly
+[ ] Rate limiting enabled
+[ ] CSRF protection active
+[ ] Security headers set
+[ ] Audit logging working
+[ ] Backup system tested
+[ ] Dependencies updated
+
+Post-Launch:
+[ ] Monitor error logs daily
+[ ] Review audit logs weekly
+[ ] Check for updates monthly
+[ ] Rotate secrets quarterly
+[ ] Penetration test annually
+[ ] Security training for team
+[ ] Update incident response plan
+[ ] Test backup restore
+
+================================================================================
+REPORTING SECURITY ISSUES
+================================================================================
+
+If you discover a security vulnerability:
+
+1. DO NOT create public GitHub issue
+2. Contact maintainers directly
+3. Provide detailed information:
+   - Vulnerability description
+   - Steps to reproduce
+   - Potential impact
+   - Suggested fix (if any)
+
+4. Allow time for fix before disclosure
+5. Coordinated disclosure process
+
+Email: security@your-domain.com
+PGP Key: Available on request
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

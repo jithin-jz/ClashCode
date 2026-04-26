@@ -2,6 +2,7 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field, OpenApiTypes
 from .models import Notification, FCMToken
 from users.serializers import UserSummarySerializer
+from project.media import build_file_url
 
 class FCMTokenSerializer(serializers.ModelSerializer):
     """Serializer for registering and updating FCM tokens."""
@@ -9,6 +10,9 @@ class FCMTokenSerializer(serializers.ModelSerializer):
         model = FCMToken
         fields = ["token", "device_id", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
+        extra_kwargs = {
+            "token": {"validators": []}  # Remove UniqueValidator to allow upserts
+        }
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -28,19 +32,16 @@ class NotificationSerializer(serializers.ModelSerializer):
             return None
             
         # Check common image fields in target models
-        url = None
+        media_field = None
         if hasattr(obj.target, "image") and obj.target.image:
-            url = obj.target.image.url
+            media_field = obj.target.image
         elif hasattr(obj.target, "avatar") and obj.target.avatar:
-            url = obj.target.avatar.url
+            media_field = obj.target.avatar
         elif hasattr(obj.target, "thumbnail") and obj.target.thumbnail:
-            url = obj.target.thumbnail.url
+            media_field = obj.target.thumbnail
             
-        if url:
-            request = self.context.get("request")
-            if request:
-                return request.build_absolute_uri(url)
-            return url
+        if media_field:
+            return build_file_url(media_field, self.context.get("request"))
         return None
 
 

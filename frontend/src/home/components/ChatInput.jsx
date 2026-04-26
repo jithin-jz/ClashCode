@@ -1,5 +1,6 @@
-import React, { memo } from "react";
-import { Send, Smile, X } from "lucide-react";
+import React, { memo, useState, useRef } from "react";
+import { Send, Smile, X, Image } from "lucide-react";
+import useChatStore from "../../stores/useChatStore";
 import EmojiPicker from "emoji-picker-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -16,11 +17,22 @@ const ChatInput = ({
   placeholder,
 }) => {
   const [inputMessage, setInputMessage] = React.useState("");
+  const fileInputRef = React.useRef(null);
+  const sendImage = useChatStore((s) => s.sendImage);
 
   const handleSend = () => {
     if (inputMessage.trim()) {
       sendMessage(inputMessage);
       setInputMessage("");
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      sendImage(file);
+      // Reset input
+      e.target.value = "";
     }
   };
 
@@ -83,6 +95,23 @@ const ChatInput = ({
               className="group-hover:scale-110 transition-transform"
             />
           )}
+        </button>
+
+        {/* Image Upload Button */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={!user}
+          className="group relative flex items-center justify-center h-10 w-10 min-w-10 rounded-xl bg-white/[0.03] text-neutral-500 hover:text-neutral-200 border border-transparent hover:border-white/10 hover:bg-white/5 transition-all duration-300 disabled:opacity-20"
+        >
+          <Image size={18} className="group-hover:scale-110 transition-transform" />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
         </button>
 
         {/* Input Wrapper */}

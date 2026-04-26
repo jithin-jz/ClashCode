@@ -1,0 +1,457 @@
+================================================================================
+CLASHCODE - DOCUMENTATION INDEX
+================================================================================
+
+WELCOME TO CLASHCODE DOCUMENTATION
+================================================================================
+
+This folder contains comprehensive documentation for the CLASHCODE platform.
+Each file is numbered for easy navigation and covers a specific topic.
+
+================================================================================
+QUICK START GUIDE
+================================================================================
+
+New to CLASHCODE? Start here:
+
+1. Read: 01-PROJECT-OVERVIEW.txt
+   - Understand what CLASHCODE is
+   - Learn about features and architecture
+   - Get high-level system overview
+
+2. Read: 02-SETUP-GUIDE.txt
+   - Install prerequisites
+   - Configure environment
+   - Run your first instance
+
+3. Read: 05-COMMANDS-REFERENCE.txt
+   - Essential Docker commands
+   - Database operations
+   - Troubleshooting commands
+
+Total time: ~30 minutes
+
+================================================================================
+DOCUMENTATION FILES
+================================================================================
+
+01-PROJECT-OVERVIEW.txt
+------------------------
+What: Complete project introduction
+For: Everyone (developers, designers, managers)
+Contains:
+  ✓ Project description
+  ✓ System architecture
+  ✓ Key features
+  ✓ Technology stack
+  ✓ Project structure
+  ✓ Security highlights
+
+Time to read: 10 minutes
+
+
+02-SETUP-GUIDE.txt
+-------------------
+What: Step-by-step installation guide
+For: Developers setting up local environment
+Contains:
+  ✓ Prerequisites
+  ✓ Installation steps
+  ✓ Environment configuration
+  ✓ Database setup
+  ✓ First-time initialization
+  ✓ Common issues
+
+Time to read: 15 minutes
+Time to complete: 20-40 minutes
+
+
+03-ARCHITECTURE.txt
+--------------------
+What: Detailed system architecture
+For: Backend developers, architects
+Contains:
+  ✓ High-level architecture diagrams
+  ✓ Microservices design
+  ✓ Database architecture
+  ✓ Authentication flow
+  ✓ Code execution pipeline
+  ✓ AI tutoring system
+  ✓ Real-time chat system
+  ✓ Frontend architecture
+  ✓ Security architecture
+
+Time to read: 30 minutes
+
+
+04-API-REFERENCE.txt
+---------------------
+What: Complete API documentation
+For: Frontend developers, API consumers
+Contains:
+  ✓ All API endpoints
+  ✓ Request/response examples
+  ✓ Authentication methods
+  ✓ Rate limits
+  ✓ Error codes
+  ✓ Interactive docs reference
+
+Time to read: 20 minutes
+Use as: Reference guide
+
+
+05-COMMANDS-REFERENCE.txt
+--------------------------
+What: Docker and management commands
+For: All developers
+Contains:
+  ✓ Starting/stopping services
+  ✓ Monitoring commands
+  ✓ Database operations
+  ✓ Shell access
+  ✓ Debugging commands
+  ✓ Cleanup procedures
+  ✓ Useful aliases
+
+Time to read: 10 minutes
+Use as: Quick reference
+
+
+06-SECURITY-GUIDE.txt
+----------------------
+What: Security best practices
+For: All developers, security team
+Contains:
+  ✓ Authentication security
+  ✓ Code execution security
+  ✓ API security
+  ✓ Data security
+  ✓ Infrastructure security
+  ✓ Frontend security
+  ✓ Audit logging
+  ✓ Security checklist
+
+Time to read: 25 minutes
+
+
+07-DEPLOYMENT-GUIDE.txt
+------------------------
+What: Production deployment instructions
+For: DevOps, senior developers
+Contains:
+  ✓ Server setup
+  ✓ SSL configuration
+  ✓ Environment setup
+  ✓ Nginx configuration
+  ✓ Monitoring setup
+  ✓ Backup system
+  ✓ Scaling configuration
+  ✓ Security hardening
+  ✓ Rollback procedures
+
+Time to read: 20 minutes
+Time to deploy: 1-2 hours
+
+
+08-TROUBLESHOOTING.txt
+-----------------------
+What: Common issues and solutions
+For: All developers
+Contains:
+  ✓ Quick diagnosis flowchart
+  ✓ 12 common issues with solutions
+  ✓ Debug mode instructions
+  ✓ Advanced debugging techniques
+  ✓ Getting help
+
+Time to read: 15 minutes
+Use as: Reference when issues occur
+
+================================================================================
+ROLE-BASED READING GUIDE
+================================================================================
+
+FOR FRONTEND DEVELOPERS
+=========================
+Must read:
+  1. 01-PROJECT-OVERVIEW.txt (project context)
+  2. 02-SETUP-GUIDE.txt (local setup)
+  3. 04-API-REFERENCE.txt (API integration)
+  4. 05-COMMANDS-REFERENCE.txt (daily commands)
+
+Recommended:
+  - 03-ARCHITECTURE.txt (frontend section)
+  - 08-TROUBLESHOOTING.txt (common issues)
+
+
+FOR BACKEND DEVELOPERS
+========================
+Must read:
+  1. 01-PROJECT-OVERVIEW.txt (project context)
+  2. 02-SETUP-GUIDE.txt (local setup)
+  3. 03-ARCHITECTURE.txt (system design)
+  4. 04-API-REFERENCE.txt (API design)
+  5. 05-COMMANDS-REFERENCE.txt (daily commands)
+  6. 06-SECURITY-GUIDE.txt (security practices)
+
+Recommended:
+  - 07-DEPLOYMENT-GUIDE.txt (deployment process)
+  - 08-TROUBLESHOOTING.txt (debugging)
+
+
+FOR DEVOPS ENGINEERS
+=====================
+Must read:
+  1. 01-PROJECT-OVERVIEW.txt (system overview)
+  2. 03-ARCHITECTURE.txt (infrastructure)
+  3. 05-COMMANDS-REFERENCE.txt (operations)
+  4. 07-DEPLOYMENT-GUIDE.txt (deployment)
+  5. 08-TROUBLESHOOTING.txt (incident response)
+
+Recommended:
+  - 06-SECURITY-GUIDE.txt (security hardening)
+
+
+FOR NEW TEAM MEMBERS
+=====================
+Read in order:
+  1. 01-PROJECT-OVERVIEW.txt
+  2. 02-SETUP-GUIDE.txt
+  3. 03-ARCHITECTURE.txt
+  4. 04-API-REFERENCE.txt
+  5. 05-COMMANDS-REFERENCE.txt
+
+Then:
+  - 06-SECURITY-GUIDE.txt (week 2)
+  - 07-DEPLOYMENT-GUIDE.txt (when ready to deploy)
+  - 08-TROUBLESHOOTING.txt (as needed)
+
+
+FOR PROJECT MANAGERS
+=====================
+Read:
+  1. 01-PROJECT-OVERVIEW.txt (understand the product)
+  2. 06-SECURITY-GUIDE.txt (security posture)
+
+Skim:
+  - 03-ARCHITECTURE.txt (high-level understanding)
+
+
+FOR CONTRIBUTORS
+=================
+Read:
+  1. 01-PROJECT-OVERVIEW.txt (project context)
+  2. 02-SETUP-GUIDE.txt (setup dev environment)
+  3. 05-COMMANDS-REFERENCE.txt (useful commands)
+
+Also read:
+  - CONTRIBUTING.md (in root directory)
+  - 04-API-REFERENCE.txt (if working on APIs)
+
+================================================================================
+TOPIC-BASED NAVIGATION
+================================================================================
+
+Want to learn about...
+
+Authentication?
+  → 03-ARCHITECTURE.txt (Section 4)
+  → 06-SECURITY-GUIDE.txt (Section 1)
+
+Code Execution?
+  → 03-ARCHITECTURE.txt (Section 5)
+  → 06-SECURITY-GUIDE.txt (Section 2)
+
+API Endpoints?
+  → 04-API-REFERENCE.txt (complete reference)
+
+Docker Commands?
+  → 05-COMMANDS-REFERENCE.txt (all commands)
+
+Security?
+  → 06-SECURITY-GUIDE.txt (comprehensive guide)
+
+Deployment?
+  → 07-DEPLOYMENT-GUIDE.txt (step-by-step)
+
+Troubleshooting?
+  → 08-TROUBLESHOOTING.txt (common issues)
+
+Database?
+  → 03-ARCHITECTURE.txt (Section 3)
+  → 05-COMMANDS-REFERENCE.txt (database operations)
+
+Chat/WebSocket?
+  → 03-ARCHITECTURE.txt (Section 7)
+
+AI System?
+  → 03-ARCHITECTURE.txt (Section 6)
+
+Frontend?
+  → 03-ARCHITECTURE.txt (Section 8)
+
+================================================================================
+COMMON TASKS - WHERE TO LOOK
+================================================================================
+
+Task: Set up local development environment
+Guide: 02-SETUP-GUIDE.txt
+
+Task: Make API call
+Guide: 04-API-REFERENCE.txt
+
+Task: Debug failing service
+Guide: 08-TROUBLESHOOTING.txt
+
+Task: Deploy to production
+Guide: 07-DEPLOYMENT-GUIDE.txt
+
+Task: Check service logs
+Guide: 05-COMMANDS-REFERENCE.txt
+
+Task: Backup database
+Guide: 05-COMMANDS-REFERENCE.txt (Database Operations)
+
+Task: Scale services
+Guide: 07-DEPLOYMENT-GUIDE.txt (Scaling Configuration)
+
+Task: Secure API endpoint
+Guide: 06-SECURITY-GUIDE.txt (API Security)
+
+Task: Understand system design
+Guide: 03-ARCHITECTURE.txt
+
+Task: Create new feature
+Guide: 03-ARCHITECTURE.txt (understand existing)
+       04-API-REFERENCE.txt (API design patterns)
+
+Task: Fix security vulnerability
+Guide: 06-SECURITY-GUIDE.txt
+       08-TROUBLESHOOTING.txt
+
+================================================================================
+EXTERNAL DOCUMENTATION
+================================================================================
+
+Root Directory Files:
+======================
+README.md
+  → Project overview and quick start
+  → Located in project root
+
+CONTRIBUTING.md
+  → How to contribute to the project
+  → Coding standards and PR process
+  → Located in project root
+
+CHANGELOG.md
+  → Version history and changes
+  → Located in project root
+
+Services Documentation:
+========================
+services/core/README.md
+  → Core service (Django) documentation
+
+services/chat/README.md
+  → Chat service documentation
+
+services/ai/README.md
+  → AI service documentation
+
+services/executor/README.md
+  → Executor service documentation
+
+frontend/README.md
+  → Frontend application documentation
+
+Interactive Documentation:
+===========================
+/api/docs/
+  → Swagger/OpenAPI interactive API docs
+  → Available when server is running
+  → Try endpoints directly
+
+/admin/
+  → Django admin interface
+  → Manage data, view logs
+  → Available when server is running
+
+================================================================================
+PRINTED QUICK REFERENCE
+================================================================================
+
+ESSENTIAL COMMANDS
+===================
+Start:          docker compose up -d
+Stop:           docker compose down
+Logs:           docker compose logs -f core
+Restart:        docker compose restart core
+Migrate:        docker compose exec core python manage.py migrate
+Shell:          docker compose exec core python manage.py shell
+DB Shell:       docker compose exec db psql -U clashcode -d clashcode_db
+Redis CLI:      docker compose exec redis redis-cli
+Test:           docker compose exec core python manage.py test
+Health:         curl http://localhost/health/
+Status:         docker compose ps
+
+ACCESS POINTS
+==============
+Frontend:       http://localhost:5173
+API:            http://localhost/api/
+Admin:          http://localhost/admin/
+API Docs:       http://localhost/api/docs/
+
+ENVIRONMENT FILES
+==================
+services/.env
+services/core/.env
+services/chat/.env
+services/ai/.env
+frontend/.env
+
+================================================================================
+DOCUMENTATION MAINTENANCE
+================================================================================
+
+Updating Documentation:
+========================
+When you make changes to the system, update relevant docs:
+
+- New feature? → Update 01-PROJECT-OVERVIEW.txt
+- API changes? → Update 04-API-REFERENCE.txt
+- New command? → Update 05-COMMANDS-REFERENCE.txt
+- Security fix? → Update 06-SECURITY-GUIDE.txt
+- Deploy changes? → Update 07-DEPLOYMENT-GUIDE.txt
+- New issue found? → Update 08-TROUBLESHOOTING.txt
+
+Format:
+- Use plain text for maximum compatibility
+- Use === for major sections
+- Use --- for subsections
+- Use ✓ and ✗ for checklists
+- Keep lines under 80 characters
+
+Review Schedule:
+- Monthly: Review for accuracy
+- Quarterly: Major update check
+- Annually: Complete rewrite if needed
+
+================================================================================
+FEEDBACK
+================================================================================
+
+Found an error? Missing information? Confusing section?
+
+Please:
+1. Note the file name
+2. Describe the issue
+3. Suggest improvement
+4. Submit as GitHub issue or PR
+
+Your feedback helps improve documentation for everyone!
+
+================================================================================
+Last Updated: 2026-04-26
+Version: 1.0.0
+================================================================================

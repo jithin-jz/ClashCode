@@ -300,6 +300,7 @@ const ChallengeWorkspace = () => {
             hintLevel={hintLevel}
             ai_hints_purchased={challenge?.ai_hints_purchased || 0}
             userXp={user?.profile?.xp || 0}
+            isCodePassed={lastRunPassed}
           />
         </div>
       </div>

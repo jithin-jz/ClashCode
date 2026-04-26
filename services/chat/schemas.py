@@ -32,7 +32,7 @@ class PresenceEvent(BaseEvent):
 
 
 class IncomingMessage(BaseModel):
-    action: Literal["send", "edit", "delete", "typing", "react", "pin", "unpin"] = (
+    action: Literal["send", "edit", "delete", "typing", "react", "pin", "unpin", "read"] = (
         "send"
     )
     target_timestamp: Optional[str] = None

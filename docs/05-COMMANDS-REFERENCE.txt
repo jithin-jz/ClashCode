@@ -1,0 +1,405 @@
+================================================================================
+CLASHCODE - DOCKER COMMANDS REFERENCE
+================================================================================
+
+STARTING & STOPPING SERVICES
+================================================================================
+
+# Build and start everything (first time or after changes)
+docker compose up --build -d
+
+# Start without rebuilding
+docker compose up -d
+
+# Stop all services (keeps data)
+docker compose stop
+
+# Stop and remove containers (keeps volumes/data)
+docker compose down
+
+# Stop, remove containers AND delete all data (DESTRUCTIVE!)
+docker compose down -v
+
+================================================================================
+MONITORING SERVICES
+================================================================================
+
+# See all container statuses
+docker compose ps -a
+
+# View logs (all services)
+docker compose logs
+
+# View logs (specific service, last 50 lines, follow mode)
+docker compose logs -f --tail=50 core
+docker compose logs -f --tail=50 chat
+docker compose logs -f --tail=50 ai
+docker compose logs -f --tail=50 worker
+docker compose logs -f --tail=50 beat
+docker compose logs -f --tail=50 nginx
+docker compose logs -f --tail=50 db
+docker compose logs -f --tail=50 redis
+
+# View resource usage (CPU, memory, network)
+docker stats
+
+================================================================================
+RESTART & REBUILD
+================================================================================
+
+# Restart a specific service
+docker compose restart core
+docker compose restart chat
+docker compose restart ai
+docker compose restart worker
+docker compose restart beat
+docker compose restart nginx
+docker compose restart db
+
+# Rebuild and restart a single service
+docker compose up --build -d core
+docker compose up --build -d ai
+docker compose up --build -d chat
+
+# Rebuild everything
+docker compose up --build -d
+
+================================================================================
+DJANGO MANAGEMENT (CORE SERVICE)
+================================================================================
+
+# Run database migrations
+docker compose exec core python manage.py migrate
+
+# Create superuser (admin account)
+docker compose exec core python manage.py createsuperuser
+
+# Collect static files
+docker compose exec core python manage.py collectstatic --noinput
+
+# Open Django shell (Python interactive)
+docker compose exec core python manage.py shell
+
+# Create new migrations (after model changes)
+docker compose exec core python manage.py makemigrations
+
+# Run tests
+docker compose exec core python manage.py test
+
+# Load challenge content from markdown files
+docker compose exec core python manage.py load_challenges
+
+# Check for migration issues
+docker compose exec core python manage.py migrate --check
+
+# Show migration status
+docker compose exec core python manage.py showmigrations
+
+# Clear cache
+docker compose exec core python manage.py clear_cache
+
+================================================================================
+SHELL ACCESS
+================================================================================
+
+# Open bash in a container
+docker compose exec core bash
+docker compose exec chat bash
+docker compose exec ai bash
+docker compose exec executor bash
+
+# Access PostgreSQL database shell
+docker compose exec db psql -U clashcode -d clashcode_db
+
+# Access Redis CLI
+docker compose exec redis redis-cli
+
+# Access ChromaDB (if needed)
+docker compose exec chroma bash
+
+# Access DynamoDB Local (if needed)
+docker compose exec dynamodb bash
+
+================================================================================
+DATABASE OPERATIONS
+================================================================================
+
+# Backup PostgreSQL database
+docker compose exec db pg_dump -U clashcode clashcode_db > backup.sql
+
+# Restore from backup
+cat backup.sql | docker compose exec -T db psql -U clashcode -d clashcode_db
+
+# Backup with compression
+docker compose exec db pg_dump -U clashcode clashcode_db | gzip > backup.sql.gz
+
+# Restore compressed backup
+gunzip -c backup.sql.gz | docker compose exec -T db psql -U clashcode -d clashcode_db
+
+# Backup Redis data
+docker compose exec redis redis-cli BGSAVE
+docker cp clashcode-redis-1:/data/dump.rdb ./redis-backup.rdb
+
+# View database size
+docker compose exec db psql -U clashcode -d clashcode_db -c "SELECT pg_size_pretty(pg_database_size('clashcode_db'));"
+
+================================================================================
+DEBUGGING
+================================================================================
+
+# Check Docker Compose config for errors
+docker compose config
+
+# Inspect a specific container
+docker inspect clashcode-core-1
+
+# View container's environment variables
+docker compose exec core env
+docker compose exec chat env
+docker compose exec ai env
+
+# Check container health
+docker compose ps
+
+# View container logs with timestamps
+docker compose logs -f --tail=100 -t core
+
+# Execute command in running container
+docker compose exec core python manage.py check
+
+# Check network connectivity between containers
+docker compose exec core ping db
+docker compose exec core ping redis
+
+# View Docker network
+docker network ls
+docker network inspect clashcode_network
+
+================================================================================
+CLEANUP
+================================================================================
+
+# Remove unused Docker images
+docker image prune -f
+
+# Remove all stopped containers
+docker container prune -f
+
+# Remove unused volumes (DESTRUCTIVE - deletes data!)
+docker volume prune -f
+
+# Nuclear cleanup - everything unused (DESTRUCTIVE!)
+docker system prune -af
+
+# Remove specific service containers
+docker compose rm core
+docker compose rm -f core  # Force removal
+
+# Clear Docker build cache
+docker builder prune -af
+
+================================================================================
+HEALTH CHECKS
+================================================================================
+
+# Test Core service health
+curl http://localhost/health/
+
+# Test Core directly
+curl http://localhost:8000/health/
+
+# Test Chat service
+curl http://localhost:8001/
+
+# Test AI service
+curl http://localhost:8002/health
+
+# Test Executor service
+curl http://localhost:8011/health
+
+# Test API endpoint
+curl http://localhost/api/challenges/
+
+================================================================================
+SERVICE ACCESS POINTS
+================================================================================
+
+Development Environment:
+-------------------------
+Frontend:        http://localhost:5173
+API Gateway:     http://localhost/api/
+Django Admin:    http://localhost/admin/
+API Docs:        http://localhost/api/docs/
+Health Check:    http://localhost/health/
+
+Internal Service Ports (not exposed to host):
+----------------------------------------------
+Core Service:    Port 8000
+Chat Service:    Port 8001
+AI Service:      Port 8002
+Executor:        Port 8011
+PostgreSQL:      Port 5432
+Redis:           Port 6379
+ChromaDB:        Port 8000
+DynamoDB:        Port 8008
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: Service won't start
+Solution:
+1. Check logs: docker compose logs core
+2. Verify .env files are configured
+3. Check dependencies: docker compose ps
+
+Problem: Port already in use
+Solution:
+1. Find process: netstat -tulpn | grep :80
+2. Kill process or change port in .env
+3. NGINX_HTTP_PORT=8080
+
+Problem: Database connection failed
+Solution:
+1. Check DB is running: docker compose ps db
+2. Check DB logs: docker compose logs db
+3. Restart DB: docker compose restart db
+
+Problem: 502 Bad Gateway
+Solution:
+1. Check backend services: docker compose ps
+2. Check nginx logs: docker compose logs nginx
+3. Verify services are healthy
+4. Restart nginx: docker compose restart nginx
+
+Problem: High memory usage
+Solution:
+1. Check usage: docker stats
+2. Restart heavy services: docker compose restart core chat
+3. Increase limits in docker-compose.yml if needed
+
+Problem: Celery tasks stuck
+Solution:
+1. Check worker logs: docker compose logs worker
+2. Purge stuck tasks: docker compose exec core python manage.py celery purge
+3. Restart workers: docker compose restart worker beat
+
+Problem: Code execution failing
+Solution:
+1. Check executor logs: docker compose logs executor
+2. Verify Docker access: docker compose exec executor docker ps
+3. Test manually: curl -X POST http://localhost:8011/execute -d '{"code": "print(\"test\")"}'
+
+================================================================================
+MULTI-INSTANCE SCALING
+================================================================================
+
+# Scale Celery workers
+docker compose up -d --scale worker=3
+
+# Scale chat service
+docker compose up -d --scale chat=2
+
+# Scale everything
+docker compose up -d --scale worker=3 --scale chat=2
+
+# Verify scaling
+docker compose ps
+
+================================================================================
+ENVIRONMENT MANAGEMENT
+================================================================================
+
+# View current environment variables
+docker compose exec core env | grep SECRET_KEY
+
+# Update environment variable (requires restart)
+# Edit .env file, then:
+docker compose up -d --no-deps core
+
+# Check if .env file is loaded correctly
+docker compose config
+
+================================================================================
+USEFUL ALIASES (Add to ~/.bashrc or ~/.zshrc)
+================================================================================
+
+# Quick commands
+alias cc-up='docker compose up -d'
+alias cc-down='docker compose down'
+alias cc-logs='docker compose logs -f --tail=50'
+alias cc-ps='docker compose ps'
+alias cc-restart='docker compose restart'
+alias cc-core-logs='docker compose logs -f --tail=100 core'
+alias cc-chat-logs='docker compose logs -f --tail=100 chat'
+alias cc-ai-logs='docker compose logs -f --tail=100 ai'
+alias cc-migrate='docker compose exec core python manage.py migrate'
+alias cc-shell='docker compose exec core python manage.py shell'
+alias cc-test='docker compose exec core python manage.py test'
+alias cc-db='docker compose exec db psql -U clashcode -d clashcode_db'
+alias cc-redis='docker compose exec redis redis-cli'
+
+================================================================================
+MONITORING SCRIPTS
+================================================================================
+
+# Check all services health
+#!/bin/bash
+echo "Checking CLASHCODE services..."
+docker compose ps
+echo ""
+echo "Testing endpoints..."
+curl -s http://localhost/health/ > /dev/null && echo "✓ Health check OK" || echo "✗ Health check FAILED"
+curl -s http://localhost/api/challenges/ > /dev/null && echo "✓ API OK" || echo "✗ API FAILED"
+
+# View service resource usage
+#!/bin/bash
+echo "Service Resource Usage:"
+docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | grep clashcode
+
+================================================================================
+BACKUP AUTOMATION
+================================================================================
+
+Create backup.sh:
+#!/bin/bash
+BACKUP_DIR="/backups/clashcode"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p $BACKUP_DIR
+
+# Database backup
+docker compose exec db pg_dump -U clashcode clashcode_db | gzip > $BACKUP_DIR/db_$TIMESTAMP.sql.gz
+
+# Redis backup
+docker compose exec redis redis-cli BGSAVE
+docker cp clashcode-redis-1:/data/dump.rdb $BACKUP_DIR/redis_$TIMESTAMP.rdb
+
+# Keep only last 7 days
+find $BACKUP_DIR -name "*.gz" -mtime +7 -delete
+find $BACKUP_DIR -name "*.rdb" -mtime +7 -delete
+
+echo "Backup completed: $TIMESTAMP"
+
+Add to crontab (daily at 2 AM):
+0 2 * * * /path/to/backup.sh
+
+================================================================================
+QUICK REFERENCE CARD
+================================================================================
+
+Start:           docker compose up -d
+Stop:            docker compose down
+Logs:            docker compose logs -f core
+Restart:         docker compose restart core
+Migrate:         docker compose exec core python manage.py migrate
+Shell:           docker compose exec core python manage.py shell
+DB:              docker compose exec db psql -U clashcode -d clashcode_db
+Redis:           docker compose exec redis redis-cli
+Test:            docker compose exec core python manage.py test
+Health:          curl http://localhost/health/
+Status:          docker compose ps
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

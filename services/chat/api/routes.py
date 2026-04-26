@@ -19,7 +19,7 @@ async def get_message_history(
     request: Request,
     room: str,
     limit: int = 50,
-    offset: int = 0,
+    last_timestamp: str | None = None,
 ):
     """Get paginated message history for a room."""
     token = get_token(request)
@@ -31,11 +31,46 @@ async def get_message_history(
         )
 
     try:
-        data = await ChatService.get_history(room, limit, offset)
-        return JSONResponse(content=data, status=status.HTTP_200_OK)
+        data = await ChatService.get_history(room, limit, last_timestamp)
+        return JSONResponse(content=data, status_code=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error fetching message history: {e}", exc_info=True)
         return JSONResponse(
             content={"error": "Failed to fetch message history"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@router.get("/search/{room}")
+async def search_room_messages(
+    request: Request,
+    room: str,
+    q: str,
+    limit: int = 20,
+):
+    """Search messages in a room."""
+    token = get_token(request)
+    payload = verify_jwt(token or "")
+    if not payload:
+        return JSONResponse(
+            content={"error": "Invalid token"}, 
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        from dynamo import dynamo_client
+        from core.serializers import serialize_dynamo_message
+        result = await dynamo_client.search_messages(room, q, limit)
+        if not result.get("ok"):
+            return JSONResponse(
+                content={"error": "Search failed"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        messages = [serialize_dynamo_message(room, m) for m in result["items"]]
+        return JSONResponse(content={"messages": messages}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error searching messages: {e}", exc_info=True)
+        return JSONResponse(
+            content={"error": "Search failed"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

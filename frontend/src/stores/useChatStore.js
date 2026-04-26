@@ -21,6 +21,12 @@ const useChatStore = create((set, get) => ({
   pinnedMessage: null, // {timestamp, message, pinned_by}
   currentRoom: "global",
   isChatOpen: false,
+  lastTimestamp: null,
+  hasMore: false,
+  isLoadingMore: false,
+  searchResults: [],
+  isSearching: false,
+  error: null,
 
   // Actions
   connect: () => {
@@ -39,7 +45,19 @@ const useChatStore = create((set, get) => ({
       state.socket.close();
     }
 
-    set({ shouldReconnect: true, currentRoom: roomName, isConnected: false });
+    // Only clear messages on first connection, not on reconnects
+    const isFirstConnection = !state.lastTimestamp && state.messages.length === 0;
+    
+    set({ 
+      shouldReconnect: true, 
+      currentRoom: roomName, 
+      isConnected: false,
+      ...(isFirstConnection && {
+        messages: [],
+        lastTimestamp: null,
+        hasMore: true
+      })
+    });
 
     const wsUrl = `${WS_URL}/${roomName}`;
     const socket = new WebSocket(wsUrl);
@@ -127,8 +145,21 @@ const useChatStore = create((set, get) => ({
           });
         } else if (data.type === "chat_unpin") {
           set({ pinnedMessage: null });
+        } else if (data.type === "chat_read") {
+          set((state) => ({
+            messages: state.messages.map((msg) => {
+              if (msg.timestamp !== data.timestamp) return msg;
+              const readBy = new Set(msg.read_by || []);
+              readBy.add(data.username);
+              return { ...msg, read_by: Array.from(readBy) };
+            }),
+          }));
         } else if (data.type === "history") {
-          set({ messages: data.messages });
+          set({ 
+            messages: data.messages, 
+            lastTimestamp: data.last_timestamp,
+            hasMore: data.last_timestamp !== null 
+          });
         } else if (data.type === "presence") {
           set({ onlineCount: data.count });
         } else if (data.type === "error") {
@@ -221,7 +252,77 @@ const useChatStore = create((set, get) => ({
     get()._send({ action: "unpin", target_timestamp: timestamp });
   },
 
-  clearMessages: () => set({ messages: [] }),
+  clearMessages: () => set({ messages: [], lastTimestamp: null, hasMore: true }),
+
+  loadMore: async () => {
+    const { currentRoom, lastTimestamp, hasMore, isLoadingMore, messages } = get();
+    if (!hasMore || isLoadingMore || !lastTimestamp) return;
+
+    set({ isLoadingMore: true });
+    try {
+      const { default: api } = await import("../services/api");
+      const url = `/chat/history/${currentRoom}?limit=50&last_timestamp=${lastTimestamp}`;
+      const response = await api.get(url);
+      const data = response.data;
+
+      set({
+        messages: [...data.messages, ...messages],
+        lastTimestamp: data.last_timestamp,
+        hasMore: data.has_more,
+        isLoadingMore: false
+      });
+    } catch (err) {
+      console.error("Failed to load more messages", err);
+      set({ isLoadingMore: false });
+    }
+  },
+  
+  sendImage: async (file) => {
+    try {
+      const { authAPI } = await import("../services/api");
+      const response = await authAPI.uploadMedia(file);
+      const url = response.data.url;
+      const { user } = (await import("./useAuthStore")).default.getState();
+      const messageContent = `IMAGE:${url}|${user?.username || 'user'}`;
+      get().sendMessage(messageContent);
+    } catch (err) {
+      console.error("Failed to upload image", err);
+      set({ error: "Failed to upload image" });
+      setTimeout(() => set({ error: null }), 3000);
+    }
+  },
+
+  markAsRead: (timestamp) => {
+    const socket = get().socket;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        action: "read",
+        target_timestamp: timestamp
+      }));
+    }
+  },
+
+  searchMessages: (query) => {
+    const { messages } = get();
+    
+    if (!query || !query.trim()) {
+      set({ searchResults: [], isSearching: false });
+      return;
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+    
+    // Filter messages client-side
+    const filtered = messages.filter(msg => {
+      const messageText = msg.message?.toLowerCase() || '';
+      const username = msg.username?.toLowerCase() || '';
+      return messageText.includes(searchTerm) || username.includes(searchTerm);
+    });
+
+    set({ searchResults: filtered, isSearching: false });
+  },
+
+  clearSearch: () => set({ searchResults: [], isSearching: false }),
 }));
 
 export default useChatStore;

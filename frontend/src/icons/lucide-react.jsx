@@ -109,6 +109,7 @@ export const Camera = adapt(CameraIcon);
 export const Check = adapt(CheckedIcon);
 export const CheckCircle = adapt(FilledCheckedIcon);
 export const CheckCircle2 = adapt(DoubleCheckIcon);
+export const CheckCheck = adapt(DoubleCheckIcon);
 export const Chrome = adapt(BrandGoogleIcon);
 export const Code = adapt(CodeIcon);
 export const Code2 = adapt(CodeXmlIcon);

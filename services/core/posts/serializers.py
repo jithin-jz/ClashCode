@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post
 from users.serializers import UserSummarySerializer
+from project.media import build_file_url
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -8,6 +9,7 @@ class PostSerializer(serializers.ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
     is_liked = serializers.BooleanField(read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -15,6 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "image",
+            "image_url",
             "caption",
             "likes_count",
             "is_liked",
@@ -22,6 +25,9 @@ class PostSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "user", "created_at", "updated_at", "likes_count", "is_liked"]
+
+    def get_image_url(self, obj):
+        return build_file_url(obj.image, self.context.get("request"))
 
 
 class PostLikeResponseSerializer(serializers.Serializer):

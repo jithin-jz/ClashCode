@@ -37,7 +37,7 @@ class Notification(models.Model):
 class FCMToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="fcm_tokens")
     token = models.TextField(unique=True)
-    device_id = models.CharField(max_length=255, null=True, blank=True)
+    device_id = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

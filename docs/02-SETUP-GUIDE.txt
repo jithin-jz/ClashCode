@@ -1,0 +1,299 @@
+================================================================================
+CLASHCODE - SETUP GUIDE
+================================================================================
+
+PREREQUISITES
+================================================================================
+
+Required Software:
+- Docker (v24 or higher)
+- Docker Compose (v2 or higher)
+- Node.js (v18 or higher) - for frontend development
+- Git (v2.40 or higher)
+- Python (v3.11 or higher) - optional, for backend development
+
+System Requirements:
+- Operating System: Windows 10/11, macOS, or Linux
+- RAM: 8GB minimum (16GB recommended)
+- Storage: 10GB free space
+- CPU: 4 cores minimum
+
+================================================================================
+STEP 1: CLONE REPOSITORY
+================================================================================
+
+git clone https://github.com/your-org/CLASHCODE.git
+cd CLASHCODE
+
+================================================================================
+STEP 2: CONFIGURE ENVIRONMENT VARIABLES
+================================================================================
+
+Copy environment template files:
+
+Windows (PowerShell):
+---------------------
+Copy-Item services\.env.example services\.env
+Copy-Item services\core\.env.example services\core\.env
+Copy-Item services\chat\.env.example services\chat\.env
+Copy-Item services\ai\.env.example services\ai\.env
+Copy-Item frontend\.env.example frontend\.env
+
+Linux/macOS:
+------------
+cp services/.env.example services/.env
+cp services/core/.env.example services/core/.env
+cp services/chat/.env.example services/chat/.env
+cp services/ai/.env.example services/ai/.env
+cp frontend/.env.example frontend/.env
+
+================================================================================
+STEP 3: GENERATE SECURITY KEYS
+================================================================================
+
+Generate SECRET_KEY for Django:
+--------------------------------
+# Linux/macOS
+openssl rand -base64 32
+
+# Windows PowerShell
+[System.Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+
+Generate JWT Keys (optional, for production):
+----------------------------------------------
+openssl genrsa -out jwt_private.pem 2048
+openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+
+================================================================================
+STEP 4: CONFIGURE CRITICAL ENVIRONMENT VARIABLES
+================================================================================
+
+Edit services/core/.env and set:
+
+SECRET_KEY=<generated-key-from-step-3>
+POSTGRES_PASSWORD=<strong-random-password>
+INTERNAL_API_KEY=<long-random-string>
+INTERNAL_SIGNING_SECRET=<long-random-string>
+
+For development, you can use these minimal settings:
+-----------------------------------------------------
+DEBUG=True
+SECRET_KEY=dev-secret-key-not-for-production
+POSTGRES_PASSWORD=dev-password
+INTERNAL_API_KEY=dev-api-key
+INTERNAL_SIGNING_SECRET=dev-signing-secret
+
+================================================================================
+STEP 5: START BACKEND SERVICES
+================================================================================
+
+Navigate to services directory:
+--------------------------------
+cd services
+
+Build and start all services:
+------------------------------
+docker compose up -d --build
+
+This will start:
+- PostgreSQL database
+- Redis cache
+- ChromaDB vector store
+- DynamoDB Local
+- Core Django service
+- Chat FastAPI service
+- AI FastAPI service
+- Executor service
+- Celery worker
+- Celery beat scheduler
+- Nginx gateway
+
+================================================================================
+STEP 6: VERIFY SERVICES
+================================================================================
+
+Check all services are running:
+--------------------------------
+docker compose ps
+
+Expected output - all services should show "Up" or "healthy"
+
+View logs:
+-----------
+docker compose logs -f --tail=50
+
+Check specific service:
+------------------------
+docker compose logs core
+docker compose logs chat
+docker compose logs ai
+
+================================================================================
+STEP 7: INITIALIZE DATABASE
+================================================================================
+
+Run migrations:
+----------------
+docker compose exec core python manage.py migrate
+
+Create superuser (admin account):
+-----------------------------------
+docker compose exec core python manage.py createsuperuser
+
+Follow prompts to create admin account.
+
+Load challenge content:
+------------------------
+docker compose exec core python manage.py load_challenges
+
+================================================================================
+STEP 8: START FRONTEND (Development)
+================================================================================
+
+Navigate to frontend directory:
+---------------------------------
+cd frontend
+
+Install dependencies:
+----------------------
+npm install
+
+Start development server:
+--------------------------
+npm run dev
+
+Frontend will start at: http://localhost:5173
+
+================================================================================
+STEP 9: VERIFY SETUP
+================================================================================
+
+Test Frontend:
+---------------
+Open browser: http://localhost:5173
+You should see the CLASHCODE landing page
+
+Test API:
+----------
+curl http://localhost/api/challenges/
+
+Test Admin Panel:
+------------------
+Open browser: http://localhost/admin/
+Login with superuser credentials
+
+Test Health Check:
+-------------------
+curl http://localhost/health/
+
+================================================================================
+COMMON ISSUES & SOLUTIONS
+================================================================================
+
+Issue: Port already in use
+---------------------------
+Solution: Change port in .env file
+NGINX_HTTP_PORT=8080
+
+Issue: Docker build fails
+--------------------------
+Solution: 
+1. Check Docker is running
+2. Clear Docker cache: docker system prune -f
+3. Rebuild: docker compose up -d --build
+
+Issue: Database connection error
+----------------------------------
+Solution:
+1. Check database is running: docker compose ps db
+2. Check logs: docker compose logs db
+3. Restart: docker compose restart db
+
+Issue: Frontend can't connect to API
+--------------------------------------
+Solution:
+1. Check VITE_API_URL in frontend/.env
+2. Should be: VITE_API_URL=/api (for dev)
+3. Restart frontend: npm run dev
+
+Issue: Services keep restarting
+---------------------------------
+Solution:
+1. Check logs: docker compose logs core
+2. Verify .env files are configured
+3. Check environment variables: docker compose exec core env
+
+================================================================================
+ACCESS POINTS (Development)
+================================================================================
+
+Frontend:        http://localhost:5173
+API Gateway:     http://localhost/api/
+Django Admin:    http://localhost/admin/
+API Docs:        http://localhost/api/docs/
+Health Check:    http://localhost/health/
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+After successful setup:
+
+1. Read ARCHITECTURE.txt to understand system design
+2. Read API-REFERENCE.txt for API documentation
+3. Read COMMANDS.txt for Docker command reference
+4. Explore the admin panel
+5. Create your first challenge
+6. Try the code execution feature
+
+================================================================================
+DEVELOPMENT TIPS
+================================================================================
+
+Hot Reloading:
+- Frontend: Auto-reloads on code changes
+- Backend: Code changes auto-reload in development
+- To see model changes: docker compose restart core
+
+Debugging:
+- Backend logs: docker compose logs -f core
+- Frontend: Use browser DevTools
+- Database shell: docker compose exec db psql -U clashcode -d clashcode_db
+
+Testing:
+- Backend tests: docker compose exec core python manage.py test
+- Lint code: cd frontend && npm run lint
+
+================================================================================
+PRODUCTION DEPLOYMENT
+================================================================================
+
+For production deployment, see: DEPLOYMENT.txt
+
+Key differences:
+- Set DEBUG=False
+- Use strong passwords and keys
+- Configure SSL certificates
+- Set proper CORS origins
+- Use production SMTP server
+- Configure Cloudinary for media
+
+================================================================================
+SUPPORT
+================================================================================
+
+If you encounter issues:
+
+1. Check this guide carefully
+2. Read COMMANDS.txt for useful commands
+3. Check logs: docker compose logs -f
+4. Search existing GitHub issues
+5. Create new issue with:
+   - Error message
+   - Steps to reproduce
+   - System information
+   - Logs
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

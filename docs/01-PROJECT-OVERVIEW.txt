@@ -1,0 +1,244 @@
+================================================================================
+CLASHCODE - PROJECT OVERVIEW
+================================================================================
+
+WHAT IS CLASHCODE?
+------------------
+CLASHCODE is an industrial-grade, gamified coding platform designed for:
+- Competitive programming
+- Mastery-based progression
+- AI-assisted tutoring
+- Community engagement
+
+Tagline: "Learn to Code Through Gamification"
+
+================================================================================
+SYSTEM ARCHITECTURE
+================================================================================
+
+Frontend: React 19 + Vite + Tailwind CSS + Zustand
+Backend: Microservices architecture (4 services)
+Gateway: Nginx reverse proxy
+Database: PostgreSQL + Redis + ChromaDB + DynamoDB Local
+
+Service Breakdown:
+1. Core Service (Django 5) - Port 8000
+   - User authentication & profiles
+   - Challenge management
+   - Store & payments (Razorpay)
+   - Social features (posts, follows)
+   - Admin dashboard
+   - XP economy & achievements
+
+2. Chat Service (FastAPI) - Port 8001
+   - Real-time messaging via WebSockets
+   - User presence tracking
+   - Redis Pub/Sub for broadcasting
+   - DynamoDB message persistence
+
+3. AI Service (FastAPI) - Port 8002
+   - RAG-powered AI tutoring
+   - Contextual hints (3 levels)
+   - Code analysis & suggestions
+   - ChromaDB vector retrieval
+   - LangChain integration
+
+4. Executor Service (FastAPI) - Port 8011
+   - Sandboxed Python code execution
+   - Docker container isolation
+   - AST validation
+   - Resource limits (CPU, memory, time)
+   - gVisor support for enhanced security
+
+================================================================================
+KEY FEATURES
+================================================================================
+
+GAMIFICATION:
+- 60+ coding challenges across difficulty levels
+- Star-based performance grading (0-3 stars)
+- XP economy with daily streak rewards
+- Achievement badges
+- Level progression system
+- Leaderboards
+
+AUTHENTICATION:
+- JWT with token rotation
+- OAuth 2.0 (GitHub, Google)
+- Email OTP passwordless login
+- HttpOnly cookie support
+- Redis-backed token blacklisting
+
+CODE EXECUTION:
+- Python code execution in isolated containers
+- Multi-layer security (AST + Docker + gVisor)
+- Resource limits enforcement
+- Real-time output display
+
+AI ASSISTANT:
+- Personalized hints based on user code
+- Code quality analysis
+- Best practices suggestions
+- Complexity analysis
+
+SOCIAL FEATURES:
+- User profiles with contribution calendar
+- Follow system
+- Social posts with images
+- Real-time chat
+- Push notifications (FCM)
+
+STORE & PAYMENTS:
+- Cosmetic marketplace (themes, fonts, effects)
+- XP-based economy
+- Razorpay payment integration
+- Item equip/unequip system
+
+ADMIN TOOLS:
+- User management with role-based access
+- Audit logging
+- Analytics dashboard
+- System health monitoring
+- Broadcast notifications
+
+================================================================================
+TECHNOLOGY STACK
+================================================================================
+
+FRONTEND:
+- React 19
+- Vite 6
+- Tailwind CSS 4
+- Zustand (state management)
+- TanStack Query (data fetching)
+- Framer Motion (animations)
+- Monaco Editor (code editing)
+- Boneyard-js (zero-layout-shift loading)
+- Axios (HTTP client)
+- React Router 7
+
+BACKEND:
+- Django 5.0 (Core service)
+- FastAPI (Chat, AI, Executor)
+- Django REST Framework
+- Celery (async tasks)
+- LangChain (AI)
+
+DATABASES:
+- PostgreSQL 15 (relational data)
+- Redis 7 (cache, sessions, pub/sub)
+- ChromaDB (vector storage for AI)
+- DynamoDB Local (chat messages)
+
+INFRASTRUCTURE:
+- Docker Compose (orchestration)
+- Nginx (reverse proxy)
+- Gunicorn (Django WSGI)
+- Sentry (error tracking)
+- Cloudinary (media storage)
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+
+CLASHCODE/
+├── frontend/                 # React application
+│   ├── src/
+│   │   ├── admin/           # Admin dashboard
+│   │   ├── auth/            # Login & OAuth
+│   │   ├── game/            # Challenge workspace
+│   │   ├── home/            # Home page components
+│   │   ├── pages/           # Route pages
+│   │   ├── services/        # API clients
+│   │   ├── stores/          # Zustand stores
+│   │   ├── hooks/           # Custom React hooks
+│   │   └── components/      # Reusable UI components
+│   └── public/              # Static assets
+│
+├── services/                # Backend microservices
+│   ├── core/               # Django REST API
+│   │   ├── authentication/  # Auth system
+│   │   ├── challenges/      # Challenge management
+│   │   ├── learning/        # Learning logic
+│   │   ├── xpoint/          # XP economy
+│   │   ├── store/           # Marketplace
+│   │   ├── payments/        # Razorpay integration
+│   │   ├── posts/           # Social posts
+│   │   ├── notifications/   # Push notifications
+│   │   ├── achievements/    # Badge system
+│   │   ├── certificates/    # Certificate generation
+│   │   ├── users/           # User profiles
+│   │   ├── administration/  # Admin tools
+│   │   └── project/         # Django project config
+│   │
+│   ├── chat/               # WebSocket chat service
+│   ├── ai/                 # AI tutoring service
+│   └── executor/           # Code execution sandbox
+│
+├── nginx/                  # Gateway configuration
+└── docs/                   # Documentation
+
+================================================================================
+ACCESS POINTS (Development)
+================================================================================
+
+Frontend:        http://localhost:5173
+API Gateway:     http://localhost/api/
+Django Admin:    http://localhost/admin/
+API Docs:        http://localhost/api/docs/
+Health Check:    http://localhost/health/
+
+================================================================================
+QUICK START
+================================================================================
+
+1. Clone repository
+2. Copy .env.example files and configure
+3. Start backend: cd services && docker compose up -d --build
+4. Start frontend: cd frontend && npm install && npm run dev
+5. Access at http://localhost:5173
+
+For detailed setup instructions, see: SETUP.txt
+
+================================================================================
+SECURITY HIGHLIGHTS
+================================================================================
+
+✓ JWT token rotation with Redis blacklisting
+✓ Sandboxed code execution (AST + Docker + gVisor)
+✓ Rate limiting on all endpoints
+✓ XSS and CSRF protection
+✓ HttpOnly cookies for tokens
+✓ Non-root container users
+✓ Network isolation for databases
+✓ Internal service authentication
+✓ Content Security Policy headers
+
+================================================================================
+MONITORING & OBSERVABILITY
+================================================================================
+
+- Sentry: Error tracking across all services
+- Request ID tracing: End-to-end request correlation
+- Structured logging: JSON format for log aggregation
+- Health checks: All services monitored
+- Celery task tracking: Admin can view task status
+
+================================================================================
+LICENSE
+================================================================================
+
+MIT License - See LICENSE file for details
+
+================================================================================
+CONTACT & SUPPORT
+================================================================================
+
+GitHub: https://github.com/your-org/CLASHCODE
+Documentation: See docs/ folder
+Issues: https://github.com/your-org/CLASHCODE/issues
+
+================================================================================
+Last Updated: 2026-04-26
+Version: 1.0.0
+================================================================================

@@ -9,6 +9,7 @@ from .views import (
     UserFollowingView,
     SuggestedUsersView,
     ContributionHistoryView,
+    MediaUploadView,
 )
 
 urlpatterns = [
@@ -35,4 +36,5 @@ urlpatterns = [
         UserFollowingView.as_view(),
         name="user_following",
     ),
+    path("media/upload/", MediaUploadView.as_view(), name="media_upload"),
 ]

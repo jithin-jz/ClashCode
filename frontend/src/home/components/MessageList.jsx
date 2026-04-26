@@ -4,12 +4,13 @@ import {
   Lock,
   MessageCircle,
   User,
-  Edit,
   Trash2,
-  Check,
-  X,
+  Edit,
   Pin,
   Smile,
+  CheckCheck,
+  X,
+  Check,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 
@@ -87,38 +88,38 @@ const ReactionBar = ({ reactions, onReact, username }) => {
   const hasReactions = reactions && Object.keys(reactions).length > 0;
 
   return (
-    <div className="flex items-center gap-1 flex-wrap mt-1 relative">
+    <div className="flex items-center gap-1.5 flex-wrap relative">
       {hasReactions &&
         Object.entries(reactions).map(([emoji, users]) => (
           <button
             key={emoji}
             onClick={() => onReact(emoji)}
-            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all ${
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all shadow-sm ${
               users.includes(username)
-                ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                : "bg-white/5 border-white/10 text-neutral-400 hover:bg-white/10"
+                ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/35"
+                : "bg-white/10 border-white/20 text-neutral-300 hover:bg-white/20 hover:border-white/30"
             }`}
             title={users.join(", ")}
           >
-            <span>{emoji}</span>
-            <span className="font-mono text-[9px]">{users.length}</span>
+            <span className="text-sm">{emoji}</span>
+            <span className="font-mono text-[10px] font-semibold">{users.length}</span>
           </button>
         ))}
       <div className="relative" ref={pickerRef}>
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="w-5 h-5 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-400 hover:bg-white/5 transition-all"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-500 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all"
           title="Add reaction"
         >
-          <Smile size={10} />
+          <Smile size={14} />
         </button>
         <AnimatePresence>
           {showPicker && (
             <Motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 5 }}
+              initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 5 }}
-              className="absolute bottom-7 left-0 z-50 flex gap-1 p-1.5 bg-[#111] border border-[#222] rounded-lg shadow-xl"
+              exit={{ opacity: 0, scale: 0.8, y: 10 }}
+              className="absolute bottom-8 left-0 z-50 flex gap-1.5 p-2 bg-[#0a0a0a] border border-white/20 rounded-xl shadow-2xl backdrop-blur-xl"
             >
               {REACTION_EMOJIS.map((emoji) => (
                 <button
@@ -127,7 +128,7 @@ const ReactionBar = ({ reactions, onReact, username }) => {
                     onReact(emoji);
                     setShowPicker(false);
                   }}
-                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-sm"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/15 hover:scale-110 transition-all text-base"
                 >
                   {emoji}
                 </button>
@@ -148,8 +149,26 @@ const MessageList = ({
   deleteMessage,
   toggleReaction,
   pinMessage,
+  loadMore,
+  hasMore,
+  isLoadingMore,
+  markAsRead,
+  searchResults = [],
+  isSearching = false,
 }) => {
   const scrollRef = React.useRef(null);
+  
+  // Mark last message as read if it's from others
+  useEffect(() => {
+    if (!user || !messages.length) return;
+    const lastMsg = messages[messages.length - 1];
+    const isOwn = lastMsg.user_id === user.user_id;
+    const alreadyRead = lastMsg.read_by?.includes(user.username);
+
+    if (!isOwn && !alreadyRead) {
+      markAsRead(lastMsg.timestamp);
+    }
+  }, [messages, user, markAsRead]);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [editingMsgId, setEditingMsgId] = useState(null);
   const [editContent, setEditContent] = useState("");
@@ -249,12 +268,37 @@ const MessageList = ({
     );
   }
 
+  const displayedMessages = searchResults.length > 0 ? searchResults : messages;
+
   return (
     <div
       ref={scrollRef}
       onScroll={handleScroll}
-      className="h-full overflow-y-auto px-4 py-4 space-y-4 bg-transparent scroll-smooth"
+      className="h-full overflow-y-auto px-4 py-6 scrollbar-hide space-y-8 flex flex-col"
     >
+      {searchResults.length > 0 && (
+        <div className="shrink-0 pb-4 border-b border-white/5">
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/60 mb-1">
+            Search Results
+          </h4>
+          <p className="text-[9px] text-neutral-600 font-mono">
+            {searchResults.length} transmissions found matching query
+          </p>
+        </div>
+      )}
+
+      {hasMore && !searchResults.length && (
+        <div className="flex justify-center pb-4">
+          <button
+            onClick={loadMore}
+            disabled={isLoadingMore}
+            className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-emerald-400 disabled:opacity-50 transition-colors"
+          >
+            {isLoadingMore ? "Loading signal..." : "Load older transmissions"}
+          </button>
+        </div>
+      )}
+
       {messages.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-center py-20 px-6">
           <div className="relative mb-8">
@@ -275,8 +319,11 @@ const MessageList = ({
         </div>
       )}
 
-      {messages.map((msg, idx) => {
-        const isOwn = msg.user_id === user?.id;
+      {displayedMessages.map((msg, index) => {
+        // Compare using user_id or username as fallback
+        const isOwn = msg.user_id === user?.user_id || 
+                     (msg.user_id && user?.user_id && String(msg.user_id) === String(user.user_id)) ||
+                     msg.username === user?.username;
         const metadata = userMetadata[msg.user_id] || {
           username: msg.username,
           avatar_url: msg.avatar_url,
@@ -293,74 +340,64 @@ const MessageList = ({
           return `${baseUrl}${rawUrl}`;
         })();
 
+        // Debug: Log first message to check structure
+        if (index === 0) {
+          console.log('Message debug:', { 
+            msgUserId: msg.user_id, 
+            userUserId: user?.user_id, 
+            msgUsername: msg.username, 
+            userUsername: user?.username, 
+            isOwn 
+          });
+        }
+
         return (
           <Motion.div
-            key={idx}
+            key={msg.timestamp || index}
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className={`flex gap-3.5 ${isOwn ? "flex-row-reverse" : "flex-row"} group`}
+            className={`flex gap-2 ${isOwn ? "justify-end" : "justify-start"} group`}
           >
-            {/* Avatar */}
-            <Link
-              to={`/profile/${metadata.username}`}
-              className={`relative shrink-0 w-7 h-7 rounded-full overflow-hidden border transition-all duration-300 shadow-sm ${
-                isOwn
-                  ? "border-emerald-500/20 hover:border-emerald-500"
-                  : "border-white/5 hover:border-white/20"
-              }`}
-            >
-              <ChatAvatar
-                isOwn={isOwn}
-                avatarUrl={formattedAvatar}
-                username={metadata.username}
-              />
-            </Link>
+            {/* Other users' avatar (left side) */}
+            {!isOwn && (
+              <Link
+                to={`/profile/${metadata.username}`}
+                className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300 shadow-sm"
+              >
+                <ChatAvatar
+                  isOwn={false}
+                  avatarUrl={formattedAvatar}
+                  username={metadata.username}
+                />
+              </Link>
+            )}
 
             {/* Message Content */}
             <div
-              className={`flex flex-col gap-1 max-w-[80%] ${isOwn ? "items-end" : "items-start"}`}
+              className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}
             >
-              {/* Username & Time */}
-              <div
-                className={`flex items-center gap-1.5 px-1 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
-              >
+              {/* Username (only for others) */}
+              {!isOwn && (
                 <Link
                   to={`/profile/${metadata.username}`}
-                  className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                    isOwn
-                      ? "text-emerald-500/70 hover:text-emerald-500"
-                      : "text-neutral-500 hover:text-neutral-300"
-                  }`}
+                  className="text-[10px] font-bold text-neutral-400 hover:text-neutral-300 transition-colors ml-1"
                 >
-                  {isOwn ? "You" : metadata.username}
+                  {metadata.username}
                 </Link>
-                <span className="text-[8px] font-mono text-neutral-700 tracking-tighter">
-                  {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  })}
-                </span>
-              </div>
+              )}
 
-              {/* Message Bubble & Actions */}
+              {/* Message Bubble */}
               <div
-                className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                className={`
+                  relative px-4 py-2.5 text-[13px] leading-relaxed transition-all duration-300 rounded-2xl shadow-md
+                  ${
+                    isOwn
+                      ? "bg-gradient-to-br from-emerald-600/30 via-emerald-500/20 to-emerald-600/25 border border-emerald-500/40 text-emerald-50 rounded-br-none"
+                      : "bg-white/[0.05] backdrop-blur-md border border-white/[0.1] text-neutral-200 rounded-bl-none hover:bg-white/[0.07]"
+                  }
+                  ${msg.message?.startsWith("IMAGE:") ? "p-2 !rounded-xl" : ""}
+                `}
               >
-                <div
-                  className={`
-                    relative px-3.5 py-2.5 text-[12px] leading-relaxed transition-all duration-300 rounded-2xl shrink-0 max-w-full shadow-lg
-                    ${
-                      isOwn
-                        ? "bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-400/20 border border-emerald-500/30 text-emerald-50 shadow-emerald-950/20 rounded-tr-none"
-                        : "bg-white/[0.03] backdrop-blur-md border border-white/[0.08] text-neutral-200 rounded-tl-none hover:bg-white/[0.05]"
-                    }
-                    ${msg.message?.startsWith("IMAGE:") ? "p-1.5 !rounded-lg" : ""}
-                  `}
-                >
-                  {isOwn && (
-                    <div className="absolute top-0 right-[-4px] w-2 h-2 bg-emerald-500/40 rounded-full blur-[4px] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
                   {msg.message?.startsWith("IMAGE:") ? (
                     (() => {
                       const [imageUrl, ownerUsername] = msg.message
@@ -423,6 +460,23 @@ const MessageList = ({
                   ) : (
                     <RenderMessage text={msg.message} />
                   )}
+
+                  {/* Time stamp inside bubble */}
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    <span className="text-[9px] font-mono text-neutral-400/60 tracking-tighter">
+                      {new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </span>
+                    {isOwn && (
+                      <CheckCheck 
+                        size={10} 
+                        className={`${(msg.read_by?.length > 0) ? "text-emerald-400" : "text-neutral-400/40"}`} 
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons (visible on hover) */}
@@ -457,14 +511,15 @@ const MessageList = ({
                     )}
                   </div>
                 )}
-              </div>
 
-              {/* Reaction Bar */}
-              <ReactionBar
-                reactions={msg.reactions}
-                onReact={(emoji) => toggleReaction(msg.timestamp, emoji)}
-                username={user?.username}
-              />
+              {/* Reaction Bar - positioned below message */}
+              <div className={`flex items-center gap-1 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                <ReactionBar
+                  reactions={msg.reactions}
+                  onReact={(emoji) => toggleReaction(msg.timestamp, emoji)}
+                  username={user?.username}
+                />
+              </div>
             </div>
           </Motion.div>
         );

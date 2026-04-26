@@ -76,11 +76,23 @@ export const useChallenge = (id) => {
     mutationFn: (userCode) => challengesApi.execute(id, userCode),
     onMutate: () => {
       setLastRunPassed(false);
-      setOutput([{ type: "log", content: "⚙️ Initializing CLASHCODE Sandbox..." }]);
+      setOutput([]);
     },
     onSuccess: (data) => {
       if (data.stdout) setOutput((prev) => [...prev, { type: "log", content: data.stdout }]);
-      if (data.stderr) setOutput((prev) => [...prev, { type: "error", content: data.stderr }]);
+      
+      // Only show stderr if it's NOT a security error
+      if (data.stderr) {
+        const isSecurityError = data.stderr.includes("Security Error") || data.stderr.includes("Security Violation");
+        if (isSecurityError) {
+          // Log security errors to console only, not in UI
+          console.error("🔒 Code Security Error:", data.stderr);
+          setOutput((prev) => [...prev, { type: "error", content: "❌ Code execution blocked. Check browser console for details." }]);
+        } else {
+          setOutput((prev) => [...prev, { type: "error", content: data.stderr }]);
+        }
+      }
+      
       if (!data.stdout && !data.stderr) setOutput((prev) => [...prev, { type: "log", content: "Execution finished with no output." }]);
 
       if (data.passed) {
@@ -93,7 +105,8 @@ export const useChallenge = (id) => {
     },
     onError: (err) => {
       const errorMsg = err.response?.data?.error || "Execution failed. Server might be down.";
-      setOutput((prev) => [...prev, { type: "error", content: `❌ ${errorMsg}` }]);
+      console.error("❌ Code Execution Error:", errorMsg);
+      setOutput((prev) => [...prev, { type: "error", content: "❌ Execution failed. Check browser console for details." }]);
     }
   });
 

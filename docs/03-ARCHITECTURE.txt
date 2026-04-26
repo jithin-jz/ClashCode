@@ -1,0 +1,802 @@
+================================================================================
+CLASHCODE - ARCHITECTURE OVERVIEW
+================================================================================
+
+TABLE OF CONTENTS
+================================================================================
+1. High-Level Architecture
+2. Microservices Design
+3. Database Architecture
+4. Authentication Flow
+5. Code Execution Pipeline
+6. AI Tutoring System
+7. Real-time Chat System
+8. Frontend Architecture
+9. Security Architecture
+10. Deployment Architecture
+
+================================================================================
+1. HIGH-LEVEL ARCHITECTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────┐
+│                        USER BROWSER                          │
+│                  (React 19 Frontend)                         │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         │ HTTP/HTTPS + WebSocket
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                    NGINX GATEWAY                             │
+│                  (Reverse Proxy :80)                         │
+└──┬────────────┬─────────────┬──────────────┬────────────────┘
+   │            │             │              │
+   │            │             │              │
+┌──▼─────┐ ┌───▼──────┐ ┌───▼───────┐ ┌───▼──────────┐
+│  CORE  │ │   CHAT   │ │    AI     │ │   EXECUTOR   │
+│ :8000  │ │  :8001   │ │  :8002    │ │   :8011      │
+│ Django │ │ FastAPI  │ │ FastAPI   │ │   FastAPI    │
+└──┬─────┘ └───┬──────┘ └───┬───────┘ └──────────────┘
+   │           │            │
+   │           │            │
+┌──▼───────────▼────────────▼──────────────────────────────┐
+│                   INFRASTRUCTURE                          │
+│  ┌──────────┐  ┌──────┐  ┌────────┐  ┌─────────────┐   │
+│  │PostgreSQL│  │Redis │  │ChromaDB│  │DynamoDB     │   │
+│  │   :5432  │  │:6379 │  │ :8000  │  │Local :8008  │   │
+│  └──────────┘  └──────┘  └────────┘  └─────────────┘   │
+└──────────────────────────────────────────────────────────┘
+
+================================================================================
+2. MICROSERVICES DESIGN
+================================================================================
+
+CORE SERVICE (Django 5)
+========================
+Purpose: Main business logic and data management
+
+Components:
+- authentication/  - User auth (JWT, OAuth, OTP)
+- challenges/      - Challenge content and metadata
+- learning/        - Learning progression logic
+- xpoint/          - XP economy and transactions
+- store/           - Marketplace items
+- payments/        - Razorpay payment processing
+- posts/           - Social posts and interactions
+- notifications/   - Push notifications (FCM)
+- achievements/    - Badge and achievement system
+- certificates/    - Certificate generation
+- users/           - User profiles
+- administration/  - Admin dashboard and tools
+
+Tech Stack:
+- Django 5.0
+- Django REST Framework
+- Celery (async tasks)
+- PostgreSQL
+- Redis
+
+Key Patterns:
+- Service-View separation
+- Repository pattern
+- Signal-based notifications
+- Atomic transactions for XP
+
+
+CHAT SERVICE (FastAPI)
+=======================
+Purpose: Real-time messaging and presence
+
+Components:
+- WebSocket handlers
+- Redis Pub/Sub integration
+- DynamoDB message storage
+- Presence tracking
+- Rate limiting
+
+Tech Stack:
+- FastAPI
+- WebSockets
+- Redis Pub/Sub
+- DynamoDB Local
+
+Features:
+- Real-time message delivery
+- User online/offline status
+- Typing indicators
+- Message history with pagination
+- Duplicate message filtering
+
+
+AI SERVICE (FastAPI)
+=====================
+Purpose: Intelligent tutoring and code analysis
+
+Components:
+- RAG pipeline (LangChain)
+- ChromaDB vector store
+- Hint generation system
+- Code analyzer
+- LLM integration
+
+Tech Stack:
+- FastAPI
+- LangChain
+- ChromaDB
+- HuggingFace embeddings
+- Multiple LLM providers (OpenAI, Groq, etc.)
+
+Features:
+- Contextual hints (3 levels)
+- Code quality analysis
+- Complexity analysis
+- Best practices suggestions
+- Challenge-specific assistance
+
+
+EXECUTOR SERVICE (FastAPI)
+===========================
+Purpose: Secure code execution
+
+Components:
+- AST validator
+- Docker container manager
+- Resource monitor
+- Output capture
+
+Tech Stack:
+- FastAPI
+- Docker SDK
+- Python AST module
+
+Security Layers:
+1. AST validation (blocks dangerous code)
+2. Docker container isolation
+3. Resource limits (CPU, memory, time)
+4. Network isolation
+5. Non-root user
+6. Optional gVisor runtime
+
+================================================================================
+3. DATABASE ARCHITECTURE
+================================================================================
+
+POSTGRESQL (Primary Database)
+==============================
+Stores:
+- User accounts and profiles
+- Challenges and content
+- Submissions and scores
+- XP transactions (immutable ledger)
+- Store items and purchases
+- Posts and comments
+- Achievements
+- Certificates
+- Admin audit logs
+
+Key Tables:
+- users_user (custom user model)
+- challenges_challenge
+- learning_submission
+- xpoint_xpttransaction (ledger)
+- store_storeitem
+- posts_post
+- notifications_notification
+
+Indexes:
+- User: username, email
+- Challenges: difficulty, topic
+- Submissions: user_id, created_at
+- XP transactions: user_id, created_at
+
+
+REDIS (Cache & Message Broker)
+===============================
+Uses:
+- Session storage
+- Token blacklisting
+- Rate limiting
+- Celery message broker
+- Chat Pub/Sub
+- Presence tracking
+- OTP storage
+- Caching layer
+
+Redis DBs:
+- DB 0: Celery broker & cache
+- DB 1: Django cache
+- DB 2: Sessions & tokens
+
+
+CHROMADB (Vector Database)
+===========================
+Purpose: AI RAG system
+
+Stores:
+- Challenge embeddings
+- Hint templates
+- Code examples
+
+Used for:
+- Semantic search
+- Context retrieval
+- Hint generation
+
+
+DYNAMODB LOCAL (Chat Messages)
+===============================
+Purpose: Long-term chat message storage
+
+Stores:
+- Chat message history
+- Room metadata
+
+Benefits:
+- Scalable NoSQL storage
+- Fast retrieval
+- Automatic indexing
+
+================================================================================
+4. AUTHENTICATION FLOW
+================================================================================
+
+JWT AUTHENTICATION
+===================
+
+Login Flow:
+1. User submits credentials (email/OTP or OAuth)
+2. Backend validates credentials
+3. Generate JWT tokens:
+   - Access token (15 min expiry)
+   - Refresh token (7 days expiry)
+4. Send access token in response body
+5. Set refresh token in HttpOnly cookie
+6. Frontend stores access token in memory
+
+Request Flow:
+1. Frontend sends request with Authorization: Bearer <token>
+2. Backend validates token signature
+3. Check token not blacklisted in Redis
+4. Process request
+5. Return response
+
+Token Refresh:
+1. Access token expires (401 response)
+2. Frontend calls /auth/refresh/ endpoint
+3. Backend validates refresh token from cookie
+4. Generate new access + refresh tokens
+5. Old refresh token blacklisted (rotation)
+6. Return new tokens
+
+Token Revocation:
+- On logout: blacklist current tokens
+- On password change: blacklist all user tokens
+- Tokens stored in Redis with TTL
+
+OAUTH 2.0 FLOW
+===============
+
+GitHub/Google Login:
+1. User clicks "Login with GitHub/Google"
+2. Frontend requests OAuth URL from backend
+3. Backend generates state parameter
+4. User redirected to OAuth provider
+5. User authorizes application
+6. Provider redirects back with authorization code
+7. Frontend sends code to backend
+8. Backend exchanges code for user info
+9. Create or update user account
+10. Generate JWT tokens
+11. Return to frontend
+
+Email Bridging:
+- If OAuth email matches existing account
+- Automatically link OAuth provider
+- No duplicate accounts created
+
+OTP LOGIN
+==========
+
+Passwordless Flow:
+1. User enters email
+2. Backend generates 6-digit OTP
+3. Store OTP in Redis with 5-min TTL
+4. Send OTP via email (SMTP)
+5. User enters OTP
+6. Backend validates OTP
+7. Delete OTP from Redis
+8. Generate JWT tokens
+
+Rate Limiting:
+- Max 5 OTP attempts per email
+- Max 5 OTP requests per email per hour
+- Prevents brute force attacks
+
+================================================================================
+5. CODE EXECUTION PIPELINE
+================================================================================
+
+EXECUTION FLOW
+===============
+
+1. User writes code in Monaco editor
+2. User clicks "Submit" or "Run"
+3. Frontend sends code to backend:
+   POST /api/challenges/{id}/submit/
+   {
+     "code": "def solution():\n    ..."
+   }
+
+4. Backend validates request:
+   - Check rate limit (12 req/min)
+   - Validate user authenticated
+   - Check challenge exists
+
+5. Backend sends to Executor service:
+   POST http://executor:8011/execute
+   {
+     "code": "...",
+     "stdin": "",
+     "timeout": 5
+   }
+
+6. Executor processes code:
+   a. AST Validation:
+      - Parse code into AST
+      - Check for dangerous patterns
+      - Block prohibited imports (os, sys, subprocess, etc.)
+   
+   b. Create Docker container:
+      - Minimal Python image
+      - No network access
+      - Resource limits applied
+      - Non-root user
+   
+   c. Execute code:
+      - Write code to temp file
+      - Run with timeout
+      - Capture stdout, stderr
+      - Monitor resource usage
+   
+   d. Cleanup:
+      - Kill container
+      - Remove temp files
+      - Return results
+
+7. Executor returns result:
+   {
+     "success": true,
+     "stdout": "Hello World\n",
+     "stderr": "",
+     "exit_code": 0,
+     "execution_time_ms": 45
+   }
+
+8. Backend validates against test cases:
+   - Compare output with expected
+   - Calculate stars based on time
+   - Award XP if passed
+
+9. Return result to frontend:
+   {
+     "status": "success",
+     "test_cases_passed": 5,
+     "test_cases_total": 5,
+     "stars_earned": 3,
+     "xp_gained": 50
+   }
+
+SECURITY MEASURES
+==================
+
+AST Validation:
+- Blocks: import os, import sys, subprocess, socket, etc.
+- Allows: standard library (math, collections, etc.)
+- Prevents: infinite loops, recursion depth limits
+
+Docker Isolation:
+- --network=none (no internet)
+- --memory=128m (memory limit)
+- --cpus=1.0 (CPU limit)
+- --pids-limit=128 (process limit)
+- Non-root user (10001:10001)
+- Read-only filesystem
+- tmpfs for /tmp
+
+gVisor (Optional):
+- Kernel-level isolation
+- Additional security layer
+- Enabled via CONTAINER_RUNTIME=runsc
+
+================================================================================
+6. AI TUTORING SYSTEM
+================================================================================
+
+RAG ARCHITECTURE
+=================
+
+Retrieval-Augmented Generation (RAG):
+
+1. User requests hint for challenge
+2. Backend sends request to AI service:
+   POST /ai/hint/
+   {
+     "challenge_id": "level_025_python-025",
+     "user_code": "def solution():\n    pass",
+     "hint_level": 1
+   }
+
+3. AI service retrieves context:
+   a. Query ChromaDB for challenge metadata
+   b. Get challenge description, examples
+   c. Get hint templates for this level
+
+4. Construct prompt:
+   - System prompt (AI behavior)
+   - Challenge context (description, tests)
+   - User's current code
+   - Hint level requested
+
+5. Send to LLM:
+   - OpenAI GPT-4, or
+   - Groq LLaMA, or
+   - Other configured provider
+
+6. Receive and cache response:
+   - Store in Redis (10 min TTL)
+   - Consistent hints for same request
+
+7. Return to user
+
+HINT LEVELS
+============
+
+Level 1 - Conceptual:
+- General approach
+- Algorithm hints
+- No code examples
+
+Level 2 - Guidance:
+- Specific function names
+- Data structure suggestions
+- Pseudocode
+
+Level 3 - Implementation:
+- Code snippets
+- Specific logic
+- Near-complete solution
+
+CODE ANALYSIS
+==============
+
+When user requests code review:
+
+1. User submits code for analysis
+2. AI service analyzes:
+   - Time complexity
+   - Space complexity
+   - Code style
+   - Best practices
+   - Edge cases
+   - Performance issues
+
+3. Returns structured feedback:
+   {
+     "complexity": "O(n) time, O(n) space",
+     "suggestions": [...],
+     "best_practices": [...],
+     "score": 85
+   }
+
+================================================================================
+7. REAL-TIME CHAT SYSTEM
+================================================================================
+
+WEBSOCKET CONNECTION
+=====================
+
+Connection Flow:
+1. User opens chat
+2. Frontend establishes WebSocket:
+   const ws = new WebSocket('wss://domain/ws/chat/')
+
+3. Authenticate:
+   ws.send(JSON.stringify({
+     type: 'auth',
+     token: 'jwt_token'
+   }))
+
+4. Server validates token
+5. Connection established
+6. User marked as "online"
+
+Message Flow:
+1. User sends message
+2. Frontend sends via WebSocket:
+   ws.send(JSON.stringify({
+     type: 'message',
+     room_id: 'general',
+     content: 'Hello!'
+   }))
+
+3. Server receives message
+4. Validates and sanitizes
+5. Stores in DynamoDB
+6. Publishes to Redis Pub/Sub
+7. All connected users in room receive message
+8. Frontend updates UI
+
+REDIS PUB/SUB
+==============
+
+Purpose: Scale across multiple instances
+
+Flow:
+1. Instance A receives message
+2. Publishes to Redis channel: chat:room:{room_id}
+3. All instances subscribe to channel
+4. Each instance forwards to connected users
+5. Ensures message delivery even with multiple servers
+
+PRESENCE TRACKING
+==================
+
+Online Status:
+- Stored in Redis: user:{id}:presence
+- TTL: 60 seconds
+- Updated on WebSocket activity
+- Expires if user disconnects
+
+Typing Indicators:
+- Sent via WebSocket
+- Stored temporarily in Redis
+- Broadcast to room members
+- Auto-expires after 3 seconds
+
+MESSAGE HISTORY
+================
+
+REST API for history:
+GET /chat/history/{room_id}?last_timestamp=...&limit=50
+
+Benefits:
+- Cursor-based pagination
+- Efficient loading
+- Infinite scroll support
+- Reduces WebSocket payload
+
+================================================================================
+8. FRONTEND ARCHITECTURE
+================================================================================
+
+REACT APPLICATION STRUCTURE
+============================
+
+src/
+├── App.jsx                # Main app with routing
+├── main.jsx               # Entry point
+├── auth/                  # Login & OAuth
+├── admin/                 # Admin dashboard
+├── game/                  # Challenge workspace
+├── home/                  # Home page
+├── pages/                 # Route pages
+├── components/            # Reusable UI
+├── services/              # API clients
+├── stores/                # Zustand stores
+├── hooks/                 # Custom hooks
+└── bones/                 # Skeleton loaders
+
+STATE MANAGEMENT
+=================
+
+Zustand Stores:
+- useAuthStore: Authentication state
+- useGameStore: Game/challenge state
+- useChatStore: Chat messages
+- useNotificationStore: Notifications
+- useStore: Marketplace state
+- useProfileStore: User profile
+- useAdminStore: Admin state
+
+Benefits:
+- Minimal boilerplate
+- No providers needed
+- TypeScript support
+- DevTools integration
+
+DATA FETCHING
+==============
+
+TanStack Query (React Query):
+- Automatic caching
+- Background refetching
+- Optimistic updates
+- Error handling
+- Pagination support
+
+Example:
+const { data, isLoading, error } = useQuery({
+  queryKey: ['challenges'],
+  queryFn: () => fetchChallenges()
+})
+
+ZERO-LAYOUT-SHIFT LOADING
+==========================
+
+Boneyard-js Framework:
+1. Define skeleton structure
+2. Matches final layout exactly
+3. No layout shift when data loads
+4. Smooth transition with animation
+
+Example:
+- Profile skeleton has exact same dimensions
+- Replaced by actual content seamlessly
+- User perceives faster loading
+
+CODE SPLITTING
+===============
+
+Lazy-loaded routes:
+const ChallengeWorkspace = lazy(() => 
+  import('./game/ChallengeWorkspace')
+);
+
+Benefits:
+- Smaller initial bundle
+- Faster page load
+- Code loaded on demand
+- Better performance
+
+ERROR HANDLING
+===============
+
+Global Axios Interceptor:
+1. Request fails (401)
+2. Check if refresh needed
+3. Queue failed requests
+4. Refresh token
+5. Retry queued requests
+6. All requests succeed transparently
+
+Error Display:
+- Toast notifications (Sonner)
+- Request ID shown for support
+- Graceful fallbacks
+- Error boundaries
+
+================================================================================
+9. SECURITY ARCHITECTURE
+================================================================================
+
+DEFENSE IN DEPTH
+=================
+
+Layer 1: Network
+- Nginx gateway (single entry point)
+- Database ports not exposed
+- Internal service authentication
+- CORS configuration
+
+Layer 2: Application
+- JWT authentication
+- Rate limiting
+- Input validation
+- SQL injection prevention (ORM)
+- XSS protection
+
+Layer 3: Execution
+- AST validation
+- Docker isolation
+- Resource limits
+- Import blocking
+- gVisor runtime
+
+Layer 4: Data
+- Encrypted passwords (bcrypt)
+- Token rotation
+- Redis blacklisting
+- Audit logging
+- Immutable XP ledger
+
+SPECIFIC PROTECTIONS
+=====================
+
+XSS Prevention:
+- React auto-escapes output
+- CSP headers
+- Sanitize user input
+- HttpOnly cookies
+
+CSRF Prevention:
+- SameSite cookie attribute
+- CSRF tokens for state changes
+- CORS configuration
+
+SQL Injection:
+- Django ORM (parameterized queries)
+- No raw SQL
+- Input validation
+
+Rate Limiting:
+- Per-endpoint limits
+- Redis-backed
+- Anonymous and user limits
+- Custom throttles
+
+Token Security:
+- Short-lived access tokens (15 min)
+- HttpOnly refresh tokens
+- Token rotation
+- Blacklisting on logout
+
+================================================================================
+10. DEPLOYMENT ARCHITECTURE
+================================================================================
+
+DEVELOPMENT
+============
+
+┌─ Developer Machine ─────────────────────┐
+│                                          │
+│  Frontend (localhost:5173)              │
+│       ↓                                  │
+│  Docker Compose                          │
+│  ├── Nginx (:80)                        │
+│  ├── Core (:8000)                       │
+│  ├── Chat (:8001)                       │
+│  ├── AI (:8002)                         │
+│  ├── Executor (:8011)                   │
+│  ├── PostgreSQL                         │
+│  ├── Redis                              │
+│  ├── ChromaDB                           │
+│  └── DynamoDB                           │
+└──────────────────────────────────────────┘
+
+PRODUCTION
+===========
+
+┌─ Cloud Server ──────────────────────────┐
+│                                          │
+│  Internet                                │
+│       ↓                                  │
+│  SSL Certificate (Let's Encrypt)        │
+│       ↓                                  │
+│  Nginx (:443)                           │
+│       ↓                                  │
+│  Docker Compose (Production)            │
+│  ├── Core (Gunicorn, 3+ workers)        │
+│  ├── Chat (2+ instances)                │
+│  ├── AI (1+ instances)                  │
+│  ├── Executor (1+ instances)            │
+│  ├── Celery Worker (3+ workers)         │
+│  ├── Celery Beat                        │
+│  ├── PostgreSQL (backups)               │
+│  ├── Redis                              │
+│  ├── ChromaDB                           │
+│  └── Monitoring (Prometheus, Grafana)   │
+└──────────────────────────────────────────┘
+
+SCALING STRATEGY
+=================
+
+Horizontal Scaling:
+- Core: Increase Gunicorn workers
+- Chat: Add more instances (Redis Pub/Sub)
+- Workers: Scale Celery workers
+- Executor: Multiple instances
+
+Vertical Scaling:
+- Increase container resources
+- Database connection pooling
+- Query optimization
+
+Database Scaling:
+- Read replicas for analytics
+- Connection pooling (PgBouncer)
+- Query optimization
+- Index tuning
+
+================================================================================
+Last Updated: 2026-04-26
+================================================================================

@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Gem } from "lucide-react";
+import { Sparkles, Gem, Lock } from "lucide-react";
 const Spinner = ({ className = "" }) => (
   <div className={`rounded-full border border-white/20 animate-spin border-t-white/60 ${className}`} />
 );
@@ -35,6 +35,7 @@ const AIAssistantPane = ({
   hintLevel,
   ai_hints_purchased,
   userXp,
+  isCodePassed = false, // New prop: whether code has passed tests
 }) => {
   const [hintHistory, setHintHistory] = React.useState([]);
   const scrollRef = React.useRef(null);
@@ -236,7 +237,8 @@ const AIAssistantPane = ({
       {/* Action Bar - Fixed at absolute bottom of Card */}
       <div className="p-3 border-t border-white/5 bg-black space-y-2 shrink-0">
         {isMaxReached ? (
-          <div className="w-full bg-[#0a0a0a] text-neutral-600 border border-white/5 text-[10px] font-semibold h-10 rounded-lg cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider">
+          <div className="w-full bg-purple-900/30 text-purple-400/60 border border-purple-500/20 text-[10px] font-semibold h-10 rounded-lg cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider">
+            <Gem size={12} className="opacity-50" />
             Max Hints Reached
           </div>
         ) : isLocked ? (
@@ -247,31 +249,27 @@ const AIAssistantPane = ({
               disabled={
                 isHintLoading || (userXp !== undefined && userXp < nextCost)
               }
-              className={`w-full text-[10px] font-semibold h-10 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 group relative overflow-hidden uppercase tracking-wider ${
+              className={`w-full text-[10px] font-semibold h-10 rounded-lg transition-all flex items-center justify-center gap-2 group relative overflow-hidden uppercase tracking-wider ${
                 userXp !== undefined && userXp < nextCost
-                  ? "bg-black border border-white/5 text-neutral-700 cursor-not-allowed"
-                  : "bg-white text-[#0a0a0a] hover:bg-neutral-200 border border-transparent"
+                  ? "bg-amber-900/20 border border-amber-500/20 text-amber-600/40 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30"
               }`}
             >
-              {/* Shimmer effect overlay */}
-              {userXp >= nextCost && (
-                <div className="absolute inset-0 bg-black/5 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
-              )}
-
               {isHintLoading ? (
                 <Spinner className="w-3 h-3" />
               ) : (
                 <Sparkles size={12} className="fill-current" />
               )}
               <span className="relative z-10">Get Hint</span>
-              <span className="opacity-50 text-[9px] relative z-10 font-normal ml-1 flex items-center gap-0.5">
+              <span className="opacity-70 text-[9px] relative z-10 font-normal ml-1 flex items-center gap-0.5">
                 (<Gem size={8} className="inline" />
                 {nextCost})
               </span>
             </button>
             {userXp !== undefined && userXp < nextCost && (
-              <div className="text-[9px] text-red-900 text-center font-bold uppercase tracking-tighter">
-                Insufficient <Gem size={8} className="inline text-red-400" />
+              <div className="text-[9px] text-red-400/80 text-center font-bold uppercase tracking-tighter flex items-center justify-center gap-1">
+                <span>Insufficient XP</span>
+                <Gem size={10} className="text-red-400" />
               </div>
             )}
           </div>
@@ -280,7 +278,7 @@ const AIAssistantPane = ({
             type="button"
             onClick={onGetHint}
             disabled={isHintLoading}
-            className="w-full bg-black hover:bg-[#0a0a0a] text-neutral-500 hover:text-neutral-200 border border-white/5 hover:border-white/10 text-[10px] font-semibold h-10 rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+            className="w-full bg-purple-600 hover:bg-purple-500 text-white border border-purple-500/30 text-[10px] font-semibold h-10 rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
           >
             {isHintLoading ? (
               <Spinner className="w-3 h-3" />
@@ -294,15 +292,23 @@ const AIAssistantPane = ({
         <button
           type="button"
           onClick={onAnalyze}
-          disabled={isReviewLoading}
-          className="w-full bg-black hover:bg-[#0a0a0a] text-neutral-600 hover:text-neutral-200 border border-white/5 hover:border-white/10 text-[10px] font-semibold h-10 rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-40"
+          disabled={isReviewLoading || !isCodePassed}
+          className={`w-full text-[10px] font-semibold h-10 rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
+            !isCodePassed
+              ? "bg-slate-800/50 text-slate-500/60 border border-slate-600/20 cursor-not-allowed"
+              : isReviewLoading
+              ? "bg-blue-900/30 text-blue-400/60 border border-blue-500/20"
+              : "bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/30"
+          }`}
         >
           {isReviewLoading ? (
-              <Spinner className="w-3 h-3" />
+            <Spinner className="w-3 h-3" />
+          ) : !isCodePassed ? (
+            <Lock size={12} className="opacity-60" />
           ) : (
             <Sparkles size={12} />
           )}
-          {review ? "Re-analyze Code" : "Analyze Code"}
+          {!isCodePassed ? "Locked - Pass Tests First" : review ? "Re-analyze Code" : "Analyze Code"}
         </button>
       </div>
     </section>

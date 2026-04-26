@@ -174,6 +174,13 @@ export const authAPI = {
   getSuggestedUsers: () => api.get("/profiles/users/suggestions/"),
   getContributionHistory: (username) =>
     api.get(`/profiles/users/${username}/stats/contributions/`),
+  uploadMedia: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/profiles/media/upload/", formData, {
+      headers: { "Content-Type": undefined },
+    });
+  },
 
   // Admin endpoints
   getUsers: (params = {}) => api.get("/admin/users/", { params }),

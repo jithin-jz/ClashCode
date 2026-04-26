@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from "react";
-import { X, Pin, Map } from "lucide-react";
+import { X, Pin, Map, Search } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import useChatStore from "../../stores/useChatStore";
 import ChatInput from "../components/ChatInput";
@@ -20,11 +20,22 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
     typingUsers,
     pinnedMessage,
     currentRoom,
+    loadMore,
+    hasMore,
+    isLoadingMore,
+    markAsRead,
+    searchMessages,
+    clearSearch,
+    searchResults,
+    isSearching,
   } = useChatStore();
 
   const [showPicker, setShowPicker] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const searchTimeoutRef = useRef(null);
 
   const pickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
@@ -46,6 +57,15 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showPicker]);
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Visual Viewport API for flexible mobile heights
   useEffect(() => {
@@ -155,14 +175,88 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="h-8 w-8 rounded-xl flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSearch(!showSearch);
+                    if (showSearch) {
+                      setSearchQuery("");
+                      clearSearch();
+                      if (searchTimeoutRef.current) {
+                        clearTimeout(searchTimeoutRef.current);
+                      }
+                    }
+                  }}
+                  className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300 ${showSearch ? "bg-emerald-500/20 text-emerald-400" : "text-neutral-500 hover:text-white hover:bg-white/5"}`}
+                >
+                  <Search size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="h-8 w-8 rounded-xl flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </header>
+
+            {/* Search Bar */}
+            <AnimatePresence>
+              {showSearch && (
+                <Motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="shrink-0 border-b border-[#1a1a1a] bg-[#0d0d0d] overflow-hidden"
+                >
+                  <div className="px-4 py-3">
+                    <div className="relative group">
+                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Search transmissions..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          
+                          // Debounce search
+                          if (searchTimeoutRef.current) {
+                            clearTimeout(searchTimeoutRef.current);
+                          }
+                          
+                          searchTimeoutRef.current = setTimeout(() => {
+                            searchMessages(e.target.value);
+                          }, 300);
+                        }}
+                        className="w-full bg-white/[0.03] border-white/5 focus:border-emerald-500/30 rounded-xl pl-9 pr-10 py-2 text-[11px] text-white transition-all placeholder:text-neutral-600 outline-none"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            clearSearch();
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                    {isSearching && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <span className="text-[9px] text-neutral-500 ml-1">Searching...</span>
+                      </div>
+                    )}
+                  </div>
+                </Motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Pinned Message Banner */}
             <AnimatePresence>
@@ -202,6 +296,12 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                   deleteMessage={deleteMessage}
                   toggleReaction={toggleReaction}
                   pinMessage={pinMessage}
+                  loadMore={loadMore}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  markAsRead={markAsRead}
+                  searchResults={searchResults}
+                  isSearching={isSearching}
                 />
               </div>
             </main>

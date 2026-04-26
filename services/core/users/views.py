@@ -7,7 +7,7 @@ from django.db.models.functions import TruncDate
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, parsers
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -264,3 +264,48 @@ class ContributionHistoryView(APIView):
         ]
 
         return Response(formatted_data, status=status.HTTP_200_OK)
+
+
+class MediaUploadView(APIView):
+    """
+    Generic view to upload media files.
+    Used for chat attachments and other ephemeral media.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (parsers.MultiPartParser, parsers.FormParser)
+
+    @extend_schema(
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "format": "binary"}
+                }
+            }
+        },
+        responses={200: OpenApiTypes.OBJECT},
+        description="Upload a media file and get back the public URL.",
+    )
+    def post(self, request):
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # We can use a temporary model or just save to storage
+        # Since we want it to be simple, we can just save it to a dummy profile field or use a dedicated model
+        # But wait, we have a Post model that handles this.
+        # Let's just use the storage directly.
+        from django.core.files.storage import default_storage
+        import uuid
+        
+        ext = file_obj.name.split(".")[-1]
+        filename = f"chat/{uuid.uuid4()}.{ext}"
+        
+        actual_filename = default_storage.save(filename, file_obj)
+        url = default_storage.url(actual_filename)
+        
+        # If it's a relative URL, prepend the backend URL
+        if not url.startswith("http"):
+            url = build_file_url(request, url)
+            
+        return Response({"url": url}, status=status.HTTP_200_OK)

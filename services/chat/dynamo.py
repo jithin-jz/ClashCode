@@ -115,19 +115,29 @@ class DynamoClient:
         except Exception as e:
             logger.exception("Error saving message to DynamoDB: %s", e)
 
-    async def get_messages(self, room_id: str, limit: int = 50):
+    async def get_messages(self, room_id: str, limit: int = 50, last_timestamp: str | None = None):
         try:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(TABLE_NAME)
-                response = await table.query(
-                    KeyConditionExpression=Key("room_id").eq(room_id),
-                    ScanIndexForward=False,  # Get latest first
-                    Limit=limit,
-                )
-                return response.get("Items", [])
+                query_kwargs = {
+                    "KeyConditionExpression": Key("room_id").eq(room_id),
+                    "ScanIndexForward": False,  # Get latest first
+                    "Limit": limit,
+                }
+                if last_timestamp:
+                    query_kwargs["ExclusiveStartKey"] = {
+                        "room_id": room_id,
+                        "timestamp": last_timestamp,
+                    }
+                
+                response = await table.query(**query_kwargs)
+                return {
+                    "items": response.get("Items", []),
+                    "last_evaluated_key": response.get("LastEvaluatedKey")
+                }
         except Exception as e:
             logger.exception("Error fetching messages from DynamoDB: %s", e)
-            return []
+            return {"items": [], "last_evaluated_key": None}
 
     async def get_message(self, room_id: str, timestamp: str) -> dict[str, Any] | None:
         try:
@@ -215,6 +225,49 @@ class DynamoClient:
         except Exception as e:
             logger.exception("Error toggling reaction in DynamoDB: %s", e)
             return {"ok": False, "reason": "error", "reactions": {}}
+
+
+    async def mark_as_read(self, room_id: str, timestamp: str, username: str):
+        """Add a user to the read_by list of a message."""
+        try:
+            async with self.session.resource("dynamodb", **self.creds) as dynamo:
+                table = await dynamo.Table(TABLE_NAME)
+                # Use ADD to insert into a string set (SS) to avoid duplicates efficiently
+                # But here we use a list for simplicity or a set if Boto3 allows easily.
+                # Actually, DynamoDB UpdateExpression "ADD" works for Sets.
+                # Let's use a List and keep it simple for now, or just use a Set attribute.
+                await table.update_item(
+                    Key={"room_id": room_id, "timestamp": timestamp},
+                    UpdateExpression="ADD read_by :u",
+                    ExpressionAttributeValues={":u": {username}}, # Set literal
+                )
+            return {"ok": True}
+        except Exception as e:
+            logger.exception("Error marking message as read in DynamoDB: %s", e)
+            return {"ok": False, "reason": "error"}
+
+
+    async def search_messages(self, room_id: str, query: str, limit: int = 20):
+        """Search messages in a room containing the query string."""
+        try:
+            async with self.session.resource("dynamodb", **self.creds) as dynamo:
+                table = await dynamo.Table(TABLE_NAME)
+                # Using scan with FilterExpression for simple substring search
+                # This is not highly efficient for large datasets but works for chat search
+                response = await table.query(
+                    KeyConditionExpression=Key("room_id").eq(room_id),
+                    FilterExpression="contains(content, :q)",
+                    ExpressionAttributeValues={":q": query},
+                    Limit=limit,
+                    ScanIndexForward=False # Latest matches first
+                )
+                return {
+                    "items": response.get("Items", []),
+                    "ok": True
+                }
+        except Exception as e:
+            logger.exception("Error searching messages in DynamoDB: %s", e)
+            return {"items": [], "ok": False}
 
 
 dynamo_client = DynamoClient()
