@@ -1,149 +1,13 @@
-import React, { memo, useState, useMemo, useEffect, useRef } from "react";
+import React, { memo, useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  Lock,
-  MessageCircle,
-  User,
-  Trash2,
-  Edit,
-  Pin,
-  Smile,
-  CheckCheck,
-  X,
-  Check,
-  Search,
-} from "lucide-react";
-import { motion as Motion, AnimatePresence } from "framer-motion";
+import { Lock, MessageCircle, Search } from "lucide-react";
+import { motion as Motion } from "framer-motion";
+import MessageItem from "./MessageItem";
 
-const REACTION_EMOJIS = ["👍", "🔥", "😂", "❤️", "🎉", "💯"];
-
-const ChatAvatar = ({ isOwn, avatarUrl, username }) => {
-  const [hasError, setHasError] = useState(false);
-  const showPlaceholder = !avatarUrl || hasError;
-
-  return (
-    <div className="w-full h-full relative group">
-      {avatarUrl && !hasError && (
-        <img
-          src={avatarUrl}
-          alt={username}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={() => setHasError(true)}
-        />
-      )}
-      {showPlaceholder && (
-        <div
-          className={`w-full h-full flex items-center justify-center text-[10px] font-black tracking-tighter ${
-            isOwn
-              ? "bg-gradient-to-br from-emerald-500/30 via-emerald-500/20 to-emerald-500/40 text-emerald-400"
-              : "bg-gradient-to-br from-purple-500/30 via-purple-500/20 to-purple-500/40 text-purple-400"
-          } animate-pulse`}
-          style={{ animationDuration: "3s" }}
-        >
-          {username?.charAt(0).toUpperCase() || <User size={12} />}
-        </div>
-      )}
-      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-full" />
-    </div>
-  );
-};
-
-// Render message text with @mentions highlighted
-const RenderMessage = ({ text }) => {
-  if (!text) return null;
-  const parts = text.split(/(@\w+)/g);
-  return (
-    <p className="break-words font-medium">
-      {parts.map((part, i) =>
-        part.startsWith("@") ? (
-          <Link
-            key={i}
-            to={`/profile/${part.slice(1)}`}
-            className="text-amber-400 hover:text-amber-300 font-bold transition-colors"
-          >
-            {part}
-          </Link>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </p>
-  );
-};
-
-// Reaction display & picker
-const ReactionBar = ({ reactions, onReact, username, isOwn }) => {
-  const [showPicker, setShowPicker] = useState(false);
-  const pickerRef = useRef(null);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
-        setShowPicker(false);
-      }
-    };
-    if (showPicker) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showPicker]);
-
-  const hasReactions = reactions && Object.keys(reactions).length > 0;
-
-  return (
-    <div className="flex items-center gap-1 min-w-max relative">
-      {hasReactions &&
-        Object.entries(reactions).map(([emoji, users]) => (
-          <button
-            key={emoji}
-            onClick={() => onReact(emoji)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border transition-all shadow-sm backdrop-blur-md ${
-              users.includes(username)
-                ? "bg-emerald-500/30 border-emerald-500/50 text-emerald-200 hover:bg-emerald-500/40"
-                : "bg-black/60 border-white/10 text-neutral-400 hover:bg-white/10 hover:border-white/20"
-            }`}
-            title={users.join(", ")}
-          >
-            <span className="text-xs">{emoji}</span>
-            <span className="font-mono font-bold">
-              {users.length}
-            </span>
-          </button>
-        ))}
-      <div className="relative" ref={pickerRef}>
-        <button
-          onClick={() => setShowPicker(!showPicker)}
-          className="w-5 h-5 rounded-full flex items-center justify-center text-neutral-500 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all"
-          title="Add reaction"
-        >
-          <Smile size={12} />
-        </button>
-        <AnimatePresence>
-          {showPicker && (
-            <Motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              className={`absolute bottom-7 ${isOwn ? "right-0" : "left-0"} z-50 flex gap-1 p-1.5 bg-[#0a0a0a]/95 border border-white/10 rounded-lg shadow-2xl backdrop-blur-xl min-w-max`}
-            >
-              {REACTION_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => {
-                    onReact(emoji);
-                    setShowPicker(false);
-                  }}
-                  className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/10 hover:scale-110 transition-all text-sm"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </Motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
-
+/**
+ * MessageList Component
+ * Handles the scrollable list of messages, infinite scroll logic, and search results.
+ */
 const MessageList = ({
   user,
   messages,
@@ -161,6 +25,9 @@ const MessageList = ({
   isSearchMode = false,
 }) => {
   const scrollRef = React.useRef(null);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editContent, setEditContent] = useState("");
 
   // Mark last message as read if it's from others
   useEffect(() => {
@@ -173,9 +40,6 @@ const MessageList = ({
       markAsRead(lastMsg.timestamp);
     }
   }, [messages, user, markAsRead]);
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
-  const [editingMsgId, setEditingMsgId] = useState(null);
-  const [editContent, setEditContent] = useState("");
 
   const handleEditInit = (msg) => {
     setEditingMsgId(msg.timestamp);
@@ -324,7 +188,6 @@ const MessageList = ({
       )}
 
       {displayedMessages.map((msg, index) => {
-        // Compare using user_id or username as fallback
         const isOwn =
           msg.user_id === user?.user_id ||
           (msg.user_id &&
@@ -347,192 +210,24 @@ const MessageList = ({
           return `${baseUrl}${rawUrl}`;
         })();
 
-        // Debug: Log first message to check structure
-        if (index === 0) {
-          console.log("Message debug:", {
-            msgUserId: msg.user_id,
-            userUserId: user?.user_id,
-            msgUsername: msg.username,
-            userUsername: user?.username,
-            isOwn,
-          });
-        }
-
         return (
-          <Motion.div
+          <MessageItem
             key={msg.timestamp || index}
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className={`flex gap-2 ${isOwn ? "justify-end" : "justify-start"} group`}
-          >
-            {/* Other users' avatar (left side) */}
-            {!isOwn && (
-              <Link
-                to={`/profile/${metadata.username}`}
-                className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300 shadow-sm"
-              >
-                <ChatAvatar
-                  isOwn={false}
-                  avatarUrl={formattedAvatar}
-                  username={metadata.username}
-                />
-              </Link>
-            )}
-
-            {/* Message Content */}
-            <div
-              className={`relative flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}
-            >
-              {/* Username (only for others) */}
-              {!isOwn && (
-                <Link
-                  to={`/profile/${metadata.username}`}
-                  className="text-[10px] font-bold text-neutral-400 hover:text-neutral-300 transition-colors ml-1"
-                >
-                  {metadata.username}
-                </Link>
-              )}
-
-              {/* Message Bubble */}
-              <div
-                className={`
-                  relative px-4 py-2.5 text-[13px] leading-relaxed transition-all duration-300 rounded-2xl shadow-md
-                  ${
-                    isOwn
-                      ? "bg-gradient-to-br from-emerald-600/30 via-emerald-500/20 to-emerald-600/25 border border-emerald-500/40 text-emerald-50 rounded-br-none"
-                      : "bg-white/[0.05] backdrop-blur-md border border-white/[0.1] text-neutral-200 rounded-bl-none hover:bg-white/[0.07]"
-                  }
-                  ${msg.message?.startsWith("IMAGE:") ? "p-2 !rounded-xl" : ""}
-                `}
-              >
-                {msg.message?.startsWith("IMAGE:") ? (
-                  (() => {
-                    const [imageUrl, ownerUsername] = msg.message
-                      .replace("IMAGE:", "")
-                      .split("|");
-                    return (
-                      <div className="space-y-2">
-                        <Link
-                          to={`/profile/${ownerUsername}`}
-                          className="block overflow-hidden rounded-lg border border-white/5 shadow-lg"
-                        >
-                          <img
-                            src={imageUrl}
-                            alt=""
-                            className="w-full h-auto"
-                          />
-                        </Link>
-                        <div className="flex items-center justify-between px-1 py-0.5">
-                          <p className="text-[8px] font-bold uppercase tracking-widest text-neutral-600">
-                            Transmission
-                          </p>
-                          <Link
-                            to={`/profile/${ownerUsername}`}
-                            className="text-[8px] font-bold uppercase tracking-widest text-emerald-500 hover:underline"
-                          >
-                            Verify
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })()
-                ) : editingMsgId === msg.timestamp ? (
-                  <div className="flex flex-col gap-2 relative z-50">
-                    <input
-                      type="text"
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="bg-black/40 border border-emerald-500/50 rounded px-2 py-1.5 text-emerald-100 outline-none w-full min-w-[200px]"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleEditSave(msg.timestamp);
-                        if (e.key === "Escape") setEditingMsgId(null);
-                      }}
-                      autoFocus
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => setEditingMsgId(null)}
-                        className="text-white/50 hover:text-white p-1 bg-black/50 rounded"
-                      >
-                        <X size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleEditSave(msg.timestamp)}
-                        className="text-emerald-500 hover:text-emerald-400 p-1 bg-black/50 rounded"
-                      >
-                        <Check size={12} />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <RenderMessage text={msg.message} />
-                )}
-
-                {/* Time stamp inside bubble */}
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  <span className="text-[9px] font-mono text-neutral-400/60 tracking-tighter">
-                    {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
-                  </span>
-                  {isOwn && (
-                    <CheckCheck
-                      size={10}
-                      className={`${msg.read_by?.length > 0 ? "text-emerald-400" : "text-neutral-400/40"}`}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Unified Toolbar (Actions + Reactions) */}
-              <div
-                className={`absolute bottom-0 ${isOwn ? "right-2" : "left-2"} translate-y-1/2 flex items-center gap-2 z-20`}
-              >
-                {/* Reactions */}
-                <ReactionBar
-                  reactions={msg.reactions}
-                  onReact={(emoji) => toggleReaction(msg.timestamp, emoji)}
-                  username={user?.username}
-                  isOwn={isOwn}
-                />
-
-                {/* Edit/Delete Actions (visible on hover) */}
-                {editingMsgId !== msg.timestamp && (
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 border border-white/5">
-                    {isOwn && (
-                      <>
-                        <button
-                          onClick={() => handleEditInit(msg)}
-                          className="text-neutral-400 hover:text-emerald-400 transition-colors p-1"
-                          title="Edit"
-                        >
-                          <Edit size={12} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(msg.timestamp)}
-                          className="text-neutral-400 hover:text-red-400 transition-colors p-1"
-                          title="Delete"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </>
-                    )}
-                    {user?.is_admin && (
-                      <button
-                        onClick={() => pinMessage(msg.timestamp, msg.message)}
-                        className="text-neutral-400 hover:text-amber-400 transition-colors p-1"
-                        title="Pin message"
-                      >
-                        <Pin size={12} />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </Motion.div>
+            msg={msg}
+            user={user}
+            isOwn={isOwn}
+            metadata={metadata}
+            formattedAvatar={formattedAvatar}
+            editingMsgId={editingMsgId}
+            editContent={editContent}
+            setEditingMsgId={setEditingMsgId}
+            setEditContent={setEditContent}
+            handleEditInit={handleEditInit}
+            handleEditSave={handleEditSave}
+            handleDelete={handleDelete}
+            toggleReaction={toggleReaction}
+            pinMessage={pinMessage}
+          />
         );
       })}
       <div className="h-4 w-full shrink-0" />
