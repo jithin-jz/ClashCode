@@ -1,12 +1,15 @@
 import logging
 from pathlib import Path
-from django.core.files.storage import default_storage
+
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from xpoint.services import XPService
-from .models import StoreItem, Purchase
+
+from .models import Purchase, StoreItem
 
 logger = logging.getLogger(__name__)
+
 
 class StoreService:
     """
@@ -19,6 +22,7 @@ class StoreService:
         Handles the purchase of a store item using XP.
         """
         from django.shortcuts import get_object_or_404
+
         item = get_object_or_404(StoreItem, pk=item_id, is_active=True)
 
         if Purchase.objects.filter(user=user, item=item).exists():
@@ -38,7 +42,7 @@ class StoreService:
                 raise ValueError(f"Insufficient XP. Need {shortage} more.")
 
             Purchase.objects.create(user=user, item=item)
-            
+
         return item, remaining_xp
 
     @staticmethod
@@ -47,6 +51,7 @@ class StoreService:
         Equips a purchased cosmetic item.
         """
         from django.shortcuts import get_object_or_404
+
         item = get_object_or_404(StoreItem, pk=item_id, is_active=True)
 
         if not Purchase.objects.filter(user=user, item=item).exists():
@@ -58,19 +63,23 @@ class StoreService:
 
         if category == "THEME":
             key = item_data.get("theme_key")
-            if not key: raise ValueError("Invalid theme data.")
+            if not key:
+                raise ValueError("Invalid theme data.")
             profile.active_theme = key
         elif category == "FONT":
             key = item_data.get("font_family")
-            if not key: raise ValueError("Invalid font data.")
+            if not key:
+                raise ValueError("Invalid font data.")
             profile.active_font = key
         elif category == "EFFECT":
             key = item_data.get("effect_key") or item_data.get("effect_type")
-            if not key: raise ValueError("Invalid effect data.")
+            if not key:
+                raise ValueError("Invalid effect data.")
             profile.active_effect = key
         elif category == "VICTORY":
             key = item_data.get("victory_key") or item_data.get("animation_type")
-            if not key: raise ValueError("Invalid victory data.")
+            if not key:
+                raise ValueError("Invalid victory data.")
             profile.active_victory = key
         else:
             raise ValueError("This item cannot be equipped.")
@@ -82,7 +91,7 @@ class StoreService:
     def unequip_category(user, category):
         """Resets a cosmetic category to its default value."""
         profile = user.profile
-        
+
         defaults = {
             "THEME": ("active_theme", "vs-dark"),
             "FONT": ("active_font", "Fira Code"),

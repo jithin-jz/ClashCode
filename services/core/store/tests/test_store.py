@@ -1,8 +1,9 @@
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from store.models import StoreItem, Purchase
+
+from store.models import Purchase, StoreItem
 
 
 class StoreTests(APITestCase):
@@ -30,9 +31,7 @@ class StoreTests(APITestCase):
             item_data={"font_family": "Monospace"},
             icon_name="type",
         )
-        self.inactive = StoreItem.objects.create(
-            name="Old", cost=50, category="THEME", is_active=False, icon_name="clock"
-        )
+        self.inactive = StoreItem.objects.create(name="Old", cost=50, category="THEME", is_active=False, icon_name="clock")
 
     def test_list_active_items(self):
         url = reverse("store-item-list")
@@ -50,9 +49,7 @@ class StoreTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["remaining_xp"], 300)  # 500 - 200
-        self.assertTrue(
-            Purchase.objects.filter(user=self.user, item=self.theme).exists()
-        )
+        self.assertTrue(Purchase.objects.filter(user=self.user, item=self.theme).exists())
 
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.xp, 300)

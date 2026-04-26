@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 from typing import Any
 
+
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Decimal):

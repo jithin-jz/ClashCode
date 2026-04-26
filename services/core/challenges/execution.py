@@ -1,6 +1,7 @@
+import logging
+
 import requests
 from django.conf import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,7 @@ class PistonExecutionService:
             return {
                 "run": {
                     "stdout": "",
-                    "stderr": (
-                        "Code is too large to execute. "
-                        f"Maximum size is {cls.MAX_CODE_BYTES} bytes."
-                    ),
+                    "stderr": (f"Code is too large to execute. Maximum size is {cls.MAX_CODE_BYTES} bytes."),
                     "code": -1,
                     "signal": None,
                     "output": "",
@@ -54,9 +52,7 @@ class PistonExecutionService:
         }
 
         try:
-            response = requests.post(
-                cls.EXECUTOR_URL, json=payload, timeout=cls.TIMEOUT_SECONDS
-            )
+            response = requests.post(cls.EXECUTOR_URL, json=payload, timeout=cls.TIMEOUT_SECONDS)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -81,9 +77,7 @@ class PistonExecutionService:
         all_passed = True
 
         for tc in test_cases:
-            res = cls.execute_code(
-                language, code, version=version, stdin=tc.get("input", "")
-            )
+            res = cls.execute_code(language, code, version=version, stdin=tc.get("input", ""))
 
             # Simple string comparison for now.
             # In a real app, you might want to strip trailing whitespace or handle precision.

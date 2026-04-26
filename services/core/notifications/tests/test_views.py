@@ -1,27 +1,19 @@
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
+from notifications.models import FCMToken, Notification
 from rest_framework import status
 from rest_framework.test import APITestCase
-from notifications.models import Notification, FCMToken
 
 
 class NotificationTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="notify_user", password="password"
-        )
-        self.other_user = User.objects.create_user(
-            username="actor_user", password="password"
-        )
+        self.user = User.objects.create_user(username="notify_user", password="password")
+        self.other_user = User.objects.create_user(username="actor_user", password="password")
         self.client.force_authenticate(user=self.user)
 
         # Create some notifications
-        self.n1 = Notification.objects.create(
-            recipient=self.user, actor=self.other_user, verb="followed you"
-        )
-        self.n2 = Notification.objects.create(
-            recipient=self.user, actor=self.other_user, verb="liked your post"
-        )
+        self.n1 = Notification.objects.create(recipient=self.user, actor=self.other_user, verb="followed you")
+        self.n2 = Notification.objects.create(recipient=self.user, actor=self.other_user, verb="liked your post")
 
     def test_list_notifications(self):
         url = reverse("notification-list")
@@ -47,9 +39,7 @@ class NotificationTests(APITestCase):
         url = reverse("notification-mark-all-read")
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            Notification.objects.filter(recipient=self.user, is_read=False).count(), 0
-        )
+        self.assertEqual(Notification.objects.filter(recipient=self.user, is_read=False).count(), 0)
 
     def test_clear_all_notifications(self):
         url = reverse("notification-clear-all")
@@ -68,16 +58,12 @@ class NotificationTests(APITestCase):
         data["device_id"] = "phone-xyz"
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            FCMToken.objects.get(token="fake-fcm-token-123").device_id, "phone-xyz"
-        )
+        self.assertEqual(FCMToken.objects.get(token="fake-fcm-token-123").device_id, "phone-xyz")
 
     def test_notification_isolation(self):
         # Create notification for another user
         stranger = User.objects.create_user(username="stranger", password="password")
-        Notification.objects.create(
-            recipient=stranger, actor=self.other_user, verb="messaged you"
-        )
+        Notification.objects.create(recipient=stranger, actor=self.other_user, verb="messaged you")
 
         url = reverse("notification-list")
         response = self.client.get(url)

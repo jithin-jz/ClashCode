@@ -1,9 +1,11 @@
+import logging
+
+from certificates.services import CertificateService
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import UserProgress
-from certificates.services import CertificateService
 from learning.tasks import update_leaderboard_cache
-import logging
+
+from .models import UserProgress
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +39,7 @@ def auto_generate_certificate(sender, instance, created, **kwargs):
             if current_count != certificate.completion_count:
                 certificate.completion_count = current_count
                 certificate.save(update_fields=["completion_count"])
-                logger.info(
-                    f"Auto-updated certificate for {user.username}: "
-                    f"{certificate.completion_count} challenges"
-                )
+                logger.info(f"Auto-updated certificate for {user.username}: {certificate.completion_count} challenges")
         except Exception as e:
             logger.error(f"Failed to update certificate for {user.username}: {e}")
         return
@@ -48,10 +47,7 @@ def auto_generate_certificate(sender, instance, created, **kwargs):
     # Generate new certificate
     try:
         certificate = CertificateService.get_or_create_certificate(user)
-        logger.info(
-            f"Auto-generated certificate for {user.username} "
-            f"(ID: {certificate.certificate_id})"
-        )
+        logger.info(f"Auto-generated certificate for {user.username} (ID: {certificate.certificate_id})")
     except ValueError as e:
         # User not eligible (shouldn't happen due to check above, but defensive)
         logger.warning(f"Certificate generation failed for {user.username}: {e}")
@@ -60,6 +56,7 @@ def auto_generate_certificate(sender, instance, created, **kwargs):
             f"Unexpected error generating certificate for {user.username}: {e}",
             exc_info=True,
         )
+
 
 @receiver(post_save, sender=UserProgress)
 def trigger_leaderboard_update_on_progress(sender, instance, created, **kwargs):

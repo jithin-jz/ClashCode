@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock, MagicMock
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 from main import app
@@ -23,9 +24,7 @@ def test_unauthorized_hints():
 
 
 def test_unauthorized_analyze():
-    response = client.post(
-        "/analyze", json={"user_code": "print(1)", "challenge_slug": "test"}
-    )
+    response = client.post("/analyze", json={"user_code": "print(1)", "challenge_slug": "test"})
     assert response.status_code == 403
 
 

@@ -1,14 +1,14 @@
-from .analytics import AdminStatsView
-from .analytics import ChallengeAnalyticsView
-from .analytics import StoreAnalyticsView
-from .analytics import UserEngagementAnalyticsView
-from .analytics import UltimateAnalyticsView
-from .users import AdminUserViewSet
-from .reports import AdminReportViewSet
-from .notifications import GlobalNotificationView
-from .notifications import BroadcastHistoryView
-from .notifications import BroadcastResendView
-from .audit import AdminAuditViewSet
-from .system import SystemIntegrityView
-from .system import SystemHealthView
-from .store import StoreItemDuplicateView
+from .analytics import AdminStatsView as AdminStatsView
+from .analytics import ChallengeAnalyticsView as ChallengeAnalyticsView
+from .analytics import StoreAnalyticsView as StoreAnalyticsView
+from .analytics import UltimateAnalyticsView as UltimateAnalyticsView
+from .analytics import UserEngagementAnalyticsView as UserEngagementAnalyticsView
+from .audit import AdminAuditViewSet as AdminAuditViewSet
+from .notifications import BroadcastHistoryView as BroadcastHistoryView
+from .notifications import BroadcastResendView as BroadcastResendView
+from .notifications import GlobalNotificationView as GlobalNotificationView
+from .reports import AdminReportViewSet as AdminReportViewSet
+from .store import StoreItemDuplicateView as StoreItemDuplicateView
+from .system import SystemHealthView as SystemHealthView
+from .system import SystemIntegrityView as SystemIntegrityView
+from .users import AdminUserViewSet as AdminUserViewSet

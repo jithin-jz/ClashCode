@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiTypes
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,13 +8,15 @@ from administration.serializers import (
     AdminStatsSerializer,
     ChallengeAnalyticsSerializer,
     StoreAnalyticsSerializer,
-    UserEngagementAnalyticsSerializer,
     UltimateAnalyticsSerializer,
+    UserEngagementAnalyticsSerializer,
 )
 from administration.services.analytics_service import AnalyticsService
 
+
 class AdminStatsView(APIView):
     """View to get admin dashboard statistics."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -28,6 +30,7 @@ class AdminStatsView(APIView):
 
 class ChallengeAnalyticsView(APIView):
     """View to get detailed challenge performance analytics."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -41,6 +44,7 @@ class ChallengeAnalyticsView(APIView):
 
 class StoreAnalyticsView(APIView):
     """View to get store economy and item popularity."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -54,6 +58,7 @@ class StoreAnalyticsView(APIView):
 
 class UserEngagementAnalyticsView(APIView):
     """View to get user engagement and growth analytics."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -67,6 +72,7 @@ class UserEngagementAnalyticsView(APIView):
 
 class UltimateAnalyticsView(APIView):
     """Unified command center view for all system analytics."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(

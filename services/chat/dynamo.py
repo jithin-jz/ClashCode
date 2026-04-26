@@ -1,10 +1,11 @@
+import logging
 import os
+from datetime import datetime
+from typing import Any
+
 import aioboto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from datetime import datetime
-import logging
-from typing import Any
 
 # Credentials
 DYNAMODB_URL = os.getenv("DYNAMODB_URL", "http://dynamodb:8000")
@@ -129,11 +130,11 @@ class DynamoClient:
                         "room_id": room_id,
                         "timestamp": last_timestamp,
                     }
-                
+
                 response = await table.query(**query_kwargs)
                 return {
                     "items": response.get("Items", []),
-                    "last_evaluated_key": response.get("LastEvaluatedKey")
+                    "last_evaluated_key": response.get("LastEvaluatedKey"),
                 }
         except Exception as e:
             logger.exception("Error fetching messages from DynamoDB: %s", e)
@@ -143,17 +144,13 @@ class DynamoClient:
         try:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(TABLE_NAME)
-                response = await table.get_item(
-                    Key={"room_id": room_id, "timestamp": timestamp}
-                )
+                response = await table.get_item(Key={"room_id": room_id, "timestamp": timestamp})
                 return response.get("Item")
         except Exception as e:
             logger.exception("Error fetching message from DynamoDB: %s", e)
             return None
 
-    async def edit_message(
-        self, room_id: str, timestamp: str, user_id: int, new_message: str
-    ):
+    async def edit_message(self, room_id: str, timestamp: str, user_id: int, new_message: str):
         try:
             item = await self.get_message(room_id, timestamp)
             if not item:
@@ -183,17 +180,13 @@ class DynamoClient:
 
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(TABLE_NAME)
-                await table.delete_item(
-                    Key={"room_id": room_id, "timestamp": timestamp}
-                )
+                await table.delete_item(Key={"room_id": room_id, "timestamp": timestamp})
             return {"ok": True}
         except Exception as e:
             logger.exception("Error deleting message from DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
 
-    async def toggle_reaction(
-        self, room_id: str, timestamp: str, username: str, emoji: str
-    ):
+    async def toggle_reaction(self, room_id: str, timestamp: str, username: str, emoji: str):
         """Toggle a user's emoji reaction on a message. If already reacted with same emoji, remove it."""
         try:
             item = await self.get_message(room_id, timestamp)
@@ -226,7 +219,6 @@ class DynamoClient:
             logger.exception("Error toggling reaction in DynamoDB: %s", e)
             return {"ok": False, "reason": "error", "reactions": {}}
 
-
     async def mark_as_read(self, room_id: str, timestamp: str, username: str):
         """Add a user to the read_by list of a message."""
         try:
@@ -239,13 +231,12 @@ class DynamoClient:
                 await table.update_item(
                     Key={"room_id": room_id, "timestamp": timestamp},
                     UpdateExpression="ADD read_by :u",
-                    ExpressionAttributeValues={":u": {username}}, # Set literal
+                    ExpressionAttributeValues={":u": {username}},  # Set literal
                 )
             return {"ok": True}
         except Exception as e:
             logger.exception("Error marking message as read in DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
-
 
     async def search_messages(self, room_id: str, query: str, limit: int = 20):
         """Search messages in a room containing the query string."""
@@ -259,12 +250,9 @@ class DynamoClient:
                     FilterExpression="contains(content, :q)",
                     ExpressionAttributeValues={":q": query},
                     Limit=limit,
-                    ScanIndexForward=False # Latest matches first
+                    ScanIndexForward=False,  # Latest matches first
                 )
-                return {
-                    "items": response.get("Items", []),
-                    "ok": True
-                }
+                return {"items": response.get("Items", []), "ok": True}
         except Exception as e:
             logger.exception("Error searching messages in DynamoDB: %s", e)
             return {"items": [], "ok": False}

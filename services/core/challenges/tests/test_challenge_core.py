@@ -1,19 +1,18 @@
-from django.urls import reverse
-from django.contrib.auth.models import User
-from rest_framework import status
-from rest_framework.test import APITestCase
-from challenges.models import Challenge, UserProgress
-from users.models import UserProfile
-from django.utils import timezone
 from datetime import timedelta
 from unittest.mock import patch
+
+from django.contrib.auth.models import User
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from challenges.models import Challenge, UserProgress
 
 
 class ChallengeCoreTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="player", email="player@example.com", password="password"
-        )
+        self.user = User.objects.create_user(username="player", email="player@example.com", password="password")
         # Profile is created by signal
         self.profile = self.user.profile
         self.client.force_authenticate(user=self.user)
@@ -100,9 +99,7 @@ class ChallengeCoreTests(APITestCase):
         response = self.client.post(url, {"code": "pass"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        mock_execute.return_value = {
-            "run": {"code": 1, "stderr": "AssertionError", "stdout": ""}
-        }
+        mock_execute.return_value = {"run": {"code": 1, "stderr": "AssertionError", "stdout": ""}}
         response = self.client.post(url, {"code": "bad"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -178,9 +175,7 @@ class ChallengeCoreTests(APITestCase):
 
     def test_leaderboard_ordering(self):
         # Create another user and give them more XP
-        other_user = User.objects.create_user(
-            username="pro", email="pro@ex.com", password="pw"
-        )
+        other_user = User.objects.create_user(username="pro", email="pro@ex.com", password="pw")
         pro_profile = other_user.profile
         pro_profile.xp = 1000
         pro_profile.save()

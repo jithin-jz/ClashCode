@@ -4,6 +4,7 @@ Run with: python manage.py seed_achievements
 """
 
 from django.core.management.base import BaseCommand
+
 from achievements.models import Achievement
 
 ACHIEVEMENTS = [
@@ -119,14 +120,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         created_count = 0
         for data in ACHIEVEMENTS:
-            _, created = Achievement.objects.update_or_create(
-                slug=data["slug"], defaults=data
-            )
+            _, created = Achievement.objects.update_or_create(slug=data["slug"], defaults=data)
             if created:
                 created_count += 1
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Seeded {len(ACHIEVEMENTS)} achievements ({created_count} new)"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Seeded {len(ACHIEVEMENTS)} achievements ({created_count} new)"))

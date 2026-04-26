@@ -1,7 +1,9 @@
 from django.contrib.auth.models import User
 from notifications.models import Notification
+
 from administration.models import AdminAuditLog
-from administration.utils import log_admin_action, _parse_bool
+from administration.utils import _parse_bool, log_admin_action
+
 
 class NotificationService:
     @staticmethod
@@ -9,7 +11,7 @@ class NotificationService:
         """Broadcasts a notification to all active users."""
         if not message:
             return False, "Message is required", 400
-        
+
         if len(message) > 500:
             return False, "Message too long (max 500 characters)", 400
 
@@ -44,15 +46,17 @@ class NotificationService:
         logs = AdminAuditLog.objects.filter(action="SEND_GLOBAL_NOTIFICATION").order_by("-timestamp")[:25]
         rows = []
         for log in logs:
-            rows.append({
-                "request_id": log.request_id,
-                "message": log.details.get("message", ""),
-                "recipient_count": log.details.get("recipient_count", 0),
-                "include_staff": log.details.get("include_staff", False),
-                "reason": log.details.get("reason", ""),
-                "timestamp": log.timestamp.isoformat(),
-                "admin": log.admin_username or (log.admin.username if log.admin else "System"),
-            })
+            rows.append(
+                {
+                    "request_id": log.request_id,
+                    "message": log.details.get("message", ""),
+                    "recipient_count": log.details.get("recipient_count", 0),
+                    "include_staff": log.details.get("include_staff", False),
+                    "reason": log.details.get("reason", ""),
+                    "timestamp": log.timestamp.isoformat(),
+                    "admin": log.admin_username or (log.admin.username if log.admin else "System"),
+                }
+            )
         return rows
 
     @staticmethod
@@ -70,9 +74,9 @@ class NotificationService:
         users_qs = User.objects.filter(is_active=True).exclude(id=admin.id)
         if not include_staff:
             users_qs = users_qs.filter(is_staff=False, is_superuser=False)
-        
+
         recipient_count = users_qs.count()
-        
+
         def generate_notifications():
             for user_id in users_qs.values_list("id", flat=True).iterator(chunk_size=2000):
                 yield Notification(recipient_id=user_id, actor=admin, verb=verb)

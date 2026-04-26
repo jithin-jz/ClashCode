@@ -1,11 +1,13 @@
 import logging
+
 import requests
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import transaction
 from django.core.files.base import ContentFile
+from django.db import transaction
 from users.models import UserProfile
-from .base_auth_service import BaseAuthService
+
+from ..tasks import send_welcome_email_task
 from ..utils import (
     generate_tokens,
     get_github_access_token,
@@ -14,14 +16,16 @@ from ..utils import (
     get_google_access_token,
     get_google_user,
 )
-from ..tasks import send_welcome_email_task
+from .base_auth_service import BaseAuthService
 
 logger = logging.getLogger(__name__)
+
 
 class OAuthService(BaseAuthService):
     @staticmethod
     def get_github_auth_url(state=None):
         from urllib.parse import urlencode
+
         params = {
             "client_id": settings.GITHUB_CLIENT_ID,
             "redirect_uri": settings.GITHUB_REDIRECT_URI,
@@ -34,6 +38,7 @@ class OAuthService(BaseAuthService):
     @staticmethod
     def get_google_auth_url(state=None):
         from urllib.parse import urlencode
+
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
             "redirect_uri": settings.GOOGLE_REDIRECT_URI,
@@ -52,8 +57,12 @@ class OAuthService(BaseAuthService):
         if "error" in token_data:
             OAuthService.log_security_event(
                 action="OAUTH_LOGIN_FAILURE",
-                details={"provider": provider, "error": "Token exchange failed", "raw": token_data},
-                request=request
+                details={
+                    "provider": provider,
+                    "error": "Token exchange failed",
+                    "raw": token_data,
+                },
+                request=request,
             )
             return None, token_data
 
@@ -64,8 +73,12 @@ class OAuthService(BaseAuthService):
         if "error" in user_info:
             OAuthService.log_security_event(
                 action="OAUTH_LOGIN_FAILURE",
-                details={"provider": provider, "error": "User info fetch failed", "raw": user_info},
-                request=request
+                details={
+                    "provider": provider,
+                    "error": "User info fetch failed",
+                    "raw": user_info,
+                },
+                request=request,
             )
             return None, user_info
 
@@ -81,7 +94,7 @@ class OAuthService(BaseAuthService):
                 action="LOGIN_BLOCKED",
                 user=user,
                 details={"provider": provider, "reason": "Account disabled"},
-                request=request
+                request=request,
             )
             return None, {"error": "User account is disabled."}
 
@@ -91,7 +104,7 @@ class OAuthService(BaseAuthService):
             action="OAUTH_LOGIN_SUCCESS",
             user=user,
             details={"provider": provider},
-            request=request
+            request=request,
         )
 
         return user, jwt_tokens
@@ -137,9 +150,7 @@ class OAuthService(BaseAuthService):
         email = user_info["email"]
 
         try:
-            profile = UserProfile.objects.select_related("user").get(
-                provider=provider, provider_id=provider_id
-            )
+            profile = UserProfile.objects.select_related("user").get(provider=provider, provider_id=provider_id)
             profile.access_token = tokens["access"]
             profile.refresh_token = tokens["refresh"]
             profile.save()

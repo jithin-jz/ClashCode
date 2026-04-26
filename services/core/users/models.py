@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -48,18 +48,14 @@ class UserProfile(models.Model):
     )
 
     # Public Profile Visuals
-    avatar = models.ImageField(
-        upload_to="avatars/", blank=True, null=True, help_text="User's profile picture."
-    )
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True, help_text="User's profile picture.")
     banner = models.ImageField(
         upload_to="banners/",
         blank=True,
         null=True,
         help_text="Profile background banner.",
     )
-    bio = models.TextField(
-        max_length=500, blank=True, null=True, help_text="Short user biography."
-    )
+    bio = models.TextField(max_length=500, blank=True, null=True, help_text="Short user biography.")
 
     # OAuth Tokens (Sensitive)
     # Stored to allow backend to make API calls on behalf of the user (e.g. fetch repos)
@@ -69,30 +65,20 @@ class UserProfile(models.Model):
     # Linked Platforms (For display/social features, not auth)
 
     # Customization
-    active_theme = models.CharField(
-        max_length=50, default="vs-dark", help_text="Active Monaco Editor theme."
-    )
-    active_font = models.CharField(
-        max_length=50, default="Fira Code", help_text="Active Editor Font Family."
-    )
+    active_theme = models.CharField(max_length=50, default="vs-dark", help_text="Active Monaco Editor theme.")
+    active_font = models.CharField(max_length=50, default="Fira Code", help_text="Active Editor Font Family.")
     active_effect = models.CharField(
         max_length=50,
         blank=True,
         null=True,
         help_text="Active Cursor Effect (e.g., 'fire', 'particles').",
     )
-    active_victory = models.CharField(
-        max_length=50, default="default", help_text="Active Victory Animation."
-    )
+    active_victory = models.CharField(max_length=50, default="default", help_text="Active Victory Animation.")
 
     # Gamification & Referrals
     xp = models.IntegerField(default=0, help_text="Total Experience Points earned.")
-    streak_freezes = models.IntegerField(
-        default=0, help_text="Number of streak freezes available."
-    )
-    reward_cycle_start_date = models.DateField(
-        null=True, blank=True, help_text="Start date of the current 7-day reward cycle."
-    )
+    streak_freezes = models.IntegerField(default=0, help_text="Number of streak freezes available.")
+    reward_cycle_start_date = models.DateField(null=True, blank=True, help_text="Start date of the current 7-day reward cycle.")
     referral_code = models.CharField(
         max_length=12,
         unique=True,
@@ -132,9 +118,7 @@ class UserProfile(models.Model):
             import string
 
             while True:
-                code = "".join(
-                    random.choices(string.ascii_uppercase + string.digits, k=8)
-                )
+                code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
                 if not UserProfile.objects.filter(referral_code=code).exists():
                     self.referral_code = code
                     break
@@ -156,14 +140,10 @@ class UserFollow(models.Model):
     """Model to store follower/following relationships."""
 
     # User who initiates the follow
-    follower = models.ForeignKey(
-        User, related_name="following", on_delete=models.CASCADE
-    )
+    follower = models.ForeignKey(User, related_name="following", on_delete=models.CASCADE)
 
     # User being followed
-    following = models.ForeignKey(
-        User, related_name="followers", on_delete=models.CASCADE
-    )
+    following = models.ForeignKey(User, related_name="followers", on_delete=models.CASCADE)
 
     # Timestamp of follow action
     created_at = models.DateTimeField(auto_now_add=True)
@@ -194,6 +174,7 @@ def create_user_profile(sender, instance, created, **kwargs):
             bio="",
         )
 
+
 @receiver(post_save, sender=UserProfile)
 def trigger_leaderboard_update_on_profile(sender, instance, **kwargs):
     """
@@ -201,4 +182,5 @@ def trigger_leaderboard_update_on_profile(sender, instance, **kwargs):
     """
     # Import inside to avoid circular dependencies
     from learning.tasks import update_leaderboard_cache
+
     update_leaderboard_cache.delay()

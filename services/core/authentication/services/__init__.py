@@ -1,7 +1,8 @@
+from .account_service import AccountService
 from .oauth_service import OAuthService
 from .otp_service import OTPService
 from .token_service import TokenService
-from .account_service import AccountService
+
 
 class AuthService(OAuthService, OTPService, TokenService, AccountService):
     """
@@ -9,4 +10,5 @@ class AuthService(OAuthService, OTPService, TokenService, AccountService):
     Inherits from specialized services to maintain a clean code structure while providing
     a single entry point for the application.
     """
+
     pass

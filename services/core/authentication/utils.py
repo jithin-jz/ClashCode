@@ -1,12 +1,12 @@
-import jwt
-import uuid
-
 import hmac
-from hashlib import sha256
-import requests
-import string
 import secrets
+import string
+import uuid
 from datetime import datetime, timedelta, timezone
+from hashlib import sha256
+
+import jwt
+import requests
 from django.conf import settings
 from project.media import build_file_url
 
@@ -31,17 +31,12 @@ def generate_access_token(user):
         "user_id": user.id,
         "username": user.username,
         "email": user.email,
-        "avatar_url": (
-            build_file_url(user.profile.avatar) if hasattr(user, "profile") else None
-        ),
-        "exp": datetime.now(timezone.utc)
-        + timedelta(seconds=settings.JWT_ACCESS_TOKEN_LIFETIME),
+        "avatar_url": (build_file_url(user.profile.avatar) if hasattr(user, "profile") else None),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=settings.JWT_ACCESS_TOKEN_LIFETIME),
         "iat": datetime.now(timezone.utc),
         "type": "access",
     }
-    return jwt.encode(
-        payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM
-    )
+    return jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def generate_refresh_token(user):
@@ -52,14 +47,11 @@ def generate_refresh_token(user):
     payload = {
         "jti": uuid.uuid4().hex,
         "user_id": user.id,
-        "exp": datetime.now(timezone.utc)
-        + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME),
         "iat": datetime.now(timezone.utc),
         "type": "refresh",
     }
-    return jwt.encode(
-        payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM
-    )
+    return jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token):
@@ -68,9 +60,7 @@ def decode_token(token):
     Returns the payload dict if valid, or None if expired/invalid.
     """
     try:
-        payload = jwt.decode(
-            token, settings.JWT_PUBLIC_KEY, algorithms=[settings.JWT_ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=[settings.JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         return None

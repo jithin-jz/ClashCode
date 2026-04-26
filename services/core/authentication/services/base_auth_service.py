@@ -1,9 +1,12 @@
 import logging
-from django.core.cache import cache
 from datetime import datetime, timezone
+
+from django.core.cache import cache
+
 from ..models import SecurityAuditLog
 
 logger = logging.getLogger(__name__)
+
 
 class BaseAuthService:
     @staticmethod

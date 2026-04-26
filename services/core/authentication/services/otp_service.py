@@ -1,25 +1,28 @@
-import logging
 import hmac
+import logging
 from datetime import datetime, timedelta, timezone
+
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import transaction
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from users.models import UserProfile
-from .base_auth_service import BaseAuthService
+
+from ..emails import send_otp_email
 from ..models import EmailOTP
-from ..utils import (
-    generate_tokens,
-    generate_otp_code,
-    hash_otp,
-)
 from ..tasks import (
     send_otp_email_task,
     send_welcome_email_task,
 )
-from ..emails import send_otp_email
+from ..utils import (
+    generate_otp_code,
+    generate_tokens,
+    hash_otp,
+)
+from .base_auth_service import BaseAuthService
 
 logger = logging.getLogger(__name__)
+
 
 class OTPService(BaseAuthService):
     OTP_VERIFY_MAX_ATTEMPTS = 5
@@ -62,7 +65,11 @@ class OTPService(BaseAuthService):
         else:
             delivery_ok = send_otp_email(email, otp_code)
 
-        OTPService._cache_set(request_key, request_count + 1, timeout=OTPService.OTP_REQUEST_WINDOW_SECONDS)
+        OTPService._cache_set(
+            request_key,
+            request_count + 1,
+            timeout=OTPService.OTP_REQUEST_WINDOW_SECONDS,
+        )
 
         if not delivery_ok:
             raise ValidationError("Failed to deliver OTP email. Please try again later.")
@@ -82,12 +89,20 @@ class OTPService(BaseAuthService):
         expiry_time = datetime.now(timezone.utc) - timedelta(minutes=10)
         otp_hash = hash_otp(email, otp)
         otp_candidates = list(EmailOTP.objects.filter(email__iexact=email, created_at__gte=expiry_time).order_by("-created_at")[:5])
-        otp_record = next((item for item in otp_candidates if hmac.compare_digest(item.otp, otp_hash)), None)
+        otp_record = next(
+            (item for item in otp_candidates if hmac.compare_digest(item.otp, otp_hash)),
+            None,
+        )
 
         if otp_record is None:
             attempts = (OTPService._cache_get(attempts_key, 0) or 0) + 1
             OTPService._cache_set(attempts_key, attempts, timeout=OTPService.OTP_VERIFY_WINDOW_SECONDS)
-            OTPService.log_security_event(action="OTP_VERIFY_FAILURE", email=email, details={"attempt": attempts}, request=request)
+            OTPService.log_security_event(
+                action="OTP_VERIFY_FAILURE",
+                email=email,
+                details={"attempt": attempts},
+                request=request,
+            )
             if attempts >= OTPService.OTP_VERIFY_MAX_ATTEMPTS:
                 OTPService._cache_set(lock_key, 1, timeout=OTPService.OTP_VERIFY_LOCK_SECONDS)
             return None, {"error": "Invalid or expired OTP."}
@@ -111,10 +126,19 @@ class OTPService(BaseAuthService):
                 tokens = generate_tokens(user)
 
             if not user.is_active:
-                OTPService.log_security_event(action="LOGIN_BLOCKED", user=user, details={"reason": "Account disabled"}, request=request)
+                OTPService.log_security_event(
+                    action="LOGIN_BLOCKED",
+                    user=user,
+                    details={"reason": "Account disabled"},
+                    request=request,
+                )
                 return None, {"error": "User account is disabled."}
 
-            OTPService.log_security_event(action="OTP_LOGIN_SUCCESS" if not is_new_user else "OTP_REGISTER_SUCCESS", user=user, request=request)
+            OTPService.log_security_event(
+                action=("OTP_LOGIN_SUCCESS" if not is_new_user else "OTP_REGISTER_SUCCESS"),
+                user=user,
+                request=request,
+            )
             return user, tokens
         except Exception as e:
             logger.exception(f"Error in verify_otp: {e}")

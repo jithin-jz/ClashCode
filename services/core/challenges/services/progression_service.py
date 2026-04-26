@@ -1,6 +1,8 @@
 from django.utils import timezone
+
 from ..models import Challenge, UserProgress
 from .base_challenge_service import BaseChallengeService
+
 
 class ProgressionService(BaseChallengeService):
     """Handles challenge locking, unlocking, and status annotation."""
@@ -15,9 +17,7 @@ class ProgressionService(BaseChallengeService):
             queryset = Challenge.objects.all()
 
         challenges = queryset.order_by("order")
-        progress_map = {
-            p.challenge_id: p for p in UserProgress.objects.filter(user=user)
-        }
+        progress_map = {p.challenge_id: p for p in UserProgress.objects.filter(user=user)}
 
         results = []
         previous_completed = True  # First challenge is unlocked by default
@@ -38,7 +38,7 @@ class ProgressionService(BaseChallengeService):
             challenge.user_stars = stars
             results.append(challenge)
 
-            previous_completed = (status == UserProgress.Status.COMPLETED)
+            previous_completed = status == UserProgress.Status.COMPLETED
 
         return results
 
@@ -61,6 +61,4 @@ class ProgressionService(BaseChallengeService):
     @staticmethod
     def get_next_challenge(current_challenge):
         """Retrieves the next challenge in sequence."""
-        return Challenge.objects.filter(
-            order__gt=current_challenge.order
-        ).order_by("order").first()
+        return Challenge.objects.filter(order__gt=current_challenge.order).order_by("order").first()

@@ -5,8 +5,9 @@ Uses Redis for rate limiting to ensure limits work correctly
 across multiple container instances (horizontal scaling).
 """
 
-import redis.asyncio as redis
 from typing import Optional
+
+import redis.asyncio as redis
 
 
 class RateLimiter:
@@ -24,9 +25,7 @@ class RateLimiter:
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
 
-    async def is_allowed(
-        self, key: str, max_requests: int, window_seconds: int
-    ) -> bool:
+    async def is_allowed(self, key: str, max_requests: int, window_seconds: int) -> bool:
         """
         Check if a request is allowed under the rate limit.
 

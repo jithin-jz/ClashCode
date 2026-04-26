@@ -1,20 +1,17 @@
-import os
 import logging
+import os
+
 import sentry_sdk
+from api.routes import router as executor_router
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-from dotenv import load_dotenv
-
-from api.routes import router as executor_router
 
 # Load Environment
 load_dotenv()
 
 # Configure Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Sentry initialization
@@ -30,14 +27,12 @@ if SENTRY_DSN:
     logger.info("Sentry initialized for Executor service")
 
 # Initialize App
-app = FastAPI(
-    title="CLASHCODE Python Executor",
-    version="1.1"
-)
+app = FastAPI(title="CLASHCODE Python Executor", version="1.1")
 
 # Include Routers
 app.include_router(executor_router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8003)

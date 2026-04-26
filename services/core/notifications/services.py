@@ -1,10 +1,10 @@
 import logging
-from django.contrib.contenttypes.models import ContentType
-from .models import Notification, FCMToken
-from .utils import send_fcm_push
+
+from .models import FCMToken, Notification
 from .tasks import send_push_notification_task
 
 logger = logging.getLogger(__name__)
+
 
 class NotificationService:
     """
@@ -16,18 +16,13 @@ class NotificationService:
         """
         Creates a notification record and optionally sends a push/WS notification.
         """
-        notification = Notification.objects.create(
-            recipient=recipient,
-            actor=actor,
-            verb=verb,
-            target=target
-        )
+        notification = Notification.objects.create(recipient=recipient, actor=actor, verb=verb, target=target)
 
         if push:
             title = push_title or "New Notification"
             body = push_body or f"{actor.username} {verb}"
             send_push_notification_task.delay(recipient.id, title, body)
-        
+
         return notification
 
     @staticmethod
@@ -55,8 +50,5 @@ class NotificationService:
     @staticmethod
     def register_fcm_token(user, token, device_id=None):
         """Registers or updates an FCM token for a user."""
-        fcm_token, created = FCMToken.objects.update_or_create(
-            token=token,
-            defaults={"user": user, "device_id": device_id}
-        )
+        fcm_token, created = FCMToken.objects.update_or_create(token=token, defaults={"user": user, "device_id": device_id})
         return fcm_token, created

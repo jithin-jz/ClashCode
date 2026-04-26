@@ -1,12 +1,12 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
-from drf_spectacular.utils import extend_schema_field, OpenApiTypes
-from .models import UserProfile
+from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 from project.media import build_file_url
+from rest_framework import serializers
+
+from .models import UserProfile
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
     # Computed field to indicate whether this user was referred by someone
     is_referred = serializers.SerializerMethodField()
 
@@ -50,7 +50,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     # Profile is injected manually to avoid nested serializer overhead
     profile = serializers.SerializerMethodField()
 
@@ -81,7 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Defensive access in case profile was not created (edge cases)
         try:
             return UserProfileSerializer(obj.profile, context=self.context).data
-        except:
+        except Exception:
             return None
 
     @extend_schema_field(int)
@@ -131,9 +130,7 @@ class FollowToggleResponseSerializer(serializers.Serializer):
 
 
 class RedeemReferralSerializer(serializers.Serializer):
-    code = serializers.CharField(
-        required=True, help_text="The referral code to redeem."
-    )
+    code = serializers.CharField(required=True, help_text="The referral code to redeem.")
 
 
 class PublicUserProfileSerializer(serializers.ModelSerializer):

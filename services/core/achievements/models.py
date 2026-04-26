@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class Achievement(models.Model):
@@ -14,9 +14,7 @@ class Achievement(models.Model):
         STREAK = "streak", "Streak"
         SPECIAL = "special", "Special"
 
-    slug = models.SlugField(
-        unique=True, help_text="Unique identifier, e.g. 'first-blood'"
-    )
+    slug = models.SlugField(unique=True, help_text="Unique identifier, e.g. 'first-blood'")
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=300)
     icon = models.CharField(
@@ -24,13 +22,12 @@ class Achievement(models.Model):
         default="Trophy",
         help_text="Lucide icon name to render on frontend",
     )
-    category = models.CharField(
-        max_length=20, choices=Category.choices, default=Category.CHALLENGE
-    )
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.CHALLENGE)
     xp_reward = models.IntegerField(default=0, help_text="Bonus XP granted on unlock")
     is_secret = models.BooleanField(default=False, help_text="Hidden until unlocked")
     target_value = models.IntegerField(
-        default=1, help_text="The value required to unlock this achievement (e.g. 10 challenges)"
+        default=1,
+        help_text="The value required to unlock this achievement (e.g. 10 challenges)",
     )
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

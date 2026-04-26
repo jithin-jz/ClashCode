@@ -1,15 +1,14 @@
-from pydantic import BaseModel, Field
-from typing import Literal, Optional
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Literal, Optional
 from zoneinfo import ZoneInfo
+
+from pydantic import BaseModel, Field
 
 
 class BaseEvent(BaseModel):
     type: str
-    timestamp: str = Field(
-        default_factory=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).isoformat()
-    )
+    timestamp: str = Field(default_factory=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).isoformat())
 
 
 class ChatMessage(BaseEvent):
@@ -32,9 +31,7 @@ class PresenceEvent(BaseEvent):
 
 
 class IncomingMessage(BaseModel):
-    action: Literal["send", "edit", "delete", "typing", "react", "pin", "unpin", "read"] = (
-        "send"
-    )
+    action: Literal["send", "edit", "delete", "typing", "react", "pin", "unpin", "read"] = "send"
     target_timestamp: Optional[str] = None
     message: Optional[str] = Field(None, max_length=1000)
     emoji: Optional[str] = None  # For reactions

@@ -1,10 +1,9 @@
 import logging
 from datetime import datetime
 
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ def send_welcome_email(user):
     Send a welcome email to a newly registered user using a Django template.
     """
     subject = "Welcome to CLASHCODE"
-    
+
     context = {
         "name": _display_name(user),
         "avatar_url": _avatar_url(user),
@@ -45,7 +44,7 @@ def send_welcome_email(user):
 
     try:
         html_message = render_to_string("emails/welcome_email.html", context)
-        
+
         # Simple plain text fallback
         plain_message = (
             f"Welcome to CLASHCODE.\n\n"
@@ -75,7 +74,7 @@ def send_otp_email(email, otp):
     Send an OTP email for login verification using a Django template.
     """
     subject = "Your Login Code - CLASHCODE"
-    
+
     context = {
         "otp": otp,
         "year": datetime.now().year,
@@ -85,9 +84,7 @@ def send_otp_email(email, otp):
         html_message = render_to_string("emails/otp_email.html", context)
 
         plain_message = (
-            f"Your CLASHCODE login code is {otp}.\n\n"
-            "This code expires in 10 minutes.\n"
-            "If you didn’t request this, ignore this email."
+            f"Your CLASHCODE login code is {otp}.\n\nThis code expires in 10 minutes.\nIf you didn’t request this, ignore this email."
         )
 
         send_mail(

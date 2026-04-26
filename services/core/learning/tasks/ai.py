@@ -1,20 +1,22 @@
 import logging
 import os
+
 import requests
 from celery import shared_task
 from django.core.cache import cache
-
 from project.circuit_breaker import RedisCircuitBreaker
+
 from .base import (
+    AI_ANALYSIS_CACHE_TIMEOUT,
+    AI_HINT_CACHE_TIMEOUT,
+    _analysis_cache_key,
     _build_internal_headers,
     _publish_task_result,
-    _analysis_cache_key,
-    AI_HINT_CACHE_TIMEOUT,
-    AI_ANALYSIS_CACHE_TIMEOUT,
 )
 
 logger = logging.getLogger(__name__)
 ai_cb = RedisCircuitBreaker("ai_service", failure_threshold=3, recovery_timeout=60)
+
 
 @shared_task
 def generate_ai_hint_task(
@@ -63,7 +65,7 @@ def generate_ai_hint_task(
         hint_text = body.get("hint")
         if isinstance(hint_text, str) and hint_text.strip():
             cache.set(cache_key, hint_text, timeout=AI_HINT_CACHE_TIMEOUT)
-        
+
         body.setdefault("hint_level", hint_level)
         body.setdefault("max_hints", 3)
         result = {"ok": True, "payload": body}
@@ -79,9 +81,7 @@ def generate_ai_hint_task(
 
 
 @shared_task(bind=True)
-def generate_ai_analysis_task(
-    self, user_id: int, challenge_id: int, challenge_slug: str, user_code: str
-):
+def generate_ai_analysis_task(self, user_id: int, challenge_id: int, challenge_slug: str, user_code: str):
     ai_url = os.getenv("AI_SERVICE_URL", "http://ai:8002")
     payload = {
         "user_code": user_code or "",

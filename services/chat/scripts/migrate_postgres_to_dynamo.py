@@ -20,9 +20,7 @@ TABLE_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Backfill legacy chat messages from PostgreSQL into DynamoDB."
-    )
+    parser = argparse.ArgumentParser(description="Backfill legacy chat messages from PostgreSQL into DynamoDB.")
     parser.add_argument(
         "--legacy-db-url",
         default=os.getenv("LEGACY_DATABASE_URL") or os.getenv("DATABASE_URL"),
@@ -70,10 +68,7 @@ async def load_asyncpg():
     try:
         import asyncpg
     except ImportError as exc:
-        raise RuntimeError(
-            "asyncpg is required for migration. Install it with "
-            "`pip install -r requirements-migrate.txt`."
-        ) from exc
+        raise RuntimeError("asyncpg is required for migration. Install it with `pip install -r requirements-migrate.txt`.") from exc
     return asyncpg
 
 
@@ -85,9 +80,7 @@ def _normalize_timestamp(value):
 
 def _validate_table_name(table_name: str) -> str:
     if not TABLE_NAME_PATTERN.fullmatch(table_name):
-        raise RuntimeError(
-            "Invalid legacy table name. Use a simple identifier like `chatmessage`."
-        )
+        raise RuntimeError("Invalid legacy table name. Use a simple identifier like `chatmessage`.")
     return table_name
 
 
@@ -96,9 +89,7 @@ async def migrate():
     args = parse_args()
 
     if not args.legacy_db_url:
-        raise RuntimeError(
-            "No legacy database URL provided. Set LEGACY_DATABASE_URL or pass --legacy-db-url."
-        )
+        raise RuntimeError("No legacy database URL provided. Set LEGACY_DATABASE_URL or pass --legacy-db-url.")
 
     table_name = _validate_table_name(args.table)
     asyncpg = await load_asyncpg()

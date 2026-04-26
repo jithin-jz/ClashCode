@@ -1,14 +1,15 @@
 import logging
+
+from drf_spectacular.utils import extend_schema
 from rest_framework import decorators, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema
 
 from .models import UserCertificate
 from .serializers import (
-    UserCertificateSerializer, 
-    CertificateEligibilitySerializer, 
-    CertificateVerificationSerializer
+    CertificateEligibilitySerializer,
+    CertificateVerificationSerializer,
+    UserCertificateSerializer,
 )
 from .services import CertificateService
 
@@ -21,7 +22,7 @@ class CertificateViewSet(viewsets.ViewSet):
     """
 
     def get_permissions(self):
-        if self.action == 'verify':
+        if self.action == "verify":
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -34,14 +35,14 @@ class CertificateViewSet(viewsets.ViewSet):
         user = request.user
         is_eligible = CertificateService.is_eligible(user)
         existing_certificate = UserCertificate.objects.filter(user=user).first()
-        
+
         # 1. Existing certificate and still eligible (check for count update)
         if existing_certificate and is_eligible:
             current_completed = CertificateService.get_completed_count(user)
             if existing_certificate.completion_count != current_completed:
                 existing_certificate.completion_count = current_completed
                 existing_certificate.save(update_fields=["completion_count"])
-            
+
             serializer = UserCertificateSerializer(existing_certificate, context={"request": request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -56,7 +57,7 @@ class CertificateViewSet(viewsets.ViewSet):
             certificate = CertificateService.get_or_create_certificate(user)
             serializer = UserCertificateSerializer(certificate, context={"request": request})
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to generate certificate for %s", user.username)
             return Response(
                 {"error": "Failed to generate certificate. Please try again later."},
@@ -67,21 +68,20 @@ class CertificateViewSet(viewsets.ViewSet):
         responses={200: CertificateVerificationSerializer},
         description="Verify a certificate by its unique ID.",
     )
-    @decorators.action(
-        detail=False,
-        methods=["get"],
-        url_path="verify/(?P<certificate_id>[^/.]+)"
-    )
+    @decorators.action(detail=False, methods=["get"], url_path="verify/(?P<certificate_id>[^/.]+)")
     def verify(self, request, certificate_id=None):
         certificate, found = CertificateService.verify_certificate(certificate_id, request=request)
-        
+
         data = {
             "valid": found and certificate.is_valid if certificate else False,
-            "certificate": certificate if found else None
+            "certificate": certificate if found else None,
         }
-        
+
         serializer = CertificateVerificationSerializer(data, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK if found else status.HTTP_404_NOT_FOUND)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK if found else status.HTTP_404_NOT_FOUND,
+        )
 
     @extend_schema(
         responses={200: CertificateEligibilitySerializer},

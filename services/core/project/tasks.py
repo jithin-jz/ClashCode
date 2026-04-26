@@ -18,7 +18,5 @@ def cleanup_old_task_results():
 
     cutoff = timezone.now() - timedelta(days=7)
     deleted_count, _ = TaskResult.objects.filter(date_done__lt=cutoff).delete()
-    logger.info(
-        "Cleaned up %d old task result(s) (older than %s)", deleted_count, cutoff
-    )
+    logger.info("Cleaned up %d old task result(s) (older than %s)", deleted_count, cutoff)
     return {"deleted": deleted_count, "cutoff": str(cutoff)}

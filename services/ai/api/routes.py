@@ -1,22 +1,24 @@
-import logging
 import asyncio
+import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Header, Request
-from langchain_core.documents import Document
 
 from config import settings
-from models.schemas import HintRequest, AnalyzeRequest
-from core.security import authorize_internal_request
+from core.ai_logic import analyze_code_logic, generate_hint_logic
 from core.rag import get_vector_db
-from core.ai_logic import generate_hint_logic, analyze_code_logic
+from core.security import authorize_internal_request
+from fastapi import APIRouter, Header, HTTPException, Request
+from langchain_core.documents import Document
+from models.schemas import AnalyzeRequest, HintRequest
 from utils.core_client import fetch_challenge_context, fetch_internal_challenges
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
 @router.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @router.post("/index")
 async def index_challenges(
@@ -45,11 +47,7 @@ async def index_challenges(
 
     docs = []
     for c in challenges:
-        content = (
-            f"Title: {c.get('title')}\n"
-            f"Description: {c.get('description')}\n"
-            f"Initial Code:\n{c.get('initial_code')}\n"
-        )
+        content = f"Title: {c.get('title')}\nDescription: {c.get('description')}\nInitial Code:\n{c.get('initial_code')}\n"
         docs.append(
             Document(
                 page_content=content,
@@ -65,6 +63,7 @@ async def index_challenges(
     except Exception as e:
         logger.error(f"Failed to add documents to Chroma: {e}")
         return {"status": "error", "detail": "Chroma storage failed"}
+
 
 @router.post("/hints")
 async def generate_hint(
@@ -93,11 +92,12 @@ async def generate_hint(
             user_code=request.user_code,
             hint_level=request.hint_level,
             user_xp=request.user_xp,
-            challenge_context=context_data
+            challenge_context=context_data,
         )
         return {"hint": safe_hint, "hint_level": request.hint_level, "max_hints": 3}
     except Exception:
         raise HTTPException(status_code=500, detail="Error generating hint")
+
 
 @router.post("/analyze")
 async def analyze_code(
@@ -124,7 +124,7 @@ async def analyze_code(
         safe_review = await analyze_code_logic(
             challenge_slug=request.challenge_slug,
             user_code=request.user_code,
-            challenge_context=context_data
+            challenge_context=context_data,
         )
         return {"review": safe_review}
     except Exception:

@@ -25,7 +25,11 @@ class SecurityAuditLog(models.Model):
     """
 
     user = models.ForeignKey(
-        "auth.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="security_logs"
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="security_logs",
     )
     email = models.EmailField(blank=True, db_index=True)
     action = models.CharField(max_length=100, db_index=True)

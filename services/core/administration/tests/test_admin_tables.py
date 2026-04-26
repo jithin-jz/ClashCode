@@ -57,9 +57,7 @@ class AdminTablesTest(TestCase):
 
     def test_users_endpoint_supports_filters(self):
         self.client.force_authenticate(user=self.super_admin)
-        response = self.client.get(
-            "/api/admin/users/?role=user&status=active&search=user"
-        )
+        response = self.client.get("/api/admin/users/?role=user&status=active&search=user")
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data["count"] > 0)
@@ -78,9 +76,7 @@ class AdminTablesTest(TestCase):
 
     def test_audit_logs_endpoint_returns_paginated_payload_with_filters(self):
         self.client.force_authenticate(user=self.super_admin)
-        response = self.client.get(
-            "/api/admin/audit-logs/?page=1&page_size=5&action=DELETE_USER"
-        )
+        response = self.client.get("/api/admin/audit-logs/?page=1&page_size=5&action=DELETE_USER")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("results", response.data)
@@ -114,12 +110,8 @@ class AdminTablesTest(TestCase):
             log.timestamp = base + timezone.timedelta(minutes=idx)
             log.save(update_fields=["timestamp"])
 
-        oldest = self.client.get(
-            "/api/admin/audit-logs/?page=1&page_size=3&ordering=timestamp&search=ord-test-"
-        )
-        newest = self.client.get(
-            "/api/admin/audit-logs/?page=1&page_size=3&ordering=-timestamp&search=ord-test-"
-        )
+        oldest = self.client.get("/api/admin/audit-logs/?page=1&page_size=3&ordering=timestamp&search=ord-test-")
+        newest = self.client.get("/api/admin/audit-logs/?page=1&page_size=3&ordering=-timestamp&search=ord-test-")
 
         self.assertEqual(oldest.status_code, 200)
         self.assertEqual(newest.status_code, 200)

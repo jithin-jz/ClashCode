@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import UserProfile, UserFollow
+
+from .models import UserFollow, UserProfile
 
 
 @admin.register(UserProfile)

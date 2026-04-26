@@ -1,6 +1,8 @@
-from celery import shared_task
-from .emails import send_welcome_email, send_otp_email
 import logging
+
+from celery import shared_task
+
+from .emails import send_otp_email, send_welcome_email
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,7 @@ def send_otp_email_task(email, otp):
 def fetch_oauth_avatar_task(profile_id, url):
     try:
         from users.models import UserProfile
+
         from .services import AuthService
 
         profile = UserProfile.objects.get(pk=profile_id)

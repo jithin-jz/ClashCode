@@ -6,8 +6,6 @@ import time
 from hashlib import sha256
 
 import redis
-import requests
-from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +14,7 @@ LEADERBOARD_CACHE_KEY = "leaderboard_data"
 LEADERBOARD_CACHE_TIMEOUT = 60 * 10
 AI_HINT_CACHE_TIMEOUT = 60 * 60 * 24 * 30
 AI_ANALYSIS_CACHE_TIMEOUT = 60 * 60
+
 
 def _publish_task_result(user_id: int, task_id: str, task_type: str, result: dict):
     """Publish task result to Redis for real-time WebSocket notification."""

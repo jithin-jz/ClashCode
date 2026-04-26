@@ -1,19 +1,21 @@
 from django.http import HttpResponse
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from administration.permissions import IsAdminUser
 from administration.serializers import AdminAuditLogSerializer
 from administration.services.audit_service import AuditService
 from administration.utils import _parse_int
 
+
 class AdminAuditViewSet(viewsets.ViewSet):
     """
     ViewSet for administrative audit logs.
     Groups log retrieval and export actions.
     """
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -33,7 +35,7 @@ class AdminAuditViewSet(viewsets.ViewSet):
     )
     def list(self, request):
         ordering = request.query_params.get("ordering", "-timestamp")
-        
+
         # Determine pagination parameters
         limit = _parse_int(request.query_params.get("limit"), 50, 1, 500)
         offset = _parse_int(request.query_params.get("offset"), 0, 0, None)
@@ -48,9 +50,9 @@ class AdminAuditViewSet(viewsets.ViewSet):
             filters=request.query_params,
             ordering=ordering,
             page=page,
-            page_size=page_size
+            page_size=page_size,
         )
-        
+
         serializer = AdminAuditLogSerializer(data["results"], many=True)
         data["results"] = serializer.data
         return Response(data, status=status.HTTP_200_OK)

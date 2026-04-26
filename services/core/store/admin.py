@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import StoreItem, Purchase
+
+from .models import Purchase, StoreItem
 
 
 @admin.register(StoreItem)

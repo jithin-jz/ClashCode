@@ -1,19 +1,16 @@
 import os
-from django.urls import reverse
+
+from challenges.models import Challenge
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from challenges.models import Challenge
 
 
 class LearningViewTests(APITestCase):
     def setUp(self):
-        self.staff_user = User.objects.create_user(
-            username="staff", password="password", is_staff=True
-        )
-        self.regular_user = User.objects.create_user(
-            username="player", password="password"
-        )
+        self.staff_user = User.objects.create_user(username="staff", password="password", is_staff=True)
+        self.regular_user = User.objects.create_user(username="player", password="password")
         self.challenge = Challenge.objects.create(
             title="L1",
             slug="l1",

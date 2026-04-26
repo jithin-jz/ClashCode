@@ -1,14 +1,16 @@
-import os
-import pytest
 import json
+import os
+
+import pytest
 from starlette.websockets import WebSocketDisconnect
 
 # Set dummy environment variables BEFORE importing main app
 os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 os.environ["JWT_PUBLIC_KEY"] = "dummy_key"
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock, MagicMock
 from main import app
 
 client = TestClient(app)
@@ -24,7 +26,7 @@ async def test_websocket_auth_failure(mock_limiter, mock_verify):
         with client.websocket_connect(
             "/ws/chat/global",
             headers={"authorization": "Bearer invalid"},
-        ) as websocket:
+        ) as _:
             pass
     assert exc.value.code == 1008
 
@@ -34,9 +36,7 @@ async def test_websocket_auth_failure(mock_limiter, mock_verify):
 @patch("services.chat_service.rate_limiter")
 @patch("services.chat_service.redis_client")
 @patch("services.chat_service.dynamo_client")
-async def test_websocket_success_flow(
-    mock_dynamo, mock_redis, mock_limiter, mock_verify
-):
+async def test_websocket_success_flow(mock_dynamo, mock_redis, mock_limiter, mock_verify):
     # Setup Auth
     mock_verify.return_value = {"user_id": 1, "username": "testuser"}
 
@@ -87,17 +87,13 @@ async def test_websocket_success_flow(
 @patch("services.chat_service.rate_limiter")
 @patch("services.chat_service.redis_client")
 @patch("services.chat_service.dynamo_client")
-async def test_websocket_delete_forbidden_stays_local(
-    mock_dynamo, mock_redis, mock_limiter, mock_verify
-):
+async def test_websocket_delete_forbidden_stays_local(mock_dynamo, mock_redis, mock_limiter, mock_verify):
     mock_verify.return_value = {"user_id": 1, "username": "testuser"}
     mock_limiter.check_connection_rate = AsyncMock(return_value=True)
     mock_limiter.check_message_rate = AsyncMock(return_value=True)
     mock_limiter.check_burst_rate = AsyncMock(return_value=True)
     mock_dynamo.get_messages = AsyncMock(return_value={"items": [], "last_evaluated_key": None})
-    mock_dynamo.delete_message = AsyncMock(
-        return_value={"ok": False, "error": "You can only delete your own messages"}
-    )
+    mock_dynamo.delete_message = AsyncMock(return_value={"ok": False, "error": "You can only delete your own messages"})
     mock_redis.publish = AsyncMock()
 
     mock_pubsub = MagicMock()

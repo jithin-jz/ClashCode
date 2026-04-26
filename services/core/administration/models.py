@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class AdminAuditLog(models.Model):
@@ -19,9 +19,7 @@ class AdminAuditLog(models.Model):
         blank=True,
         related_name="target_of_admin_actions",
     )
-    target_username = models.CharField(
-        max_length=150, blank=True, default="", db_index=True
-    )
+    target_username = models.CharField(max_length=150, blank=True, default="", db_index=True)
     target_email = models.EmailField(blank=True, default="")
     details = models.JSONField(default=dict, blank=True)
     actor_ip = models.GenericIPAddressField(null=True, blank=True)
@@ -33,9 +31,7 @@ class AdminAuditLog(models.Model):
         ordering = ["-timestamp"]
 
     def __str__(self):
-        admin_name = self.admin_username or (
-            self.admin.username if self.admin else "unknown"
-        )
+        admin_name = self.admin_username or (self.admin.username if self.admin else "unknown")
         return f"{admin_name} - {self.action} - {self.timestamp}"
 
 

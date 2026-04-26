@@ -2,6 +2,7 @@ import os
 
 OUTPUT_LIMIT_BYTES = int(os.getenv("EXECUTOR_OUTPUT_LIMIT_BYTES", str(32 * 1024)))
 
+
 def truncate_output(value: str) -> str:
     if not value:
         return ""

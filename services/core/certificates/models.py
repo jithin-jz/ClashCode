@@ -9,20 +9,12 @@ class UserCertificate(models.Model):
     Certificate issued when user completes the full global challenge track.
     """
 
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="certificate"
-    )
-    certificate_id = models.UUIDField(
-        default=uuid.uuid4, unique=True, editable=False, db_index=True
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="certificate")
+    certificate_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
     issued_date = models.DateTimeField(auto_now_add=True)
-    certificate_image = models.ImageField(
-        upload_to="certificates/", null=True, blank=True
-    )
+    certificate_image = models.ImageField(upload_to="certificates/", null=True, blank=True)
     is_valid = models.BooleanField(default=True)
-    completion_count = models.IntegerField(
-        help_text="Number of challenges completed when certificate was issued"
-    )
+    completion_count = models.IntegerField(help_text="Number of challenges completed when certificate was issued")
 
     class Meta:
         ordering = ["-issued_date"]
@@ -45,6 +37,7 @@ class CertificateVerificationLog(models.Model):
     Logs every time a certificate is verified.
     Useful for analytics and detecting abuse.
     """
+
     certificate = models.ForeignKey(UserCertificate, on_delete=models.CASCADE, related_name="verification_logs")
     verified_at = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)

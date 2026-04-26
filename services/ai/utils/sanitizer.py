@@ -1,5 +1,5 @@
-import re
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -7,6 +7,7 @@ CODE_BLOCK_PATTERN = re.compile(r"```[\s\S]*?```", flags=re.MULTILINE)
 CODE_LIKE_LINE_PATTERN = re.compile(
     r"^\s*(def |class |for |while |if |elif |else:|try:|except |return |import |from |\w+\s*=|print\(|\w+\(.*\):)"
 )
+
 
 def sanitize_guidance_output(text: str, mode: str) -> str:
     """
@@ -28,18 +29,13 @@ def sanitize_guidance_output(text: str, mode: str) -> str:
     cleaned = "\n".join(kept_lines).strip()
 
     if removed_code_lines:
-        logger.warning(
-            "Sanitized %s code-like lines from %s response.", removed_code_lines, mode
-        )
+        logger.warning("Sanitized %s code-like lines from %s response.", removed_code_lines, mode)
 
     if cleaned:
         return cleaned
 
     if mode == "hint":
-        return (
-            "Focus on the core logic, break the problem into small steps, "
-            "and implement each step without copying a full solution."
-        )
+        return "Focus on the core logic, break the problem into small steps, and implement each step without copying a full solution."
 
     return (
         "Findings\n"

@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 140
+target-version = ['py312']
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E402", # Module level import not at top of file
+]

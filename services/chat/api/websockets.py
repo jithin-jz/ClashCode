@@ -1,12 +1,14 @@
 import logging
+
+from core.auth import JWT_ACCESS_COOKIE_NAME, get_token, verify_jwt
+from core.managers import notification_manager
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from schemas import IncomingMessage
-from core.auth import get_token, verify_jwt, JWT_ACCESS_COOKIE_NAME
-from core.managers import notification_manager
 from services.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
 
 @router.websocket("/ws/chat/{room}")
 @router.websocket("/ws/chat/{room}/")
@@ -34,7 +36,7 @@ async def chat_ws(ws: WebSocket, room: str):
         while True:
             raw = await ws.receive_text()
             incoming = IncomingMessage.model_validate_json(raw)
-            
+
             result = await ChatService.process_message(room, payload, incoming)
             if result and "error" in result:
                 await ws.send_json({"type": "error", "message": result["error"]})

@@ -1,9 +1,11 @@
 from rest_framework import serializers
+
 from .models import Challenge, UserProgress
 
 
 class ChallengePublicSerializer(serializers.ModelSerializer):
     """Serializer for public challenge details, omitting sensitive fields."""
+
     class Meta:
         model = Challenge
         fields = [
@@ -22,6 +24,7 @@ class ChallengePublicSerializer(serializers.ModelSerializer):
 
 class ChallengeAdminSerializer(serializers.ModelSerializer):
     """Full serializer for administrative CRUD operations."""
+
     created_for_user_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
@@ -44,6 +47,7 @@ class ChallengeAdminSerializer(serializers.ModelSerializer):
 
 class UserProgressSerializer(serializers.ModelSerializer):
     """Serializer for tracking user progress on a challenge."""
+
     challenge_id = serializers.IntegerField(source="challenge.id")
 
     class Meta:
@@ -52,6 +56,7 @@ class UserProgressSerializer(serializers.ModelSerializer):
 
 
 # --- Request/Response Serializers for Challenge Actions ---
+
 
 class ChallengeSubmissionRequestSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)

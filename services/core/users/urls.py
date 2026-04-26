@@ -1,15 +1,16 @@
 from django.urls import path
+
 from .views import (
+    ContributionHistoryView,
     CurrentUserView,
+    FollowToggleView,
+    MediaUploadView,
+    ProfileDetailView,
     ProfileUpdateView,
     RedeemReferralView,
-    ProfileDetailView,
-    FollowToggleView,
+    SuggestedUsersView,
     UserFollowersView,
     UserFollowingView,
-    SuggestedUsersView,
-    ContributionHistoryView,
-    MediaUploadView,
 )
 
 urlpatterns = [
@@ -23,9 +24,7 @@ urlpatterns = [
         name="user_contributions",
     ),
     path("users/<str:username>/", ProfileDetailView.as_view(), name="profile_detail"),
-    path(
-        "users/<str:username>/follow/", FollowToggleView.as_view(), name="toggle_follow"
-    ),
+    path("users/<str:username>/follow/", FollowToggleView.as_view(), name="toggle_follow"),
     path(
         "users/<str:username>/followers/",
         UserFollowersView.as_view(),

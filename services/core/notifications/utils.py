@@ -1,15 +1,17 @@
-import logging
 import json
-import redis
+import logging
 import os
 from pathlib import Path
+
+import redis
 from django.conf import settings
+
 from .models import FCMToken
 
 logger = logging.getLogger(__name__)
 
 import firebase_admin
-from firebase_admin import messaging, credentials
+from firebase_admin import credentials, messaging
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +31,7 @@ try:
                 firebase_key_path,
             )
     elif not settings.FIREBASE_SERVICE_ACCOUNT_PATH:
-        logger.warning(
-            "FIREBASE_SERVICE_ACCOUNT_PATH is not configured; push notifications are disabled."
-        )
+        logger.warning("FIREBASE_SERVICE_ACCOUNT_PATH is not configured; push notifications are disabled.")
 except Exception as e:
     logger.warning(f"Failed to initialize Firebase Admin SDK: {e}")
 
@@ -63,9 +63,7 @@ def send_fcm_push(user, title, body, data=None):
         return
 
     if not firebase_admin._apps:
-        logger.warning(
-            "Firebase not initialized; push delivery may fail for %s", user.username
-        )
+        logger.warning("Firebase not initialized; push delivery may fail for %s", user.username)
 
     try:
         # Move notification details into data to give SW full control
@@ -84,9 +82,7 @@ def send_fcm_push(user, title, body, data=None):
             tokens=tokens,
         )
         response = messaging.send_each_for_multicast(message)
-        logger.info(
-            f"Successfully sent FCM push to {user.username}: {response.success_count} success, {response.failure_count} failure"
-        )
+        logger.info(f"Successfully sent FCM push to {user.username}: {response.success_count} success, {response.failure_count} failure")
 
         # Optional: Clean up failed tokens
         if response.failure_count > 0:

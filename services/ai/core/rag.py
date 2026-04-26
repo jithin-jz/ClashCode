@@ -1,12 +1,14 @@
-import logging
 import asyncio
+import logging
+
+from config import settings
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
-from config import settings
 
 logger = logging.getLogger(__name__)
 
 _vector_db = None
+
 
 def get_vector_db():
     """Lazy initialization of the vector database to handle connection issues gracefully."""
@@ -36,9 +38,7 @@ def get_vector_db():
     return _vector_db
 
 
-async def get_rag_context(
-    challenge_description: str, user_code: str, challenge_slug: str
-):
+async def get_rag_context(challenge_description: str, user_code: str, challenge_slug: str):
     logger.info("Performing similarity search for RAG...")
     similar_docs = []
     try:
@@ -50,14 +50,8 @@ async def get_rag_context(
             return "No similar patterns found."
 
         loop = asyncio.get_running_loop()
-        results = await loop.run_in_executor(
-            None, lambda: vdb.similarity_search(query, k=2)
-        )
-        similar_docs = [
-            doc.page_content
-            for doc in results
-            if doc.metadata.get("slug") != challenge_slug
-        ]
+        results = await loop.run_in_executor(None, lambda: vdb.similarity_search(query, k=2))
+        similar_docs = [doc.page_content for doc in results if doc.metadata.get("slug") != challenge_slug]
     except Exception as e:
         logger.warning(f"RAG Search failed: {e}. Proceeding without extra context.")
     return "\n\n".join(similar_docs) if similar_docs else "No similar patterns found."

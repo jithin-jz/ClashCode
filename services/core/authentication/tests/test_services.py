@@ -1,11 +1,13 @@
-from django.test import TestCase
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
-from unittest.mock import patch, MagicMock
-from authentication.services import AuthService
-from authentication.models import EmailOTP
-from authentication.utils import hash_otp
 from django.core.cache import cache
+from django.test import TestCase
 from users.models import UserProfile
+
+from authentication.models import EmailOTP
+from authentication.services import AuthService
+from authentication.utils import hash_otp
 
 
 class AuthServiceTest(TestCase):
@@ -69,9 +71,7 @@ class AuthServiceTest(TestCase):
 
     @patch("authentication.tasks.fetch_oauth_avatar_task.delay")
     def test_create_profile_queues_avatar_download(self, mock_avatar_task):
-        user = User.objects.create_user(
-            username="oauth-user", email="oauth@example.com"
-        )
+        user = User.objects.create_user(username="oauth-user", email="oauth@example.com")
 
         with self.captureOnCommitCallbacks(execute=True):
             AuthService._create_profile(
@@ -86,9 +86,7 @@ class AuthServiceTest(TestCase):
             )
 
         # The current implementation of _create_profile calls _download_and_save_avatar synchronously
-        # or doesn't use the fetch_oauth_avatar_task. 
+        # or doesn't use the fetch_oauth_avatar_task.
         # Let's adjust the test to match reality if the task is not used.
-        self.assertTrue(
-            UserProfile.objects.filter(user=user, provider="github").exists()
-        )
+        self.assertTrue(UserProfile.objects.filter(user=user, provider="github").exists())
         # self.assertEqual(mock_avatar_task.call_count, 1) # Commented out as it's not currently queued

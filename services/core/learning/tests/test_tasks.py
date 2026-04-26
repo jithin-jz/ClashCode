@@ -1,7 +1,8 @@
-from django.test import TestCase
+from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from challenges.models import Challenge, UserProgress
+from django.test import TestCase
+
 from learning.tasks import update_leaderboard_cache
 
 
@@ -15,17 +16,11 @@ class LearningTaskTests(TestCase):
         self.c2 = Challenge.objects.create(title="C2", slug="c2", order=2)
 
         # User 1 completes both
-        UserProgress.objects.create(
-            user=self.user1, challenge=self.c1, status=UserProgress.Status.COMPLETED
-        )
-        UserProgress.objects.create(
-            user=self.user1, challenge=self.c2, status=UserProgress.Status.COMPLETED
-        )
+        UserProgress.objects.create(user=self.user1, challenge=self.c1, status=UserProgress.Status.COMPLETED)
+        UserProgress.objects.create(user=self.user1, challenge=self.c2, status=UserProgress.Status.COMPLETED)
 
         # User 2 completes one
-        UserProgress.objects.create(
-            user=self.user2, challenge=self.c1, status=UserProgress.Status.COMPLETED
-        )
+        UserProgress.objects.create(user=self.user2, challenge=self.c1, status=UserProgress.Status.COMPLETED)
 
     def test_update_leaderboard_cache(self):
         # Run the task synchronously

@@ -1,9 +1,9 @@
 import os
 from unittest.mock import MagicMock, patch
 
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
-from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from challenges.models import Challenge, UserProgress
@@ -25,9 +25,7 @@ class AIHintPolicyTest(TestCase):
             xp_reward=10,
         )
 
-        self.progress, _ = UserProgress.objects.get_or_create(
-            user=self.user, challenge=self.challenge
-        )
+        self.progress, _ = UserProgress.objects.get_or_create(user=self.user, challenge=self.challenge)
 
         self.url = f"/api/challenges/{self.challenge.slug}/ai-hint/"
         os.environ["INTERNAL_API_KEY"] = "test-internal-key"

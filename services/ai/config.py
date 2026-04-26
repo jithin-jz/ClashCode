@@ -1,6 +1,7 @@
-from pydantic import field_validator, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional, Union
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -44,12 +45,8 @@ class Settings(BaseSettings):
     def validate_keys(self):
         if not self.INTERNAL_API_KEY or not self.INTERNAL_API_KEY.strip():
             raise ValueError("INTERNAL_API_KEY must be set and non-empty")
-        if self.INTERNAL_REQUIRE_SIGNATURE and not (
-            self.INTERNAL_SIGNING_SECRET and self.INTERNAL_SIGNING_SECRET.strip()
-        ):
-            raise ValueError(
-                "INTERNAL_SIGNING_SECRET must be set when INTERNAL_REQUIRE_SIGNATURE is true"
-            )
+        if self.INTERNAL_REQUIRE_SIGNATURE and not (self.INTERNAL_SIGNING_SECRET and self.INTERNAL_SIGNING_SECRET.strip()):
+            raise ValueError("INTERNAL_SIGNING_SECRET must be set when INTERNAL_REQUIRE_SIGNATURE is true")
 
 
 settings = Settings()

@@ -1,8 +1,9 @@
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,8 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)
 
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 # Sentry Configuration
@@ -26,10 +27,13 @@ if SENTRY_DSN:
             RedisIntegration(),
         ],
         # Performance Monitoring
-        traces_sample_rate=1.0 if os.getenv("DEBUG", "false").lower() == "true" else 0.2,
+        traces_sample_rate=(1.0 if os.getenv("DEBUG", "false").lower() == "true" else 0.2),
         # Capture User PII
         send_default_pii=True,
-        environment=os.getenv("ENVIRONMENT", "development" if os.getenv("DEBUG", "false").lower() == "true" else "production"),
+        environment=os.getenv(
+            "ENVIRONMENT",
+            ("development" if os.getenv("DEBUG", "false").lower() == "true" else "production"),
+        ),
     )
 
 # Security
@@ -62,9 +66,7 @@ if not DEBUG and not ALLOWED_HOSTS:
 cloudinary_cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
 cloudinary_api_key = os.getenv("CLOUDINARY_API_KEY", "").strip()
 cloudinary_api_secret = os.getenv("CLOUDINARY_API_SECRET", "").strip()
-USE_CLOUDINARY = all(
-    [cloudinary_cloud_name, cloudinary_api_key, cloudinary_api_secret]
-)
+USE_CLOUDINARY = all([cloudinary_cloud_name, cloudinary_api_key, cloudinary_api_secret])
 
 # Applications
 INSTALLED_APPS = [
@@ -144,9 +146,7 @@ DATABASES = {
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
         "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
-        "CONN_HEALTH_CHECKS": _parse_bool(
-            os.getenv("DB_CONN_HEALTH_CHECKS"), default=True
-        ),
+        "CONN_HEALTH_CHECKS": _parse_bool(os.getenv("DB_CONN_HEALTH_CHECKS"), default=True),
     }
 }
 
@@ -160,16 +160,12 @@ if not all(
         os.getenv("DB_PORT"),
     ]
 ):
-    raise ImproperlyConfigured(
-        "Database configuration incomplete. Ensure DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT are set."
-    )
+    raise ImproperlyConfigured("Database configuration incomplete. Ensure DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT are set.")
 
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -203,9 +199,7 @@ if USE_CLOUDINARY:
         "API_SECRET": cloudinary_api_secret,
         "SECURE": _parse_bool(os.getenv("CLOUDINARY_SECURE"), default=True),
     }
-    STORAGES["default"] = {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"
-    }
+    STORAGES["default"] = {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"}
 
 # Backend URL (for absolute media paths)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
@@ -213,9 +207,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 # Firebase
 FIREBASE_SERVICE_ACCOUNT_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
 if FIREBASE_SERVICE_ACCOUNT_PATH and not os.path.isabs(FIREBASE_SERVICE_ACCOUNT_PATH):
-    FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(
-        BASE_DIR, FIREBASE_SERVICE_ACCOUNT_PATH
-    )
+    FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, FIREBASE_SERVICE_ACCOUNT_PATH)
 
 
 # Cache Configuration
@@ -284,19 +276,21 @@ if not DEBUG and "localhost" in FRONTEND_URL:
 
 CORS_ALLOWED_ORIGINS = _parse_csv(
     os.getenv("CORS_ALLOWED_ORIGINS"),
-    []
-    if not DEBUG
-    else [
-        FRONTEND_URL,
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-        "http://127.0.0.1:5176",
-    ],
+    (
+        []
+        if not DEBUG
+        else [
+            FRONTEND_URL,
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5176",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:5175",
+            "http://127.0.0.1:5176",
+        ]
+    ),
 )
 CORS_ALLOWED_ORIGIN_REGEXES = _parse_csv(
     os.getenv("CORS_ALLOWED_ORIGIN_REGEXES"),
@@ -305,15 +299,17 @@ CORS_ALLOWED_ORIGIN_REGEXES = _parse_csv(
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = _parse_csv(
     os.getenv("CSRF_TRUSTED_ORIGINS"),
-    []
-    if not DEBUG
-    else [
-        FRONTEND_URL,
-        "http://localhost",
-        "http://127.0.0.1",
-        "https://localhost",
-        "https://127.0.0.1",
-    ],
+    (
+        []
+        if not DEBUG
+        else [
+            FRONTEND_URL,
+            "http://localhost",
+            "http://127.0.0.1",
+            "https://localhost",
+            "https://127.0.0.1",
+        ]
+    ),
 )
 if not DEBUG and not CORS_ALLOWED_ORIGINS:
     raise ImproperlyConfigured("CORS_ALLOWED_ORIGINS must be set when DEBUG=False")
@@ -324,7 +320,10 @@ if not DEBUG and not CSRF_TRUSTED_ORIGINS:
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "CLASHCODE API",
-    "DESCRIPTION": "Internal API documentation for the CLASHCODE platform. This API handles authentication, user profiles, challenges, store purchases, and real-time notifications.",
+    "DESCRIPTION": (
+        "Internal API documentation for the CLASHCODE platform. "
+        "This API handles authentication, user profiles, challenges, store purchases, and real-time notifications."
+    ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -352,38 +351,20 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": os.getenv("THROTTLE_ANON_RATE", "20/minute"),  # General anonymous limit
-        "user": os.getenv(
-            "THROTTLE_USER_RATE", "100/minute"
-        ),  # General authenticated user limit
-        "otp": os.getenv(
-            "THROTTLE_OTP_RATE", "5/minute"
-        ),  # Strict limit for OTP requests (SMS cost)
-        "auth": os.getenv(
-            "THROTTLE_AUTH_RATE", "10/minute"
-        ),  # Login/register attempts (brute force protection)
-        "store": os.getenv(
-            "THROTTLE_STORE_RATE", "30/minute"
-        ),  # Store/purchase operations
-        "notifications": os.getenv(
-            "THROTTLE_NOTIFICATIONS_RATE", "180/minute"
-        ),  # Notification polling/read operations
-        "sensitive": os.getenv(
-            "THROTTLE_SENSITIVE_RATE", "5/minute"
-        ),  # Password reset, email change
-        "burst": os.getenv(
-            "THROTTLE_BURST_RATE", "10/second"
-        ),  # Short burst protection
-        "code_execution": os.getenv(
-            "THROTTLE_CODE_EXECUTION_RATE", "100/minute"
-        ),  # Sandbox-backed code run/submission endpoints
+        "user": os.getenv("THROTTLE_USER_RATE", "100/minute"),  # General authenticated user limit
+        "otp": os.getenv("THROTTLE_OTP_RATE", "5/minute"),  # Strict limit for OTP requests (SMS cost)
+        "auth": os.getenv("THROTTLE_AUTH_RATE", "10/minute"),  # Login/register attempts (brute force protection)
+        "store": os.getenv("THROTTLE_STORE_RATE", "30/minute"),  # Store/purchase operations
+        "notifications": os.getenv("THROTTLE_NOTIFICATIONS_RATE", "180/minute"),  # Notification polling/read operations
+        "sensitive": os.getenv("THROTTLE_SENSITIVE_RATE", "5/minute"),  # Password reset, email change
+        "burst": os.getenv("THROTTLE_BURST_RATE", "10/second"),  # Short burst protection
+        "code_execution": os.getenv("THROTTLE_CODE_EXECUTION_RATE", "100/minute"),  # Sandbox-backed code run/submission endpoints
     },
 }
 
 CODE_EXECUTION_MAX_BYTES = int(os.getenv("CODE_EXECUTION_MAX_BYTES", str(64 * 1024)))
 CODE_EXECUTION_TIMEOUT_SECONDS = float(os.getenv("CODE_EXECUTION_TIMEOUT_SECONDS", "15"))
-INTERNAL_REQUIRE_SIGNATURE = _parse_bool(
-    os.getenv("INTERNAL_REQUIRE_SIGNATURE"), default=not DEBUG
-)
+INTERNAL_REQUIRE_SIGNATURE = _parse_bool(os.getenv("INTERNAL_REQUIRE_SIGNATURE"), default=not DEBUG)
 
 # JWT Configuration
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "RS256").upper()
@@ -399,17 +380,13 @@ if not JWT_PRIVATE_KEY and not JWT_PUBLIC_KEY:
     fallback_secret = JWT_SHARED_SECRET or (SECRET_KEY if DEBUG else "")
     if not fallback_secret:
         raise ImproperlyConfigured(
-            "JWT configuration incomplete. Set JWT_PRIVATE_KEY/JWT_PUBLIC_KEY "
-            "for RS256 or JWT_SHARED_SECRET for local HS256."
+            "JWT configuration incomplete. Set JWT_PRIVATE_KEY/JWT_PUBLIC_KEY for RS256 or JWT_SHARED_SECRET for local HS256."
         )
     JWT_ALGORITHM = "HS256"
     JWT_PRIVATE_KEY = fallback_secret
     JWT_PUBLIC_KEY = fallback_secret
 elif not JWT_PRIVATE_KEY or not JWT_PUBLIC_KEY:
-    raise ImproperlyConfigured(
-        "JWT configuration incomplete. Both JWT_PRIVATE_KEY and JWT_PUBLIC_KEY "
-        "must be set for asymmetric signing."
-    )
+    raise ImproperlyConfigured("JWT configuration incomplete. Both JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be set for asymmetric signing.")
 
 JWT_ACCESS_TOKEN_LIFETIME = 60 * 60
 JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 7
@@ -419,9 +396,7 @@ JWT_COOKIE_SECURE = _parse_bool(os.getenv("JWT_COOKIE_SECURE"), default=not DEBU
 JWT_COOKIE_SAMESITE = os.getenv("JWT_COOKIE_SAMESITE", "Lax")
 JWT_ACCESS_COOKIE_NAME = os.getenv("JWT_ACCESS_COOKIE_NAME", "access_token")
 JWT_REFRESH_COOKIE_NAME = os.getenv("JWT_REFRESH_COOKIE_NAME", "refresh_token")
-JWT_RETURN_TOKENS_IN_BODY = _parse_bool(
-    os.getenv("JWT_RETURN_TOKENS_IN_BODY"), default=False
-)
+JWT_RETURN_TOKENS_IN_BODY = _parse_bool(os.getenv("JWT_RETURN_TOKENS_IN_BODY"), default=False)
 
 if JWT_COOKIE_SECURE:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -429,12 +404,8 @@ if JWT_COOKIE_SECURE:
 SECURE_SSL_REDIRECT = _parse_bool(os.getenv("SECURE_SSL_REDIRECT"), default=not DEBUG)
 SESSION_COOKIE_SECURE = JWT_COOKIE_SECURE
 CSRF_COOKIE_SECURE = JWT_COOKIE_SECURE
-SECURE_HSTS_SECONDS = int(
-    os.getenv("SECURE_HSTS_SECONDS", "0" if DEBUG else "31536000")
-)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = _parse_bool(
-    os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS"), default=not DEBUG
-)
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0" if DEBUG else "31536000"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _parse_bool(os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS"), default=not DEBUG)
 SECURE_HSTS_PRELOAD = _parse_bool(os.getenv("SECURE_HSTS_PRELOAD"), default=not DEBUG)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
@@ -449,9 +420,7 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = f"{FRONTEND_URL}/auth/google/callback"
 
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = _parse_bool(os.getenv("EMAIL_USE_TLS"), default=True)

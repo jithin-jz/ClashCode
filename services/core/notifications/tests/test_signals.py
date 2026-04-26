@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-
 from posts.models import Post
 from users.models import UserFollow
 
@@ -14,9 +13,7 @@ class NotificationSignalTests(TestCase):
 
     @patch("notifications.services.send_push_notification_task.delay")
     def test_like_signal_enqueues_push_task(self, mock_delay):
-        post = Post.objects.create(
-            user=self.author, caption="hello", image="posts/test.jpg"
-        )
+        post = Post.objects.create(user=self.author, caption="hello", image="posts/test.jpg")
 
         post.likes.add(self.actor)
 

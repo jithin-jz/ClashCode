@@ -1,9 +1,11 @@
 from rest_framework import serializers
-from .models import StoreItem, Purchase
+
+from .models import StoreItem
 
 
 class StoreItemSerializer(serializers.ModelSerializer):
     """Serializer for store items."""
+
     class Meta:
         model = StoreItem
         fields = [
@@ -22,6 +24,7 @@ class StoreItemSerializer(serializers.ModelSerializer):
 
 class PurchaseResponseSerializer(serializers.Serializer):
     """Serializer for successful purchase response."""
+
     status = serializers.CharField()
     message = serializers.CharField()
     remaining_xp = serializers.IntegerField()
@@ -30,15 +33,18 @@ class PurchaseResponseSerializer(serializers.Serializer):
 
 class InventoryResponseSerializer(serializers.Serializer):
     """Serializer for user inventory and equipped items."""
+
     purchased_items = StoreItemSerializer(many=True)
     equipped_items = serializers.DictField()
 
 
 class EquipItemRequestSerializer(serializers.Serializer):
     """Serializer for equipping an item."""
+
     item_id = serializers.IntegerField()
 
 
 class UnequipItemRequestSerializer(serializers.Serializer):
     """Serializer for unequipping a category."""
+
     category = serializers.ChoiceField(choices=["THEME", "FONT", "EFFECT", "VICTORY"])

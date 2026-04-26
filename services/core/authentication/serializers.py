@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
+from rest_framework import serializers
 from users.serializers import UserSerializer
 
 
@@ -56,15 +56,11 @@ class AdminLoginSerializer(serializers.Serializer):
 
             # Reject invalid credentials
             if not user:
-                raise serializers.ValidationError(
-                    "Unable to log in with provided credentials."
-                )
+                raise serializers.ValidationError("Unable to log in with provided credentials.")
 
             # Enforce admin-only access
             if not (user.is_staff or user.is_superuser):
-                raise serializers.ValidationError(
-                    "You do not have permission to access the admin area."
-                )
+                raise serializers.ValidationError("You do not have permission to access the admin area.")
 
             # Attach authenticated user to validated data
             data["user"] = user
@@ -78,9 +74,7 @@ class AdminLoginSerializer(serializers.Serializer):
 class OAuthCodeSerializer(serializers.Serializer):
     """Serializer for OAuth callback receiving an authorization code."""
 
-    code = serializers.CharField(
-        required=True, help_text="Authorization code from the provider."
-    )
+    code = serializers.CharField(required=True, help_text="Authorization code from the provider.")
 
 
 class OAuthURLSerializer(serializers.Serializer):

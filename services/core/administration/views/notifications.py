@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiTypes, inline_serializer
+from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,8 +6,10 @@ from rest_framework.views import APIView
 from administration.permissions import IsAdminUser
 from administration.services.notification_service import NotificationService
 
+
 class GlobalNotificationView(APIView):
     """View to send notifications to all users."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -39,7 +41,7 @@ class GlobalNotificationView(APIView):
             message=v_data["message"],
             include_staff=v_data["include_staff"],
             reason=v_data.get("reason", ""),
-            request=request
+            request=request,
         )
 
         if not success:
@@ -50,6 +52,7 @@ class GlobalNotificationView(APIView):
 
 class BroadcastHistoryView(APIView):
     """View to retrieve broadcast history."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -63,6 +66,7 @@ class BroadcastHistoryView(APIView):
 
 class BroadcastResendView(APIView):
     """View to resend a previously sent broadcast."""
+
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -70,11 +74,7 @@ class BroadcastResendView(APIView):
         description="Resend a previously sent broadcast by request id.",
     )
     def post(self, request, request_id):
-        success, msg, code = NotificationService.resend_broadcast(
-            admin=request.user,
-            request_id=request_id,
-            request=request
-        )
+        success, msg, code = NotificationService.resend_broadcast(admin=request.user, request_id=request_id, request=request)
 
         if not success:
             return Response({"error": msg}, status=code)

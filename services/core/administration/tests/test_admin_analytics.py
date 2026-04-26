@@ -1,15 +1,13 @@
+from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.utils import timezone
 from django.urls import reverse
-from datetime import timedelta
-from rest_framework.test import APIClient
-from rest_framework import status
-
-from users.models import UserProfile
-from challenges.models import Challenge, UserProgress
-from store.models import StoreItem
+from django.utils import timezone
 from notifications.models import Notification
+from rest_framework import status
+from rest_framework.test import APIClient
+from store.models import StoreItem
+
 from administration.models import AdminAuditLog
 
 
@@ -37,9 +35,7 @@ class AdminAnalyticsTest(TestCase):
         self.profile.save()
 
         # Create a challenge and some progress
-        self.challenge = Challenge.objects.create(
-            title="Test Challenge", slug="test-challenge", xp_reward=100
-        )
+        self.challenge = Challenge.objects.create(title="Test Challenge", slug="test-challenge", xp_reward=100)
         UserProgress.objects.create(
             user=self.user,
             challenge=self.challenge,
@@ -48,9 +44,7 @@ class AdminAnalyticsTest(TestCase):
         )
 
         # Create a store item
-        self.item = StoreItem.objects.create(
-            name="Test Item", category="gems", cost=200
-        )
+        self.item = StoreItem.objects.create(name="Test Item", category="gems", cost=200)
 
     def test_admin_stats_view(self):
         self.client.force_authenticate(user=self.super_admin)
@@ -90,9 +84,7 @@ class AdminAnalyticsTest(TestCase):
         self.assertEqual(Notification.objects.count(), 2)
 
         # Check audit log
-        audit = AdminAuditLog.objects.filter(action="SEND_GLOBAL_NOTIFICATION").latest(
-            "timestamp"
-        )
+        audit = AdminAuditLog.objects.filter(action="SEND_GLOBAL_NOTIFICATION").latest("timestamp")
         self.assertEqual(audit.details["message"], "Hello everyone!")
 
     def test_system_integrity_view(self):

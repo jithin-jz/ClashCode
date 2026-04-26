@@ -1,15 +1,14 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
-from rest_framework import status, serializers
 from celery.result import AsyncResult
-from django.conf import settings
 from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiTypes,
-    inline_serializer,
     OpenApiParameter,
+    OpenApiTypes,
+    extend_schema,
+    inline_serializer,
 )
+from rest_framework import serializers, status
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class ServiceIndexView(APIView):
@@ -77,9 +76,7 @@ class TaskStatusView(APIView):
                 response_data["result"] = str(result.result)
                 response_data["traceback"] = result.traceback
 
-            response_data["date_done"] = (
-                str(result.date_done) if result.date_done else None
-            )
+            response_data["date_done"] = str(result.date_done) if result.date_done else None
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -138,9 +135,7 @@ class TaskResultsListView(APIView):
                 "status": r.status,
                 "result": r.result,
                 "date_done": str(r.date_done),
-                "date_created": (
-                    str(r.date_created) if hasattr(r, "date_created") else None
-                ),
+                "date_created": (str(r.date_created) if hasattr(r, "date_created") else None),
                 "worker": r.worker,
                 "traceback": r.traceback[:500] if r.traceback else None,
             }

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import UserCertificate, CertificateVerificationLog
+from .models import CertificateVerificationLog, UserCertificate
 
 
 @admin.register(UserCertificate)
@@ -21,4 +21,10 @@ class CertificateVerificationLogAdmin(admin.ModelAdmin):
     list_display = ("certificate", "verified_at", "ip_address", "user_agent")
     list_filter = ("verified_at",)
     search_fields = ("certificate__certificate_id", "ip_address")
-    readonly_fields = ("certificate", "verified_at", "ip_address", "user_agent", "referer")
+    readonly_fields = (
+        "certificate",
+        "verified_at",
+        "ip_address",
+        "user_agent",
+        "referer",
+    )

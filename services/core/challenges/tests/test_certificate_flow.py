@@ -1,7 +1,8 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
-from challenges.models import Challenge, UserProgress
 from certificates.models import UserCertificate
+from django.contrib.auth.models import User
+from django.test import TestCase
+
+from challenges.models import Challenge, UserProgress
 from challenges.services import ChallengeService
 
 
@@ -42,9 +43,7 @@ class CertificateFlowTest(TestCase):
         # Submit final level.
         final_level = self.challenges[-1]
 
-        result = ChallengeService.process_submission(
-            self.user, final_level, passed=True
-        )
+        result = ChallengeService.process_submission(self.user, final_level, passed=True)
 
         # Check result
         self.assertEqual(result["status"], "completed")
@@ -67,9 +66,7 @@ class CertificateFlowTest(TestCase):
         final_level = self.challenges[-1]
 
         # Submit final level again.
-        result = ChallengeService.process_submission(
-            self.user, final_level, passed=True
-        )
+        result = ChallengeService.process_submission(self.user, final_level, passed=True)
 
         # Verify certificate is present on re-submission
         self.assertEqual(result["status"], "already_completed")
@@ -86,9 +83,7 @@ class CertificateFlowTest(TestCase):
 
         # Submit penultimate level.
         penultimate_level = self.challenges[-2]
-        result = ChallengeService.process_submission(
-            self.user, penultimate_level, passed=True
-        )
+        result = ChallengeService.process_submission(self.user, penultimate_level, passed=True)
 
         self.assertEqual(result["status"], "completed")
         self.assertFalse(UserCertificate.objects.filter(user=self.user).exists())

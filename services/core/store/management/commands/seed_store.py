@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from store.models import StoreItem
 
 
@@ -306,6 +307,4 @@ class Command(BaseCommand):
             StoreItem.objects.create(**item)
             self.stdout.write(f"  + {item['name']}")
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Successfully seeded {len(items)} store items.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Successfully seeded {len(items)} store items."))

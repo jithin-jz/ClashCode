@@ -1,14 +1,15 @@
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+
 from project.health import HealthCheckView
-from project.views import ServiceIndexView, TaskStatusView, TaskResultsListView
+from project.views import ServiceIndexView, TaskResultsListView, TaskStatusView
 
 urlpatterns = [
     # Health check
@@ -28,9 +29,7 @@ urlpatterns = [
     path("api/achievements/", include("achievements.urls")),
     path("api/xpoint/", include("xpoint.urls")),
     # Celery task result endpoints (admin only)
-    path(
-        "api/tasks/<str:task_id>/status/", TaskStatusView.as_view(), name="task-status"
-    ),
+    path("api/tasks/<str:task_id>/status/", TaskStatusView.as_view(), name="task-status"),
     path("api/tasks/results/", TaskResultsListView.as_view(), name="task-results"),
     # Swagger Documentation routes
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

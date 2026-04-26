@@ -1,5 +1,6 @@
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 from rate_limiter import RateLimiter
 
 
@@ -65,16 +66,10 @@ async def test_convenience_methods(limiter, mock_redis):
     limiter.is_allowed = AsyncMock(return_value=True)
 
     await limiter.check_connection_rate(123)
-    limiter.is_allowed.assert_called_with(
-        "ratelimit:ws:connect:123", max_requests=5, window_seconds=60
-    )
+    limiter.is_allowed.assert_called_with("ratelimit:ws:connect:123", max_requests=5, window_seconds=60)
 
     await limiter.check_message_rate(123)
-    limiter.is_allowed.assert_called_with(
-        "ratelimit:ws:message:123", max_requests=30, window_seconds=60
-    )
+    limiter.is_allowed.assert_called_with("ratelimit:ws:message:123", max_requests=30, window_seconds=60)
 
     await limiter.check_burst_rate(123)
-    limiter.is_allowed.assert_called_with(
-        "ratelimit:ws:burst:123", max_requests=5, window_seconds=5
-    )
+    limiter.is_allowed.assert_called_with("ratelimit:ws:burst:123", max_requests=5, window_seconds=5)

@@ -1,13 +1,14 @@
+from .assist_service import AssistService
 from .progression_service import ProgressionService
 from .submission_service import SubmissionService
-from .assist_service import AssistService
+
 
 class ChallengeService(ProgressionService, SubmissionService, AssistService):
     """
     Unified Challenge Service.
     Provides a clean API for all challenge-related business logic.
     """
-    
+
     @staticmethod
     def process_submission(user, challenge, passed=False):
         """Backward compatibility wrapper for process_submission_result."""

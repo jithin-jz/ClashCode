@@ -1,13 +1,16 @@
 import logging
+
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db import transaction
 from xpoint.services import XPService
-from .models import UserProfile, UserFollow
+
+from .models import UserFollow, UserProfile
 
 logger = logging.getLogger(__name__)
+
 
 class UserService:
     """
@@ -29,7 +32,7 @@ class UserService:
                 requested_username = str(data.get("username", "")).strip()
                 if not requested_username:
                     raise ValueError("Username cannot be empty.")
-                
+
                 try:
                     username_validator(requested_username)
                 except ValidationError:
@@ -37,7 +40,7 @@ class UserService:
 
                 if User.objects.filter(username__iexact=requested_username).exclude(pk=user.pk).exists():
                     raise ValueError("Username is already taken.")
-                
+
                 user.username = requested_username
 
             # Handle other User fields
@@ -77,9 +80,7 @@ class UserService:
         if target_user == follower:
             raise ValueError("Cannot follow yourself")
 
-        follow, created = UserFollow.objects.get_or_create(
-            follower=follower, following=target_user
-        )
+        follow, created = UserFollow.objects.get_or_create(follower=follower, following=target_user)
 
         if not created:
             follow.delete()
@@ -90,7 +91,11 @@ class UserService:
         # Invalidate cache
         cache.delete(f"profile:{target_username}")
 
-        return is_following, target_user.followers.count(), target_user.following.count()
+        return (
+            is_following,
+            target_user.followers.count(),
+            target_user.following.count(),
+        )
 
     @staticmethod
     def redeem_referral(user, code):
@@ -129,7 +134,7 @@ class UserService:
         return {
             "new_total_xp": new_total_xp,
             "referrer_new_total_xp": referrer_new_total_xp,
-            "referrer_username": referrer_profile.user.username
+            "referrer_username": referrer_profile.user.username,
         }
 
     @staticmethod
@@ -147,6 +152,7 @@ class UserService:
                 return None
 
             from .serializers import PublicUserSerializer
+
             # Note: We pass None to context here because we want to cache general data
             data = PublicUserSerializer(user).data
             cache.set(cache_key, data, 300)
@@ -155,9 +161,7 @@ class UserService:
 
         # Inject viewer-specific flags (Non-cacheable)
         if viewer and viewer.is_authenticated:
-            data["is_following"] = UserFollow.objects.filter(
-                follower=viewer, following__username=username
-            ).exists()
+            data["is_following"] = UserFollow.objects.filter(follower=viewer, following__username=username).exists()
         else:
             data["is_following"] = False
 

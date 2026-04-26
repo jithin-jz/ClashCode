@@ -1,11 +1,13 @@
-import time
 import hmac
 import logging
+import time
 from hashlib import sha256
 from typing import Optional
+
 from config import settings
 
 logger = logging.getLogger(__name__)
+
 
 def build_internal_headers(path: str) -> dict[str, str]:
     headers = {"X-Internal-API-Key": settings.INTERNAL_API_KEY}

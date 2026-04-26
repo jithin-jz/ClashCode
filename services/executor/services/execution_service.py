@@ -1,12 +1,13 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from core.runner import run_python_code
 from core.docker_runner import DockerRunner
+from core.runner import run_python_code
 from core.security import validate_code_safety
 from models.schemas import ExecuteRequest
 
 logger = logging.getLogger(__name__)
+
 
 class ExecutionService:
     @staticmethod
@@ -31,6 +32,6 @@ class ExecutionService:
         # 2. Select Runner
         if request.runner == "docker":
             return await DockerRunner.run_code(request.code, request.stdin)
-        
+
         # Default: Host execution
         return await run_python_code(request.code, request.stdin)

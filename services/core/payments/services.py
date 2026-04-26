@@ -1,7 +1,9 @@
 import logging
+
 from django.conf import settings
 from django.db import transaction
 from xpoint.services import XPService
+
 from .models import Payment
 
 logger = logging.getLogger(__name__)
@@ -10,6 +12,7 @@ try:
     import razorpay
 except Exception:
     razorpay = None
+
 
 class PaymentService:
     """
@@ -34,9 +37,7 @@ class PaymentService:
             raise RuntimeError("Razorpay SDK is not available")
         if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
             raise RuntimeError("Razorpay keys are not configured on the server")
-        return razorpay.Client(
-            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-        )
+        return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
     @classmethod
     def create_order(cls, user, amount_inr):
@@ -56,7 +57,7 @@ class PaymentService:
 
         order = client.order.create(data=order_data)
 
-        payment = Payment.objects.create(
+        Payment.objects.create(
             user=user,
             razorpay_order_id=order["id"],
             amount=amount_inr,
@@ -75,17 +76,19 @@ class PaymentService:
     def verify_payment(cls, user, order_id, payment_id, signature):
         """Verifies the Razorpay payment signature and credits XP."""
         client = cls.get_razorpay_client()
-        
+
         # Verify signature
-        client.utility.verify_payment_signature({
-            "razorpay_order_id": order_id,
-            "razorpay_payment_id": payment_id,
-            "razorpay_signature": signature,
-        })
+        client.utility.verify_payment_signature(
+            {
+                "razorpay_order_id": order_id,
+                "razorpay_payment_id": payment_id,
+                "razorpay_signature": signature,
+            }
+        )
 
         with transaction.atomic():
             payment = Payment.objects.select_for_update().get(razorpay_order_id=order_id)
-            
+
             if payment.user_id != user.id:
                 raise PermissionError("Order does not belong to authenticated user")
 

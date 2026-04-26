@@ -1,16 +1,16 @@
-from django.urls import reverse
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from unittest.mock import patch, MagicMock
+
 from certificates.models import UserCertificate
 
 
 class CertificateViewTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="pass"
-        )
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="pass")
         self.client.force_authenticate(user=self.user)
 
     @patch("certificates.services.CertificateService.get_eligibility_status")
@@ -43,9 +43,7 @@ class CertificateViewTests(APITestCase):
 
     def test_verify_certificate_endpoint(self):
         cert = UserCertificate.objects.create(user=self.user, completion_count=60)
-        url = reverse(
-            "certificate-verify", kwargs={"certificate_id": str(cert.certificate_id)}
-        )
+        url = reverse("certificate-verify", kwargs={"certificate_id": str(cert.certificate_id)})
 
         # Verify without authentication (AllowAny)
         self.client.force_authenticate(user=None)

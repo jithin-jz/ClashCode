@@ -1,9 +1,11 @@
 import logging
-from rest_framework import authentication, exceptions
+
 from django.conf import settings
 from django.contrib.auth.models import User
-from .utils import decode_token
+from rest_framework import authentication, exceptions
+
 from .services import AuthService
+from .utils import decode_token
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +93,7 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 class JWTAuthenticationScheme(OpenApiAuthenticationExtension):
     # OpenAPI schema adapter for the custom JWT authentication class
 
-    target_class = (
-        "auth.authentication.JWTAuthentication"  # Path to the actual auth class
-    )
+    target_class = "auth.authentication.JWTAuthentication"  # Path to the actual auth class
     name = "JWTAuth"  # Name shown in Swagger's Authorize dialog
 
     def get_security_definition(self, _auto_schema):

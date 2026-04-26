@@ -1,11 +1,13 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class XPTransaction(models.Model):
     """
     Audit log for all XP changes in the system.
     Ensures every point earned or spent is traceable.
     """
+
     SOURCE_CHOICES = [
         ("check_in", "Daily Check-in"),
         ("purchase", "Store Purchase"),

@@ -1,9 +1,10 @@
 import logging
+
 from django.db import transaction
 from django.utils import timezone
+from users.models import UserProfile
 
 from .models import XPTransaction
-from users.models import UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +42,7 @@ class XPService:
                     description=description,
                 )
 
-                logger.info(
-                    f"XP_TX: {user.username} {amount:+} XP ({source}). New: {profile.xp}"
-                )
+                logger.info(f"XP_TX: {user.username} {amount:+} XP ({source}). New: {profile.xp}")
 
                 return profile.xp
 

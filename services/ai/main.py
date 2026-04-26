@@ -1,14 +1,14 @@
 import logging
+
 import sentry_sdk
+from api.routes import router as ai_router
+from config import settings
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from dotenv import load_dotenv
-
-from config import settings
 from logger_config import setup_logging
-from api.routes import router as ai_router
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 # Load Environment
 load_dotenv()
@@ -47,15 +47,15 @@ app.add_middleware(
 # Include Routes
 app.include_router(ai_router)
 
+
 # Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

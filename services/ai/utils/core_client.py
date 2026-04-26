@@ -1,10 +1,12 @@
-import httpx
 import logging
-from fastapi import HTTPException
+
+import httpx
 from config import settings
 from core.security import build_internal_headers
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
+
 
 async def fetch_challenge_context(challenge_slug: str):
     try:
@@ -15,9 +17,7 @@ async def fetch_challenge_context(challenge_slug: str):
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers, timeout=5)
             if response.status_code != 200:
-                logger.error(
-                    f"Core service error: {response.status_code} - {response.text}"
-                )
+                logger.error(f"Core service error: {response.status_code} - {response.text}")
                 raise HTTPException(
                     status_code=response.status_code,
                     detail=f"Core service returned {response.status_code}",

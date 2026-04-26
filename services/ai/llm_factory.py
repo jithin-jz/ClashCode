@@ -1,7 +1,8 @@
 import logging
+
+from config import settings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
-from config import settings
 
 logger = logging.getLogger(__name__)
 

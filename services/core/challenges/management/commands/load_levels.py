@@ -5,10 +5,13 @@ Loads global challenges from markdown files in challenges/content/ into the data
 
 import os
 import re
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.conf import settings
+
 from challenges.models import Challenge
+
 
 class Command(BaseCommand):
     help = "Load levels from challenges/content/ markdown files into the database"
@@ -24,22 +27,22 @@ class Command(BaseCommand):
         """
         Parses a markdown file with YAML-like frontmatter.
         """
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Extract frontmatter
-        fm_match = re.search(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
+        fm_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
         if not fm_match:
             return None
 
         fm_text = fm_match.group(1)
-        body = content[fm_match.end():].strip()
+        body = content[fm_match.end() :].strip()
 
         # Simple frontmatter parser (key: value)
         data = {}
-        for line in fm_text.split('\n'):
-            if ':' in line:
-                key, value = line.split(':', 1)
+        for line in fm_text.split("\n"):
+            if ":" in line:
+                key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
                 # Type conversion
@@ -49,21 +52,21 @@ class Command(BaseCommand):
 
         # Extract Initial Code and Test Code from body
         # They are at the end in ```python ... ``` blocks
-        
+
         # Initial Code
-        initial_match = re.search(r'### Initial Code\n```python\n(.*?)\n```', body, re.DOTALL)
+        initial_match = re.search(r"### Initial Code\n```python\n(.*?)\n```", body, re.DOTALL)
         if initial_match:
-            data['initial_code'] = initial_match.group(1)
+            data["initial_code"] = initial_match.group(1)
             # Remove from body to get description
             body = body.replace(initial_match.group(0), "").strip()
-        
+
         # Test Code
-        test_match = re.search(r'### Test Code\n```python\n(.*?)\n```', body, re.DOTALL)
+        test_match = re.search(r"### Test Code\n```python\n(.*?)\n```", body, re.DOTALL)
         if test_match:
-            data['test_code'] = test_match.group(1)
+            data["test_code"] = test_match.group(1)
             body = body.replace(test_match.group(0), "").strip()
 
-        data['description'] = body
+        data["description"] = body
         return data
 
     def handle(self, *args, **options):
@@ -86,9 +89,7 @@ class Command(BaseCommand):
             deleted = Challenge.objects.filter(created_for_user__isnull=True).delete()
             self.stdout.write(self.style.SUCCESS(f"  ✓ Deleted {deleted[0]} challenges"))
         else:
-            stale_qs = Challenge.objects.filter(created_for_user__isnull=True).exclude(
-                order__in=target_orders
-            )
+            stale_qs = Challenge.objects.filter(created_for_user__isnull=True).exclude(order__in=target_orders)
             stale_count = stale_qs.count()
             if stale_count:
                 stale_qs.delete()
@@ -113,7 +114,7 @@ class Command(BaseCommand):
                         "test_code": level["test_code"],
                         "xp_reward": level["xp_reward"],
                         "target_time_seconds": level["target_time_seconds"],
-                    }
+                    },
                 )
 
                 if created:

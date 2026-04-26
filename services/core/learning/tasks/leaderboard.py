@@ -1,8 +1,11 @@
 import logging
+
 from celery import shared_task
+
 from ..services import LeaderboardService
 
 logger = logging.getLogger(__name__)
+
 
 @shared_task
 def update_leaderboard_cache():

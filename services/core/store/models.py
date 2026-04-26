@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class StoreItem(models.Model):
@@ -13,9 +13,7 @@ class StoreItem(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     cost = models.IntegerField(help_text="Cost in XP")
-    icon_name = models.CharField(
-        max_length=50, help_text="Lucide icon name or image path identifier"
-    )
+    icon_name = models.CharField(max_length=50, help_text="Lucide icon name or image path identifier")
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="ITEM")
     image = models.CharField(
         max_length=255,
@@ -38,9 +36,7 @@ class StoreItem(models.Model):
 
 class Purchase(models.Model):
     user = models.ForeignKey(User, related_name="purchases", on_delete=models.CASCADE)
-    item = models.ForeignKey(
-        StoreItem, related_name="purchases", on_delete=models.CASCADE
-    )
+    item = models.ForeignKey(StoreItem, related_name="purchases", on_delete=models.CASCADE)
     purchased_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

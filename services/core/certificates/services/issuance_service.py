@@ -1,7 +1,9 @@
 from django.db import transaction
+
+from ..models import UserCertificate
 from .base_certificate_service import BaseCertificateService
 from .eligibility_service import EligibilityService
-from ..models import UserCertificate
+
 
 class IssuanceService(BaseCertificateService):
     """Handles logic for issuing and updating certificates."""

@@ -1,16 +1,16 @@
 import logging
-from django.conf import settings
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 class BaseCertificateService:
     """Base logic for certificate operations."""
-    
+
     @staticmethod
     def get_required_challenges():
         """Returns total number of challenges required for a certificate."""
         from challenges.models import Challenge
+
         return Challenge.objects.filter(created_for_user__isnull=True).count()
 
     @staticmethod

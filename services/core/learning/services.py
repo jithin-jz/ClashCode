@@ -1,17 +1,19 @@
 import logging
+
+from challenges.models import UserProgress
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Count, Q
-
-from challenges.models import UserProgress
 from users.models import UserProfile
 
 logger = logging.getLogger(__name__)
+
 
 class LeaderboardService:
     """
     Service for calculating and caching user rankings.
     """
+
     CACHE_KEY = "leaderboard_data"
     CACHE_TIMEOUT = 60 * 10  # 10 minutes
 
@@ -61,10 +63,12 @@ class LeaderboardService:
             except UserProfile.DoesNotExist:
                 pass
 
-            data.append({
-                "username": user.username,
-                "avatar": avatar_url,
-                "completed_levels": user.completed_count,
-                "xp": xp,
-            })
+            data.append(
+                {
+                    "username": user.username,
+                    "avatar": avatar_url,
+                    "completed_levels": user.completed_count,
+                    "xp": xp,
+                }
+            )
         return data

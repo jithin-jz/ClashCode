@@ -1,15 +1,17 @@
+from challenges.serializers import LeaderboardEntrySerializer
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from challenges.serializers import LeaderboardEntrySerializer
 from ..services import LeaderboardService
+
 
 class LeaderboardView(generics.GenericAPIView):
     """
     View to retrieve the global user leaderboard.
     """
+
     permission_classes = [IsAuthenticated]
     serializer_class = LeaderboardEntrySerializer
 

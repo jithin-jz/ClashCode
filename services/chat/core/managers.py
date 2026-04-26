@@ -1,12 +1,15 @@
-import json
 import asyncio
+import json
 import logging
 from typing import Dict, List
+
 from fastapi import WebSocket
-from utils.redis_client import redis_client, channel_key
+from utils.redis_client import channel_key, redis_client
+
 from core.serializers import json_dumps
 
 logger = logging.getLogger(__name__)
+
 
 class ConnectionManager:
     def __init__(self):
@@ -72,9 +75,7 @@ class NotificationManager:
         self.active.setdefault(user_id, []).append(ws)
 
         if len(self.active[user_id]) == 1 and user_id not in self.tasks:
-            self.tasks[user_id] = asyncio.create_task(
-                self.notification_subscriber(user_id)
-            )
+            self.tasks[user_id] = asyncio.create_task(self.notification_subscriber(user_id))
             logger.info(f"Started notification subscriber for user {user_id}")
 
     async def disconnect(self, ws: WebSocket, user_id: int):

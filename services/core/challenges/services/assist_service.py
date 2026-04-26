@@ -1,5 +1,7 @@
-from .base_challenge_service import BaseChallengeService
 from xpoint.services import XPService
+
+from .base_challenge_service import BaseChallengeService
+
 
 class AssistService(BaseChallengeService):
     """Handles AI assistance and hint purchases."""
@@ -22,7 +24,12 @@ class AssistService(BaseChallengeService):
 
         progress.ai_hints_purchased += 1
         progress.save(update_fields=["ai_hints_purchased"])
-        
-        AssistService.log_activity("PURCHASE_HINT", user, challenge, details={"level": progress.ai_hints_purchased, "cost": cost})
+
+        AssistService.log_activity(
+            "PURCHASE_HINT",
+            user,
+            challenge,
+            details={"level": progress.ai_hints_purchased, "cost": cost},
+        )
 
         return remaining_xp

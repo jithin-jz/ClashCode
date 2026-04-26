@@ -1,12 +1,15 @@
 import logging
+
 from django.contrib.auth.models import User
-from .base_auth_service import BaseAuthService
+
 from ..utils import (
-    generate_tokens,
     decode_token,
+    generate_tokens,
 )
+from .base_auth_service import BaseAuthService
 
 logger = logging.getLogger(__name__)
+
 
 class TokenService(BaseAuthService):
     @staticmethod
@@ -20,7 +23,7 @@ class TokenService(BaseAuthService):
             action="REFRESH_TOKEN_ROTATION",
             user=user,
             request=request,
-            details={"jti_revoked": old_payload.get("jti")}
+            details={"jti_revoked": old_payload.get("jti")},
         )
         return tokens
 

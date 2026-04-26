@@ -1,9 +1,12 @@
 import logging
+
 from django.utils import timezone
+from xpoint.services import StreakService, XPService
+
 from .models import DailyCheckIn
-from xpoint.services import XPService, StreakService
 
 logger = logging.getLogger(__name__)
+
 
 class RewardService:
     """
@@ -19,13 +22,9 @@ class RewardService:
         today = timezone.now().date()
         cycle_day, cycle_start_date, _ = StreakService.get_cycle_state(user)
 
-        today_checkin = DailyCheckIn.objects.filter(
-            user=user, check_in_date=today
-        ).first()
+        today_checkin = DailyCheckIn.objects.filter(user=user, check_in_date=today).first()
 
-        current_cycle_checkins = DailyCheckIn.objects.filter(
-            user=user, check_in_date__gte=cycle_start_date
-        )
+        current_cycle_checkins = DailyCheckIn.objects.filter(user=user, check_in_date__gte=cycle_start_date)
 
         return {
             "checked_in_today": today_checkin is not None,
@@ -52,11 +51,7 @@ class RewardService:
         xp_reward = cls.DAILY_REWARDS.get(cycle_day, 5)
 
         # 3. Create record
-        checkin = DailyCheckIn.objects.create(
-            user=user, 
-            streak_day=cycle_day, 
-            xp_earned=xp_reward
-        )
+        checkin = DailyCheckIn.objects.create(user=user, streak_day=cycle_day, xp_earned=xp_reward)
 
         # 4. Award XP
         XPService.add_xp(user, xp_reward, source=XPService.SOURCE_CHECK_IN)

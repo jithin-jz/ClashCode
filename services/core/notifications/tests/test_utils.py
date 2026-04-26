@@ -1,6 +1,7 @@
-from django.test import TestCase
+from unittest.mock import MagicMock, patch
+
 from django.contrib.auth.models import User
-from unittest.mock import patch, MagicMock
+from django.test import TestCase
 from notifications.models import FCMToken
 from notifications.utils import send_fcm_push
 

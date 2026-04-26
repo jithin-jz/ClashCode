@@ -1,10 +1,10 @@
+import asyncio
+import logging
 import os
 import sys
-import asyncio
 import tempfile
-import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from utils.helpers import truncate_output
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 TIMEOUT_SECONDS = float(os.getenv("EXECUTOR_TIMEOUT_SECONDS", "5"))
 MEMORY_LIMIT_MB = int(os.getenv("EXECUTOR_MEMORY_LIMIT_MB", "128"))
+
 
 def limit_child_process() -> None:
     if resource is None:
@@ -47,11 +48,11 @@ async def run_python_code(code: str, stdin: str) -> Dict[str, Any]:
 
         # Command to run
         args = [sys.executable, "-I", "-B", str(script_path)]
-        
+
         env = {
             "PYTHONIOENCODING": "utf-8",
             "PYTHONDONTWRITEBYTECODE": "1",
-            "PATH": os.environ.get("PATH", ""), # Needed for sys.executable
+            "PATH": os.environ.get("PATH", ""),  # Needed for sys.executable
         }
 
         process = await asyncio.create_subprocess_exec(
@@ -61,16 +62,16 @@ async def run_python_code(code: str, stdin: str) -> Dict[str, Any]:
             stderr=asyncio.subprocess.PIPE,
             cwd=tmpdir,
             env=env,
-            preexec_fn=limit_child_process if os.name == "posix" else None
+            preexec_fn=limit_child_process if os.name == "posix" else None,
         )
 
         try:
             # Write stdin and wait for completion
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
                 process.communicate(input=stdin.encode() if stdin else None),
-                timeout=TIMEOUT_SECONDS + 1.0  # Buffer for OS to kill it via resource limit
+                timeout=TIMEOUT_SECONDS + 1.0,  # Buffer for OS to kill it via resource limit
             )
-            
+
             stdout = truncate_output(stdout_bytes.decode(errors="replace"))
             stderr = truncate_output(stderr_bytes.decode(errors="replace"))
             return {

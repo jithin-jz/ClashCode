@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
 from django.utils import timezone
+
+from administration.exceptions import AdminResourceNotFound, AdminValidationError
 from administration.models import AdminReport
 from administration.utils import log_admin_action
-from administration.exceptions import AdminResourceNotFound, AdminValidationError
+
 
 class ReportService:
     @staticmethod
@@ -18,7 +20,16 @@ class ReportService:
         return qs[:100]
 
     @staticmethod
-    def create_report(created_by, target_username, title, summary, category="GENERAL", priority=AdminReport.Priority.MEDIUM, context=None, request=None):
+    def create_report(
+        created_by,
+        target_username,
+        title,
+        summary,
+        category="GENERAL",
+        priority=AdminReport.Priority.MEDIUM,
+        context=None,
+        request=None,
+    ):
         """Creates a new admin report."""
         try:
             target = User.objects.get(username=target_username.strip())
@@ -63,7 +74,7 @@ class ReportService:
             report.priority = updates["priority"]
         if "summary" in updates:
             report.summary = updates["summary"]
-        
+
         report.save()
 
         log_admin_action(

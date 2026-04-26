@@ -1,16 +1,13 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
-from unittest.mock import patch, MagicMock
 from challenges.models import Challenge, UserProgress
-from certificates.models import UserCertificate
+from django.contrib.auth.models import User
+from django.test import TestCase
+
 from certificates.services import CertificateService
 
 
 class CertificateServiceTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="pass"
-        )
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="pass")
 
     def test_get_required_challenges(self):
         # Create 3 challenges
@@ -36,9 +33,7 @@ class CertificateServiceTest(TestCase):
 
         # User completes the 3rd one
         challenge = Challenge.objects.get(order=3)
-        UserProgress.objects.create(
-            user=self.user, challenge=challenge, status=UserProgress.Status.COMPLETED
-        )
+        UserProgress.objects.create(user=self.user, challenge=challenge, status=UserProgress.Status.COMPLETED)
         self.assertEqual(CertificateService.get_completed_count(self.user), 3)
 
     def test_is_eligible(self):
@@ -62,9 +57,7 @@ class CertificateServiceTest(TestCase):
     def test_get_or_create_certificate(self):
         # Create and complete challenges
         for i in range(1, 4):
-            challenge = Challenge.objects.create(
-                order=i, title=f"C{i}", slug=f"c{i}", xp_reward=10
-            )
+            challenge = Challenge.objects.create(order=i, title=f"C{i}", slug=f"c{i}", xp_reward=10)
             UserProgress.objects.create(
                 user=self.user,
                 challenge=challenge,

@@ -1,9 +1,12 @@
 import csv
 from io import StringIO
-from django.db.models import Q
+
 from django.core.paginator import Paginator
+from django.db.models import Q
+
 from administration.models import AdminAuditLog
-from administration.utils import _parse_int, _parse_datetime_filter
+from administration.utils import _parse_datetime_filter
+
 
 class AuditService:
     @staticmethod
@@ -15,7 +18,7 @@ class AuditService:
         admin_username = (filters.get("admin") or "").strip()
         target_username = (filters.get("target") or "").strip()
         search = (filters.get("search") or "").strip()
-        
+
         date_from = _parse_datetime_filter(filters.get("date_from"))
         date_to = _parse_datetime_filter(filters.get("date_to"), end_of_day=True)
 
@@ -38,10 +41,14 @@ class AuditService:
             logs = logs.filter(timestamp__lte=date_to)
 
         allowed_ordering = {
-            "timestamp", "-timestamp",
-            "action", "-action",
-            "admin_username", "-admin_username",
-            "target_username", "-target_username",
+            "timestamp",
+            "-timestamp",
+            "action",
+            "-action",
+            "admin_username",
+            "-admin_username",
+            "target_username",
+            "-target_username",
         }
         if ordering not in allowed_ordering:
             ordering = "-timestamp"
@@ -50,13 +57,13 @@ class AuditService:
 
         paginator = Paginator(logs, page_size)
         page_obj = paginator.get_page(page)
-        
+
         return {
             "count": paginator.count,
             "page": page_obj.number,
             "page_size": page_size,
             "total_pages": paginator.num_pages,
-            "results": page_obj.object_list
+            "results": page_obj.object_list,
         }
 
     @staticmethod
@@ -70,12 +77,14 @@ class AuditService:
         writer = csv.writer(buffer)
         writer.writerow(["timestamp", "admin", "action", "target", "request_id", "details"])
         for log in logs:
-            writer.writerow([
-                log.timestamp.isoformat(),
-                log.admin_username,
-                log.action,
-                log.target_username,
-                log.request_id,
-                log.details,
-            ])
+            writer.writerow(
+                [
+                    log.timestamp.isoformat(),
+                    log.admin_username,
+                    log.action,
+                    log.target_username,
+                    log.request_id,
+                    log.details,
+                ]
+            )
         return buffer.getvalue()

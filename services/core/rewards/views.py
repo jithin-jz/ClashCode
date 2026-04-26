@@ -1,13 +1,13 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiTypes
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .serializers import (
-    DailyCheckInSerializer, 
-    CheckInSuccessSerializer, 
-    CheckInStatusSerializer
+    CheckInStatusSerializer,
+    CheckInSuccessSerializer,
+    DailyCheckInSerializer,
 )
 from .services import RewardService
 
@@ -16,6 +16,7 @@ class CheckInView(APIView):
     """
     API View to handle daily user check-ins and reward distribution.
     """
+
     permission_classes = [IsAuthenticated]
     serializer_class = DailyCheckInSerializer
 
@@ -31,14 +32,14 @@ class CheckInView(APIView):
         """Action to perform a daily check-in."""
         try:
             result = RewardService.process_check_in(request.user)
-            
+
             response_data = {
                 "message": f"Check-in successful! Day {result['cycle_day']} of cycle.",
-                **result
+                **result,
             }
             # For frontend compatibility, ensure streak_day is present
             response_data["streak_day"] = result["cycle_day"]
-            
+
             serializer = CheckInSuccessSerializer(response_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -48,7 +49,7 @@ class CheckInView(APIView):
             return Response(
                 {
                     "error": str(e),
-                    "check_in": DailyCheckInSerializer(status_data["today_checkin"]).data if status_data["today_checkin"] else None,
+                    "check_in": (DailyCheckInSerializer(status_data["today_checkin"]).data if status_data["today_checkin"] else None),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

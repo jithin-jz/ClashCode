@@ -1,5 +1,7 @@
-from challenges.models import UserProgress, Challenge
+from challenges.models import Challenge, UserProgress
+
 from .base_certificate_service import BaseCertificateService
+
 
 class EligibilityService(BaseCertificateService):
     """Handles logic for determining if a user is eligible for a certificate."""
@@ -7,9 +9,7 @@ class EligibilityService(BaseCertificateService):
     @staticmethod
     def get_completed_count(user):
         """Calculates how many unique required challenges the user has completed."""
-        required_orders = set(
-            Challenge.objects.filter(created_for_user__isnull=True).values_list("order", flat=True)
-        )
+        required_orders = set(Challenge.objects.filter(created_for_user__isnull=True).values_list("order", flat=True))
         completed_orders = set(
             UserProgress.objects.filter(
                 user=user,
@@ -31,9 +31,10 @@ class EligibilityService(BaseCertificateService):
         completed_count = EligibilityService.get_completed_count(user)
         required = EligibilityService.get_required_challenges()
         is_eligible = completed_count >= required
-        
+
         # We'll use issuance check later to avoid circularity if possible
         from ..models import UserCertificate
+
         has_cert = UserCertificate.objects.filter(user=user, is_valid=True).exists()
 
         return {

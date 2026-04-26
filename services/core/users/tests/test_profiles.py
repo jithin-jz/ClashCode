@@ -1,7 +1,8 @@
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
 from users.models import UserFollow
 
 
@@ -33,17 +34,13 @@ class ProfileTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(response.data["is_following"])
 
-        self.assertTrue(
-            UserFollow.objects.filter(follower=self.user, following=self.other).exists()
-        )
+        self.assertTrue(UserFollow.objects.filter(follower=self.user, following=self.other).exists())
 
         # Test unfollow
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["is_following"])
-        self.assertFalse(
-            UserFollow.objects.filter(follower=self.user, following=self.other).exists()
-        )
+        self.assertFalse(UserFollow.objects.filter(follower=self.user, following=self.other).exists())
 
     def test_get_public_profile(self):
         url = reverse("profile_detail", kwargs={"username": "other"})

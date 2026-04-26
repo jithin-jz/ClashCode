@@ -1,10 +1,19 @@
 from django.contrib import admin
+
 from .models import Achievement, UserAchievement, UserAchievementProgress
 
 
 @admin.register(Achievement)
 class AchievementAdmin(admin.ModelAdmin):
-    list_display = ["title", "slug", "category", "xp_reward", "target_value", "is_secret", "order"]
+    list_display = [
+        "title",
+        "slug",
+        "category",
+        "xp_reward",
+        "target_value",
+        "is_secret",
+        "order",
+    ]
     list_filter = ["category", "is_secret"]
     search_fields = ["title", "description", "slug"]
     prepopulated_fields = {"slug": ("title",)}

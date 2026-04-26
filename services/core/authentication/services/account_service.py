@@ -1,11 +1,14 @@
 import logging
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
-from .base_auth_service import BaseAuthService
+
 from ..utils import decode_token
+from .base_auth_service import BaseAuthService
 
 logger = logging.getLogger(__name__)
+
 
 class AccountService(BaseAuthService):
     @staticmethod
@@ -31,7 +34,7 @@ class AccountService(BaseAuthService):
             payload = decode_token(token_cookie)
             if payload:
                 AccountService.blacklist_token(payload)
-        
+
         AccountService.log_security_event(action="LOGOUT", user=user, request=request)
 
     @staticmethod
@@ -45,14 +48,17 @@ class AccountService(BaseAuthService):
                 username = user.username
                 email = user.email
                 user.delete()
-                
+
                 AccountService.log_security_event(
                     action="ACCOUNT_DELETED",
                     email=email,
                     request=request,
-                    details={"original_username": username}
+                    details={"original_username": username},
                 )
                 return True, None
-        except Exception as e:
+        except Exception:
             logger.exception(f"DeleteAccount failed for user_id={user_id}")
-            return False, "Failed to delete account. Please try again or contact support."
+            return (
+                False,
+                "Failed to delete account. Please try again or contact support.",
+            )

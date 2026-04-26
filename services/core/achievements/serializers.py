@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import Achievement, UserAchievement, UserAchievementProgress
 
 
@@ -33,13 +34,11 @@ class AchievementSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
-        
+
         if "user_achievement" in self.context:
             return True
-            
-        return UserAchievement.objects.filter(
-            user=request.user, achievement=obj
-        ).exists()
+
+        return UserAchievement.objects.filter(user=request.user, achievement=obj).exists()
 
     def get_unlocked_at(self, obj):
         request = self.context.get("request")
@@ -57,18 +56,15 @@ class AchievementSerializer(serializers.ModelSerializer):
         if not request or not request.user or not request.user.is_authenticated:
             return None
 
-        progress = UserAchievementProgress.objects.filter(
-            user=request.user, 
-            achievement=obj
-        ).first()
-        
+        progress = UserAchievementProgress.objects.filter(user=request.user, achievement=obj).first()
+
         if not progress:
             return {"current": 0, "target": obj.target_value, "percentage": 0}
-            
+
         return {
             "current": progress.current_value,
             "target": obj.target_value,
-            "percentage": progress.percentage
+            "percentage": progress.percentage,
         }
 
 

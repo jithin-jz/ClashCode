@@ -1,42 +1,48 @@
 import logging
-from rest_framework import viewsets, permissions, status, mixins, pagination
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiTypes
 
 from authentication.throttles import NotificationRateThrottle
-from .models import Notification, FCMToken
+from drf_spectacular.utils import OpenApiTypes, extend_schema
+from rest_framework import mixins, pagination, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from .models import FCMToken, Notification
 from .serializers import (
-    NotificationSerializer, 
-    FCMTokenSerializer, 
-    NotificationListResponseSerializer
+    FCMTokenSerializer,
+    NotificationListResponseSerializer,
+    NotificationSerializer,
 )
 from .services import NotificationService
 
 logger = logging.getLogger(__name__)
 
+
 class NotificationPagination(pagination.PageNumberPagination):
     """Custom pagination to include unread_count in the response."""
+
     page_size = 50
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
     def get_paginated_response(self, data):
         unread_count = self.request.user.notifications.filter(is_read=False).count()
-        return Response({
-            "count": self.page.paginator.count,
-            "unread_count": unread_count,
-            "page": self.page.number,
-            "page_size": self.get_page_size(self.request),
-            "total_pages": self.page.paginator.num_pages,
-            "results": data,
-        })
+        return Response(
+            {
+                "count": self.page.paginator.count,
+                "unread_count": unread_count,
+                "page": self.page.number,
+                "page_size": self.get_page_size(self.request),
+                "total_pages": self.page.paginator.num_pages,
+                "results": data,
+            }
+        )
 
 
 class FCMTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """
     ViewSet for managing FCM tokens for push notifications.
     """
+
     serializer_class = FCMTokenSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -51,11 +57,11 @@ class FCMTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         fcm_token, created = NotificationService.register_fcm_token(
             user=request.user,
             token=serializer.validated_data["token"],
-            device_id=serializer.validated_data.get("device_id")
+            device_id=serializer.validated_data.get("device_id"),
         )
 
         response_serializer = self.get_serializer(fcm_token)
@@ -74,6 +80,7 @@ class NotificationViewSet(
     """
     ViewSet for managing user notifications with proper serialization and pagination.
     """
+
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = NotificationPagination
@@ -81,9 +88,7 @@ class NotificationViewSet(
 
     def get_queryset(self):
         """Optimized queryset with select_related for performance."""
-        return Notification.objects.select_related("actor", "actor__profile").filter(
-            recipient=self.request.user
-        ).order_by("-created_at")
+        return Notification.objects.select_related("actor", "actor__profile").filter(recipient=self.request.user).order_by("-created_at")
 
     @extend_schema(
         responses={200: NotificationListResponseSerializer},
@@ -123,4 +128,7 @@ class NotificationViewSet(
         success = NotificationService.mark_as_read(pk, request.user)
         if not success:
             return Response({"error": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"status": "success", "message": "Notification marked as read."}, status=status.HTTP_200_OK)
+        return Response(
+            {"status": "success", "message": "Notification marked as read."},
+            status=status.HTTP_200_OK,
+        )

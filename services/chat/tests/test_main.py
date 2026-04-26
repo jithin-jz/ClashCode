@@ -1,12 +1,14 @@
 import os
+
 import pytest
 
 # Set dummy environment variables BEFORE importing main app
 os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 os.environ["JWT_PUBLIC_KEY"] = "dummy_key"
 
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
 from main import app
 
 client = TestClient(app)
@@ -27,9 +29,7 @@ def test_history_no_token():
 @patch("api.routes.verify_jwt")
 def test_history_invalid_token(mock_verify):
     mock_verify.return_value = None
-    response = client.get(
-        "/history/general", headers={"Authorization": "Bearer invalid"}
-    )
+    response = client.get("/history/general", headers={"Authorization": "Bearer invalid"})
     assert response.status_code == 401
     assert response.json()["error"] == "Invalid token"
 
@@ -50,7 +50,7 @@ async def test_history_success_dynamo(mock_dynamo, mock_verify):
                     "reactions": {},
                 }
             ],
-            "last_evaluated_key": None
+            "last_evaluated_key": None,
         }
     )
 

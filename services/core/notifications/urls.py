@@ -1,5 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import NotificationViewSet, FCMTokenViewSet
+
+from .views import FCMTokenViewSet, NotificationViewSet
 
 router = DefaultRouter()
 router.register(r"fcm-tokens", FCMTokenViewSet, basename="fcm-token")
