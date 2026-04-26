@@ -1,6 +1,11 @@
 import React, { useRef } from "react";
 import { Camera } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 
 const EditProfileForm = ({
@@ -38,7 +43,9 @@ const EditProfileForm = ({
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">First Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">
+                First Name
+              </label>
               <input
                 type="text"
                 value={editForm.first_name}
@@ -50,7 +57,9 @@ const EditProfileForm = ({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">Last Name</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">
+                Last Name
+              </label>
               <input
                 type="text"
                 value={editForm.last_name}
@@ -64,7 +73,9 @@ const EditProfileForm = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">Display Username</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">
+              Display Username
+            </label>
             <div className="relative">
               <input
                 type="text"
@@ -81,10 +92,14 @@ const EditProfileForm = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">Bio / Status</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-1">
+              Bio / Status
+            </label>
             <textarea
               value={editForm.bio}
-              onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, bio: e.target.value })
+              }
               className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/30 focus:ring-1 focus:ring-emerald-500/20 transition-all min-h-[100px] resize-none placeholder:text-neutral-700"
               placeholder="Tell the world your coding story..."
             />

@@ -121,13 +121,17 @@ export const useAdminDashboard = () => {
 
         if (totalPages > 1) {
           const pageRequests = [];
-          for (let currentPage = 2; currentPage <= totalPages; currentPage += 1) {
+          for (
+            let currentPage = 2;
+            currentPage <= totalPages;
+            currentPage += 1
+          ) {
             pageRequests.push(
               authAPI.getUsers({
                 ...query,
                 page: currentPage,
                 page_size: pageSize,
-              })
+              }),
             );
           }
           const extraPages = await Promise.all(pageRequests);
@@ -143,7 +147,7 @@ export const useAdminDashboard = () => {
         }
 
         const filteredResults = results.filter((row) =>
-          userMatchesQuery(row, query)
+          userMatchesQuery(row, query),
         );
         setUserList(filteredResults);
       }
@@ -197,7 +201,9 @@ export const useAdminDashboard = () => {
       notify.success(`User status updated for ${username}`);
       fetchUsers();
     } catch (error) {
-      notify.error(error.response?.data?.error || "Failed to toggle block status");
+      notify.error(
+        error.response?.data?.error || "Failed to toggle block status",
+      );
     }
   };
 

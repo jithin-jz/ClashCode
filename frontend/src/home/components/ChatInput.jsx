@@ -104,7 +104,10 @@ const ChatInput = ({
           disabled={!user}
           className="group relative flex items-center justify-center h-10 w-10 min-w-10 rounded-xl bg-white/[0.03] text-neutral-500 hover:text-neutral-200 border border-transparent hover:border-white/10 hover:bg-white/5 transition-all duration-300 disabled:opacity-20"
         >
-          <Image size={18} className="group-hover:scale-110 transition-transform" />
+          <Image
+            size={18}
+            className="group-hover:scale-110 transition-transform"
+          />
           <input
             type="file"
             ref={fileInputRef}

@@ -15,8 +15,11 @@ const waitForTaskResult = async (taskId) => {
     return await socketService.waitForTask(taskId, AI_TASK_POLL_TIMEOUT_MS);
   } catch (err) {
     // If WS times out or fails, fallback to polling
-    console.warn("[API] WebSocket failed, falling back to polling for taskId:", taskId);
-    
+    console.warn(
+      "[API] WebSocket failed, falling back to polling for taskId:",
+      taskId,
+    );
+
     const startedAt = Date.now();
     while (Date.now() - startedAt < AI_TASK_POLL_TIMEOUT_MS) {
       const response = await api.get(`/challenges/tasks/${taskId}/status/`);
@@ -32,7 +35,9 @@ const waitForTaskResult = async (taskId) => {
         throw pollErr;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, AI_TASK_POLL_INTERVAL_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, AI_TASK_POLL_INTERVAL_MS),
+      );
     }
 
     const timeoutErr = new Error("Task timed out (Poll Fallback)");

@@ -10,11 +10,14 @@ export const LandingSkeleton = () => (
         <P className="h-4 w-1/2 mx-auto opacity-40" />
         <P className="h-12 w-48 mx-auto rounded-xl" />
       </div>
-      
+
       {/* Stats bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl mt-12">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-xl p-5 text-center space-y-2">
+          <div
+            key={i}
+            className="bg-white/[0.02] border border-white/5 rounded-xl p-5 text-center space-y-2"
+          >
             <P className="h-2 w-16 mx-auto opacity-40" />
             <P className="h-6 w-24 mx-auto" />
           </div>
@@ -27,7 +30,10 @@ export const LandingSkeleton = () => (
       <div className="space-y-4">
         <P className="h-3 w-32 mb-6" />
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-xl p-6 flex gap-4">
+          <div
+            key={i}
+            className="bg-white/[0.02] border border-white/5 rounded-xl p-6 flex gap-4"
+          >
             <Circle className="w-9 h-9 rounded-lg shrink-0" />
             <div className="space-y-2 flex-1">
               <P className="h-3.5 w-32" />

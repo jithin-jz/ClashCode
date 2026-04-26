@@ -1,7 +1,11 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, ArrowLeft, Settings, LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 
 const ProfileHeader = ({
@@ -71,12 +75,15 @@ const ProfileHeader = ({
                   size="icon"
                   onClick={() => setIsEditing(!isEditing)}
                   className={`h-8 w-8 backdrop-blur-md rounded-lg transition-all ${
-                    isEditing 
-                    ? "bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]" 
-                    : "text-white/80 hover:text-white bg-black/40 hover:bg-black/60"
+                    isEditing
+                      ? "bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                      : "text-white/80 hover:text-white bg-black/40 hover:bg-black/60"
                   }`}
                 >
-                  <Settings size={16} className={isEditing ? "animate-spin-slow" : ""} />
+                  <Settings
+                    size={16}
+                    className={isEditing ? "animate-spin-slow" : ""}
+                  />
                 </Button>
                 <Button
                   variant="ghost"
@@ -90,7 +97,7 @@ const ProfileHeader = ({
             )}
           </div>
         </div>
-        
+
         {/* Banner Overlay Gradient */}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       </div>
@@ -111,11 +118,11 @@ const ProfileHeader = ({
               </AvatarFallback>
             </Avatar>
           </div>
-          
+
           {/* Animated Ring */}
           <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-purple-500/30 animate-spin-slow opacity-0 group-hover/avatar:opacity-100 transition-opacity pointer-events-none" />
         </div>
-        
+
         {isOwnProfile && (
           <div className="absolute bottom-1 right-1 z-10">
             <button

@@ -17,13 +17,14 @@ export const useProfile = (username) => {
   );
   const { updateProfile, followUser, redeemReferral } = useUserStore();
 
-  const isOwnProfile = !username || (currentUser && username === currentUser.username);
-  
+  const isOwnProfile =
+    !username || (currentUser && username === currentUser.username);
+
   const [profileUser, setProfileUser] = useState(() => {
     if (isOwnProfile && currentUser) return currentUser;
     return null;
   });
-  
+
   const [loading, setLoading] = useState(() => {
     if (isOwnProfile && currentUser) return false;
     return true;
@@ -49,42 +50,49 @@ export const useProfile = (username) => {
   const [userList, setUserList] = useState([]);
   const [listLoading, setListLoading] = useState(false);
 
-  const { getUserProfile, getFollowers, getFollowing, getSuggestedUsers } = authAPI;
+  const { getUserProfile, getFollowers, getFollowing, getSuggestedUsers } =
+    authAPI;
 
-  const fetchProfile = useCallback(async (targetUsername) => {
-    if (!targetUsername) return;
-    if (profileUser?.username !== targetUsername && !isOwnProfile) {
-      setLoading(true);
-      setUserNotFound(false);
-    }
-    try {
-      const response = await getUserProfile(targetUsername);
-      setProfileUser(response.data);
-    } catch (error) {
-      console.error("Failed to fetch profile", error);
-      if (profileUser?.username !== targetUsername) {
-        setUserNotFound(true);
+  const fetchProfile = useCallback(
+    async (targetUsername) => {
+      if (!targetUsername) return;
+      if (profileUser?.username !== targetUsername && !isOwnProfile) {
+        setLoading(true);
+        setUserNotFound(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [getUserProfile, profileUser?.username, isOwnProfile]);
+      try {
+        const response = await getUserProfile(targetUsername);
+        setProfileUser(response.data);
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+        if (profileUser?.username !== targetUsername) {
+          setUserNotFound(true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getUserProfile, profileUser?.username, isOwnProfile],
+  );
 
-  const fetchContributions = useCallback(async (targetUsername) => {
-    if (!targetUsername) return;
-    const hasData = contributionData.length > 0;
-    if (!hasData) setLoadingContributions(true);
+  const fetchContributions = useCallback(
+    async (targetUsername) => {
+      if (!targetUsername) return;
+      const hasData = contributionData.length > 0;
+      if (!hasData) setLoadingContributions(true);
 
-    try {
-      const { authAPI: api } = await import("../services/api");
-      const response = await api.getContributionHistory(targetUsername);
-      setContributionData(response.data);
-    } catch (error) {
-      console.error("Failed to fetch contributions", error);
-    } finally {
-      setLoadingContributions(false);
-    }
-  }, [contributionData.length]);
+      try {
+        const { authAPI: api } = await import("../services/api");
+        const response = await api.getContributionHistory(targetUsername);
+        setContributionData(response.data);
+      } catch (error) {
+        console.error("Failed to fetch contributions", error);
+      } finally {
+        setLoadingContributions(false);
+      }
+    },
+    [contributionData.length],
+  );
 
   const fetchSuggestions = useCallback(async () => {
     try {
@@ -148,7 +156,12 @@ export const useProfile = (username) => {
       fetchSuggestions();
       fetchContributions(currentUser.username);
     }
-  }, [isOwnProfile, currentUser?.username, fetchSuggestions, fetchContributions]);
+  }, [
+    isOwnProfile,
+    currentUser?.username,
+    fetchSuggestions,
+    fetchContributions,
+  ]);
 
   const handleImageUpload = async (event, type) => {
     const file = event.target.files[0];
@@ -160,7 +173,9 @@ export const useProfile = (username) => {
     try {
       const updatedUser = await updateProfile({ type, file }, true);
       if (isOwnProfile) setProfileUser(updatedUser);
-      notify.success(`${type === "avatar" ? "Profile picture" : "Banner"} updated!`);
+      notify.success(
+        `${type === "avatar" ? "Profile picture" : "Banner"} updated!`,
+      );
     } catch (error) {
       console.error(error);
       notify.error(`Failed to upload ${type}`);
@@ -179,7 +194,10 @@ export const useProfile = (username) => {
       notify.success("Profile updated!");
     } catch (error) {
       console.error(error);
-      const apiError = error?.response?.data?.error || error?.response?.data?.detail || "Failed to update profile";
+      const apiError =
+        error?.response?.data?.error ||
+        error?.response?.data?.detail ||
+        "Failed to update profile";
       notify.error(apiError);
     } finally {
       setSavingProfile(false);
@@ -193,13 +211,32 @@ export const useProfile = (username) => {
 
     const previousProfile = profileUser;
     const nextIsFollowing = !previousProfile?.is_following;
-    const nextFollowerCount = Math.max(0, (previousProfile?.followers_count || 0) + (nextIsFollowing ? 1 : -1));
+    const nextFollowerCount = Math.max(
+      0,
+      (previousProfile?.followers_count || 0) + (nextIsFollowing ? 1 : -1),
+    );
 
-    setProfileUser((prev) => prev ? { ...prev, is_following: nextIsFollowing, followers_count: nextFollowerCount } : prev);
+    setProfileUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            is_following: nextIsFollowing,
+            followers_count: nextFollowerCount,
+          }
+        : prev,
+    );
 
     try {
       const data = await followUser(targetUsername);
-      setProfileUser((prev) => prev ? { ...prev, is_following: data.is_following, followers_count: data.follower_count } : prev);
+      setProfileUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_following: data.is_following,
+              followers_count: data.follower_count,
+            }
+          : prev,
+      );
     } catch (error) {
       console.error("Failed to toggle follow", error);
       setProfileUser(previousProfile);
@@ -215,27 +252,56 @@ export const useProfile = (username) => {
     const optimisticFollowState = targetUser ? !targetUser.is_following : null;
 
     if (optimisticFollowState !== null) {
-      setUserList((prev) => prev.map((u) => u.username === targetUsername ? { ...u, is_following: optimisticFollowState } : u));
+      setUserList((prev) =>
+        prev.map((u) =>
+          u.username === targetUsername
+            ? { ...u, is_following: optimisticFollowState }
+            : u,
+        ),
+      );
     }
 
     if (targetUsername === previousProfile?.username) {
-      setProfileUser((prev) => prev ? {
-        ...prev,
-        is_following: !previousProfile?.is_following,
-        followers_count: Math.max(0, (previousProfile?.followers_count || 0) + (previousProfile?.is_following ? -1 : 1)),
-      } : prev);
+      setProfileUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_following: !previousProfile?.is_following,
+              followers_count: Math.max(
+                0,
+                (previousProfile?.followers_count || 0) +
+                  (previousProfile?.is_following ? -1 : 1),
+              ),
+            }
+          : prev,
+      );
     }
 
     try {
       const data = await followUser(targetUsername);
-      setUserList((prev) => prev.map((u) => u.username === targetUsername ? { ...u, is_following: data.is_following } : u));
+      setUserList((prev) =>
+        prev.map((u) =>
+          u.username === targetUsername
+            ? { ...u, is_following: data.is_following }
+            : u,
+        ),
+      );
       if (targetUsername === profileUser?.username) {
-        setProfileUser((prev) => prev ? { ...prev, is_following: data.is_following, followers_count: data.follower_count } : prev);
+        setProfileUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                is_following: data.is_following,
+                followers_count: data.follower_count,
+              }
+            : prev,
+        );
       }
     } catch (error) {
       console.error("Failed to toggle follow in list", error);
       setUserList(previousList);
-      if (targetUsername === previousProfile?.username) setProfileUser(previousProfile);
+      if (targetUsername === previousProfile?.username)
+        setProfileUser(previousProfile);
       notify.error("Failed to update follow status.");
     }
   };

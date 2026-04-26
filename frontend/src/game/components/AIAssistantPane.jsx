@@ -2,10 +2,14 @@ import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, Gem, Lock } from "lucide-react";
 const Spinner = ({ className = "" }) => (
-  <div className={`rounded-full border border-white/20 animate-spin border-t-white/60 ${className}`} />
+  <div
+    className={`rounded-full border border-white/20 animate-spin border-t-white/60 ${className}`}
+  />
 );
 const PulseCard = ({ className = "", children }) => (
-  <div className={`animate-pulse bg-white/[0.03] rounded-xl ${className}`}>{children}</div>
+  <div className={`animate-pulse bg-white/[0.03] rounded-xl ${className}`}>
+    {children}
+  </div>
 );
 
 const formatReviewMarkdown = (raw = "") => {
@@ -297,8 +301,8 @@ const AIAssistantPane = ({
             !isCodePassed
               ? "bg-slate-800/50 text-slate-500/60 border border-slate-600/20 cursor-not-allowed"
               : isReviewLoading
-              ? "bg-blue-900/30 text-blue-400/60 border border-blue-500/20"
-              : "bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/30"
+                ? "bg-blue-900/30 text-blue-400/60 border border-blue-500/20"
+                : "bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/30"
           }`}
         >
           {isReviewLoading ? (
@@ -308,7 +312,11 @@ const AIAssistantPane = ({
           ) : (
             <Sparkles size={12} />
           )}
-          {!isCodePassed ? "Locked - Pass Tests First" : review ? "Re-analyze Code" : "Analyze Code"}
+          {!isCodePassed
+            ? "Locked - Pass Tests First"
+            : review
+              ? "Re-analyze Code"
+              : "Analyze Code"}
         </button>
       </div>
     </section>

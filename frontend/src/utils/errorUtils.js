@@ -3,9 +3,12 @@
  * Handles the new centralized error format: { error: "...", code: "...", request_id: "..." }
  * as well as standard DRF { detail: "..." } and field errors { field: ["..."] }.
  */
-export const getErrorMessage = (error, defaultMessage = "An unexpected error occurred") => {
+export const getErrorMessage = (
+  error,
+  defaultMessage = "An unexpected error occurred",
+) => {
   const data = error?.response?.data;
-  
+
   if (!data) return error?.message || defaultMessage;
 
   // 1. Centralized error format

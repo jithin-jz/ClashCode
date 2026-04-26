@@ -193,10 +193,11 @@ const NotificationDrawer = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.03 }}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`group relative flex items-start gap-3 p-3 rounded-lg transition-all border cursor-pointer ${!notification.is_read
+                        className={`group relative flex items-start gap-3 p-3 rounded-lg transition-all border cursor-pointer ${
+                          !notification.is_read
                             ? "bg-amber-500/5 border-amber-500/10"
                             : "bg-[#111] border-[#1a1a1a] hover:bg-[#161616] hover:border-[#222]"
-                          }`}
+                        }`}
                       >
                         {/* Status Marker */}
                         {!notification.is_read && (

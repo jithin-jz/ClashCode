@@ -8,7 +8,7 @@ const UserTablePagination = ({
   page,
   totalPages,
   tableLoading,
-  setPage
+  setPage,
 }) => {
   return (
     <div className="flex flex-col gap-3 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">

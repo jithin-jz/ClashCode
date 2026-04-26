@@ -3,7 +3,12 @@ import { authAPI } from "../../services/api";
 import { notify } from "../../services/notification";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useUserTable = (userList, fetchUsers, userFilters, onUsersQueryChange) => {
+export const useUserTable = (
+  userList,
+  fetchUsers,
+  userFilters,
+  onUsersQueryChange,
+) => {
   const [searchValue, setSearchValue] = useState(userFilters?.search || "");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -30,7 +35,7 @@ export const useUserTable = (userList, fetchUsers, userFilters, onUsersQueryChan
 
   const count = userList.length;
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
-  
+
   const paginatedUsers = useMemo(() => {
     const startIndex = (page - 1) * pageSize;
     return userList.slice(startIndex, startIndex + pageSize);
@@ -120,6 +125,6 @@ export const useUserTable = (userList, fetchUsers, userFilters, onUsersQueryChan
     handleExport,
     count,
     start,
-    end
+    end,
   };
 };

@@ -83,7 +83,9 @@ const useAuthStore = create((set, get) => ({
     const authPromise = (async () => {
       // Boneyard Capture Bypass:
       if (isBoneyard()) {
-        console.log("[AuthStore] Boneyard crawler detected. Applying mock session.");
+        console.log(
+          "[AuthStore] Boneyard crawler detected. Applying mock session.",
+        );
         const mockUser = {
           id: "mock-id",
           username: "boneyard-bot",
@@ -119,10 +121,16 @@ const useAuthStore = create((set, get) => ({
 
         // Save tokens to localStorage for WebSocket services if present
         if (response.data.access_token) {
-          localStorage.setItem("clashcode_access_token", response.data.access_token);
+          localStorage.setItem(
+            "clashcode_access_token",
+            response.data.access_token,
+          );
         }
         if (response.data.refresh_token) {
-          localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+          localStorage.setItem(
+            "clashcode_refresh_token",
+            response.data.refresh_token,
+          );
         }
 
         SLog.setUser(user);
@@ -266,13 +274,19 @@ const useAuthStore = create((set, get) => ({
         loading: false,
         error: null,
       });
-      
+
       // Save tokens to localStorage for WebSocket services if present
       if (response.data.access_token) {
-        localStorage.setItem("clashcode_access_token", response.data.access_token);
+        localStorage.setItem(
+          "clashcode_access_token",
+          response.data.access_token,
+        );
       }
       if (response.data.refresh_token) {
-        localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+        localStorage.setItem(
+          "clashcode_refresh_token",
+          response.data.refresh_token,
+        );
       }
 
       SLog.setUser(user);
@@ -388,10 +402,16 @@ const useAuthStore = create((set, get) => ({
 
       // Save tokens to localStorage for WebSocket services if present
       if (response.data.access_token) {
-        localStorage.setItem("clashcode_access_token", response.data.access_token);
+        localStorage.setItem(
+          "clashcode_access_token",
+          response.data.access_token,
+        );
       }
       if (response.data.refresh_token) {
-        localStorage.setItem("clashcode_refresh_token", response.data.refresh_token);
+        localStorage.setItem(
+          "clashcode_refresh_token",
+          response.data.refresh_token,
+        );
       }
 
       SLog.setUser(user);

@@ -1,6 +1,11 @@
 import React from "react";
 import { Gift, Check, Copy, Send } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 
@@ -105,7 +110,10 @@ const ReferralSection = ({
               <h4 className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest px-1">
                 Redeem Code
               </h4>
-              <form onSubmit={handleRedeemReferral} className="flex gap-2 w-full">
+              <form
+                onSubmit={handleRedeemReferral}
+                className="flex gap-2 w-full"
+              >
                 <input
                   type="text"
                   value={referralCodeInput}

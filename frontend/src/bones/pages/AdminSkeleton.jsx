@@ -12,11 +12,17 @@ export const AdminSkeleton = () => (
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="bg-white/[0.015] border border-white/[0.03] rounded-2xl p-5 space-y-3">
+        <div
+          key={i}
+          className="bg-white/[0.015] border border-white/[0.03] rounded-2xl p-5 space-y-3"
+        >
           <P className="h-2.5 w-20 opacity-40" />
           <P className="h-8 w-16" />
           <div className="h-1.5 w-full bg-white/[0.02] rounded-full">
-            <P className="h-full rounded-full" style={{ width: `${30 + i * 15}%` }} />
+            <P
+              className="h-full rounded-full"
+              style={{ width: `${30 + i * 15}%` }}
+            />
           </div>
         </div>
       ))}

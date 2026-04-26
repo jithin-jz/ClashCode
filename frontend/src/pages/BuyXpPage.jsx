@@ -112,7 +112,7 @@ const BuyXpPage = () => {
               {XP_PACKAGES.map((pkg) => {
                 const Icon = pkg.icon;
                 const isPurchasing = purchasing === pkg.amount;
-  
+
                 return (
                   <Card
                     key={pkg.amount}
@@ -141,7 +141,7 @@ const BuyXpPage = () => {
                         </Badge>
                       </div>
                     )}
-  
+
                     <CardHeader className="p-5 pb-3">
                       {/* Icon */}
                       <div
@@ -164,11 +164,11 @@ const BuyXpPage = () => {
                           }
                         />
                       </div>
-  
+
                       <CardTitle className="text-base font-medium text-white">
                         {pkg.label}
                       </CardTitle>
-  
+
                       {/* XP Amount */}
                       <div className="flex items-baseline gap-1 mt-2">
                         <span className="text-3xl font-bold text-white">
@@ -177,18 +177,19 @@ const BuyXpPage = () => {
                         <span className="text-sm text-zinc-500 font-medium"></span>
                       </div>
                     </CardHeader>
-  
+
                     <CardContent className="p-5 pt-2 mt-auto">
                       {/* Bonus indicator */}
                       {pkg.xp > pkg.amount && (
                         <div className="flex items-center gap-1.5 mb-4">
                           <Check size={14} className="text-[#00af9b]" />
                           <span className="text-xs font-medium text-[#00af9b] tracking-tight">
-                            +{Math.round((pkg.xp / pkg.amount - 1) * 100)}% bonus
+                            +{Math.round((pkg.xp / pkg.amount - 1) * 100)}%
+                            bonus
                           </span>
                         </div>
                       )}
-  
+
                       <Button
                         onClick={() => handleBuy(pkg)}
                         disabled={isPurchasing}

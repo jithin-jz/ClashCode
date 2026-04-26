@@ -46,17 +46,18 @@ const useChatStore = create((set, get) => ({
     }
 
     // Only clear messages on first connection, not on reconnects
-    const isFirstConnection = !state.lastTimestamp && state.messages.length === 0;
-    
-    set({ 
-      shouldReconnect: true, 
-      currentRoom: roomName, 
+    const isFirstConnection =
+      !state.lastTimestamp && state.messages.length === 0;
+
+    set({
+      shouldReconnect: true,
+      currentRoom: roomName,
       isConnected: false,
       ...(isFirstConnection && {
         messages: [],
         lastTimestamp: null,
-        hasMore: true
-      })
+        hasMore: true,
+      }),
     });
 
     const wsUrl = `${WS_URL}/${roomName}`;
@@ -64,7 +65,7 @@ const useChatStore = create((set, get) => ({
 
     socket.onopen = async () => {
       set({ isConnected: true, error: null });
-      
+
       // Auto-load ALL history after connection
       // This will load older messages beyond the initial 50
       setTimeout(() => {
@@ -166,16 +167,16 @@ const useChatStore = create((set, get) => ({
           set((state) => {
             // Filter out duplicates from history
             const existingTimestamps = new Set(
-              state.messages.map(msg => msg.timestamp)
+              state.messages.map((msg) => msg.timestamp),
             );
             const newMessages = data.messages.filter(
-              msg => !existingTimestamps.has(msg.timestamp)
+              (msg) => !existingTimestamps.has(msg.timestamp),
             );
-            
-            return { 
+
+            return {
               messages: [...newMessages, ...state.messages],
               lastTimestamp: data.last_timestamp,
-              hasMore: data.last_timestamp !== null
+              hasMore: data.last_timestamp !== null,
             };
           });
         } else if (data.type === "presence") {
@@ -270,10 +271,12 @@ const useChatStore = create((set, get) => ({
     get()._send({ action: "unpin", target_timestamp: timestamp });
   },
 
-  clearMessages: () => set({ messages: [], lastTimestamp: null, hasMore: true }),
+  clearMessages: () =>
+    set({ messages: [], lastTimestamp: null, hasMore: true }),
 
   loadMore: async () => {
-    const { currentRoom, lastTimestamp, hasMore, isLoadingMore, messages } = get();
+    const { currentRoom, lastTimestamp, hasMore, isLoadingMore, messages } =
+      get();
     if (!hasMore || isLoadingMore || !lastTimestamp) return;
 
     set({ isLoadingMore: true });
@@ -287,7 +290,7 @@ const useChatStore = create((set, get) => ({
         messages: [...data.messages, ...messages],
         lastTimestamp: data.last_timestamp,
         hasMore: data.has_more,
-        isLoadingMore: false
+        isLoadingMore: false,
       });
     } catch (err) {
       console.error("Failed to load more messages", err);
@@ -312,10 +315,10 @@ const useChatStore = create((set, get) => ({
         const url = lastTimestamp
           ? `/chat/history/${currentRoom}?limit=50&last_timestamp=${lastTimestamp}`
           : `/chat/history/${currentRoom}?limit=50`;
-        
+
         const response = await api.get(url);
         const data = response.data;
-        
+
         allMessages = [...data.messages, ...allMessages];
         lastTimestamp = data.last_timestamp;
         hasMore = data.has_more;
@@ -326,18 +329,20 @@ const useChatStore = create((set, get) => ({
       if (allMessages.length > 0) {
         set((state) => {
           const existingTimestamps = new Set(
-            state.messages.map(msg => msg.timestamp)
+            state.messages.map((msg) => msg.timestamp),
           );
           const newMessages = allMessages.filter(
-            msg => !existingTimestamps.has(msg.timestamp)
+            (msg) => !existingTimestamps.has(msg.timestamp),
           );
-          
+
           if (newMessages.length > 0) {
-            console.log(`Loaded ${newMessages.length} old messages from history`);
+            console.log(
+              `Loaded ${newMessages.length} old messages from history`,
+            );
             return {
               messages: [...newMessages, ...state.messages],
               lastTimestamp: lastTimestamp,
-              hasMore: hasMore
+              hasMore: hasMore,
             };
           }
           return state;
@@ -347,14 +352,14 @@ const useChatStore = create((set, get) => ({
       console.error("Failed to auto-load history", err);
     }
   },
-  
+
   sendImage: async (file) => {
     try {
       const { authAPI } = await import("../services/api");
       const response = await authAPI.uploadMedia(file);
       const url = response.data.url;
       const { user } = (await import("./useAuthStore")).default.getState();
-      const messageContent = `IMAGE:${url}|${user?.username || 'user'}`;
+      const messageContent = `IMAGE:${url}|${user?.username || "user"}`;
       get().sendMessage(messageContent);
     } catch (err) {
       console.error("Failed to upload image", err);
@@ -366,27 +371,29 @@ const useChatStore = create((set, get) => ({
   markAsRead: (timestamp) => {
     const socket = get().socket;
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({
-        action: "read",
-        target_timestamp: timestamp
-      }));
+      socket.send(
+        JSON.stringify({
+          action: "read",
+          target_timestamp: timestamp,
+        }),
+      );
     }
   },
 
   searchMessages: (query) => {
     const { messages } = get();
-    
+
     if (!query || !query.trim()) {
       set({ searchResults: [], isSearching: false });
       return;
     }
 
     const searchTerm = query.toLowerCase().trim();
-    
+
     // Filter messages client-side
-    const filtered = messages.filter(msg => {
-      const messageText = msg.message?.toLowerCase() || '';
-      const username = msg.username?.toLowerCase() || '';
+    const filtered = messages.filter((msg) => {
+      const messageText = msg.message?.toLowerCase() || "";
+      const username = msg.username?.toLowerCase() || "";
       return messageText.includes(searchTerm) || username.includes(searchTerm);
     });
 

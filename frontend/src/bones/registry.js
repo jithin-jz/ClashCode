@@ -1,1 +1,2 @@
-import { registerBones } from 'boneyard-js/react'; registerBones({});
+import { registerBones } from "boneyard-js/react";
+registerBones({});

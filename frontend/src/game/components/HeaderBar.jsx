@@ -1,13 +1,7 @@
 import React from "react";
 import { ArrowLeft, Play } from "lucide-react";
 
-const HeaderBar = ({
-  title,
-  navigate,
-  isRunning,
-  isSubmitting,
-  stopCode,
-}) => {
+const HeaderBar = ({ title, navigate, isRunning, isSubmitting, stopCode }) => {
   return (
     <div className="h-12 bg-[#0a0a0a] border-b border-[#1e1e1e] flex items-center justify-between px-3 sm:px-4 shrink-0 z-20 relative font-sans">
       {/* Left: Navigation & Title */}

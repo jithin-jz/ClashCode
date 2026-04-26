@@ -11,14 +11,11 @@ const UserTableMobile = ({
   currentUser,
   setDetailsUser,
   handleDeleteUser,
-  handleBlockToggle
+  handleBlockToggle,
 }) => {
   if (tableLoading) {
     return [...Array(4)].map((_, i) => (
-      <div
-        key={i}
-        className="admin-panel h-36 animate-pulse bg-white/[0.02]"
-      />
+      <div key={i} className="admin-panel h-36 animate-pulse bg-white/[0.02]" />
     ));
   }
 

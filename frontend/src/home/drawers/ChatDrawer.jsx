@@ -213,7 +213,10 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                 >
                   <div className="px-4 py-3">
                     <div className="relative group">
-                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+                      <Search
+                        size={12}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+                      />
                       <input
                         type="text"
                         autoFocus
@@ -221,12 +224,12 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                         value={searchQuery}
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
-                          
+
                           // Debounce search
                           if (searchTimeoutRef.current) {
                             clearTimeout(searchTimeoutRef.current);
                           }
-                          
+
                           searchTimeoutRef.current = setTimeout(() => {
                             searchMessages(e.target.value);
                           }, 300);
@@ -247,10 +250,21 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                     </div>
                     {isSearching && (
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        <span className="text-[9px] text-neutral-500 ml-1">Searching...</span>
+                        <div
+                          className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <div
+                          className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <div
+                          className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
+                        <span className="text-[9px] text-neutral-500 ml-1">
+                          Searching...
+                        </span>
                       </div>
                     )}
                   </div>

@@ -27,7 +27,7 @@ const ChallengeWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
+
   const {
     challenge,
     isLoadingChallenge,
@@ -109,13 +109,41 @@ const ChallengeWorkspace = () => {
             { token: "keyword", foreground: "ffffff", fontStyle: "bold" },
             { token: "string", foreground: "a3a3a3" },
           ],
-          colors: { "editor.background": "#000000", "editor.foreground": "#e8e8e8" },
+          colors: {
+            "editor.background": "#000000",
+            "editor.foreground": "#e8e8e8",
+          },
         },
-        dracula: { base: "vs-dark", inherit: true, rules: [], colors: { "editor.background": "#282a36" } },
-        nord: { base: "vs-dark", inherit: true, rules: [], colors: { "editor.background": "#2e3440" } },
-        monokai: { base: "vs-dark", inherit: true, rules: [], colors: { "editor.background": "#272822" } },
-        "solarized-dark": { base: "vs-dark", inherit: true, rules: [], colors: { "editor.background": "#002b36" } },
-        cyberpunk: { base: "vs-dark", inherit: true, rules: [], colors: { "editor.background": "#0d0d0d" } },
+        dracula: {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: { "editor.background": "#282a36" },
+        },
+        nord: {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: { "editor.background": "#2e3440" },
+        },
+        monokai: {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: { "editor.background": "#272822" },
+        },
+        "solarized-dark": {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: { "editor.background": "#002b36" },
+        },
+        cyberpunk: {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: { "editor.background": "#0d0d0d" },
+        },
       };
 
       Object.entries(themes).forEach(([name, config]) => {
@@ -124,13 +152,15 @@ const ChallengeWorkspace = () => {
 
       editor.onDidChangeCursorPosition((e) => {
         if (user?.profile?.active_effect && window.spawnCursorEffect) {
-          const scrolledVisiblePosition = editor.getScrolledVisiblePosition(e.position);
+          const scrolledVisiblePosition = editor.getScrolledVisiblePosition(
+            e.position,
+          );
           if (scrolledVisiblePosition) {
             const domNode = editor.getDomNode();
             const rect = domNode.getBoundingClientRect();
             window.spawnCursorEffect(
-              rect.left + scrolledVisiblePosition.left, 
-              rect.top + scrolledVisiblePosition.top + 10
+              rect.left + scrolledVisiblePosition.left,
+              rect.top + scrolledVisiblePosition.top + 10,
             );
           }
         }
@@ -170,14 +200,27 @@ const ChallengeWorkspace = () => {
               </div>
 
               <div className="space-y-1">
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">Challenge Complete</h2>
-                <p className="text-gray-500 text-xs text-balance">Validation successful. You've beaten the challenge.</p>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                  Challenge Complete
+                </h2>
+                <p className="text-gray-500 text-xs text-balance">
+                  Validation successful. You've beaten the challenge.
+                </p>
               </div>
 
               <div className="flex gap-2 my-1">
                 {[1, 2, 3].map((star) => (
-                  <div key={star} className={`w-6 h-6 flex items-center justify-center ${star <= completionData.stars ? "text-[#ffa116]" : "text-gray-800"}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor">
+                  <div
+                    key={star}
+                    className={`w-6 h-6 flex items-center justify-center ${star <= completionData.stars ? "text-[#ffa116]" : "text-gray-800"}`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="100%"
+                      height="100%"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-5.82 3.25L7.38 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                   </div>
@@ -186,14 +229,18 @@ const ChallengeWorkspace = () => {
 
               {completionData.xp_earned > 0 && (
                 <div className="text-white text-sm font-mono tracking-tighter flex items-center gap-1.5">
-                  <Gem size={14} className="text-red-500 fill-red-500/10" />+{completionData.xp_earned} EARNED
+                  <Gem size={14} className="text-red-500 fill-red-500/10" />+
+                  {completionData.xp_earned} EARNED
                 </div>
               )}
 
               <div className="flex flex-col w-full gap-2 mt-4">
                 {completionData.next_level_slug && (
                   <button
-                    onClick={() => { setCompletionData(null); navigate(`/level/${completionData.next_level_slug}`); }}
+                    onClick={() => {
+                      setCompletionData(null);
+                      navigate(`/level/${completionData.next_level_slug}`);
+                    }}
                     className="w-full h-10 rounded-xl bg-[#ffa116] text-black hover:bg-[#ff8f00] font-bold uppercase text-xs transition-colors"
                   >
                     Next Challenge
@@ -223,12 +270,16 @@ const ChallengeWorkspace = () => {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10 p-0 sm:p-3 gap-0 sm:gap-3">
         {/* Left: Problem */}
-        <div className={`lg:flex flex-1 lg:flex-none w-full lg:w-[24rem] min-h-0 flex-col bg-black border-y sm:border border-white/5 sm:rounded-xl shadow-2xl overflow-y-auto ${mobileTab === "problem" ? "flex" : "hidden"}`}>
+        <div
+          className={`lg:flex flex-1 lg:flex-none w-full lg:w-[24rem] min-h-0 flex-col bg-black border-y sm:border border-white/5 sm:rounded-xl shadow-2xl overflow-y-auto ${mobileTab === "problem" ? "flex" : "hidden"}`}
+        >
           <ProblemPane challenge={challenge} loading={!challenge} />
         </div>
 
         {/* Center: Editor & Console */}
-        <div className={`lg:flex flex-1 flex-col min-w-0 sm:rounded-xl sm:border border-white/5 shadow-2xl overflow-hidden bg-black ${mobileTab === "code" ? "flex" : "hidden"}`}>
+        <div
+          className={`lg:flex flex-1 flex-col min-w-0 sm:rounded-xl sm:border border-white/5 shadow-2xl overflow-hidden bg-black ${mobileTab === "code" ? "flex" : "hidden"}`}
+        >
           <div className="flex-1 flex flex-col relative group overflow-hidden bg-black">
             <div className="flex-1 relative">
               <EditorPane
@@ -239,29 +290,43 @@ const ChallengeWorkspace = () => {
                 editorFontFamily={user?.profile?.active_font}
               />
             </div>
-            
+
             <div className="shrink-0 h-11 bg-[#0a0a0a] border-t border-white/5 flex items-center justify-between px-4">
               <div className="flex items-center gap-1.5 opacity-50">
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                 <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Sandbox Active</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                  Sandbox Active
+                </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={runCode}
                   disabled={isRunning || isSubmitting || !challenge}
                   className={`h-7 px-4 rounded border border-white/10 transition-all flex items-center gap-2 ${isRunning || isSubmitting || !challenge ? "opacity-50 text-zinc-600 cursor-not-allowed" : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white active:scale-95"}`}
                 >
-                  {isRunning ? <div className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Play size={10} fill="currentColor" />}
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Run</span>
+                  {isRunning ? (
+                    <div className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Play size={10} fill="currentColor" />
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                    Run
+                  </span>
                 </button>
                 <button
                   onClick={submitCode}
                   disabled={isRunning || isSubmitting || !challenge}
                   className={`h-7 px-5 rounded relative transition-all flex items-center gap-2 ${isRunning || isSubmitting || !challenge ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : lastRunPassed ? "bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "bg-white text-black hover:bg-zinc-200"} active:scale-95`}
                 >
-                  {isSubmitting ? <div className="w-2.5 h-2.5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Sparkles size={10} fill="currentColor" />}
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Submit</span>
+                  {isSubmitting ? (
+                    <div className="w-2.5 h-2.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <Sparkles size={10} fill="currentColor" />
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                    Submit
+                  </span>
                 </button>
               </div>
             </div>
@@ -269,12 +334,20 @@ const ChallengeWorkspace = () => {
             <div className="h-48 border-t border-white/5 flex flex-col bg-black">
               <div className="shrink-0 px-3 py-2 border-b border-white/5 flex items-center justify-between h-8 bg-black">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Terminal</span>
+                  <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                    Terminal
+                  </span>
                   {output.length > 0 && (
-                    <button onClick={() => setOutput([])} className="p-1 hover:bg-white/5 rounded text-zinc-600 hover:text-zinc-400 transition-colors" title="Clear Console"><Terminal size={10} /></button>
+                    <button
+                      onClick={() => setOutput([])}
+                      className="p-1 hover:bg-white/5 rounded text-zinc-600 hover:text-zinc-400 transition-colors"
+                      title="Clear Console"
+                    >
+                      <Terminal size={10} />
+                    </button>
                   )}
                 </div>
-                {output.some(l => l.type === "error") && (
+                {output.some((l) => l.type === "error") && (
                   <span className="text-[10px] font-bold text-red-400 uppercase tracking-tighter flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-red-400" /> Error
                   </span>
@@ -288,7 +361,9 @@ const ChallengeWorkspace = () => {
         </div>
 
         {/* Right: AI Assistant */}
-        <div className={`lg:flex flex-1 lg:flex-none w-full lg:w-[22rem] flex-col bg-black border-y sm:border border-white/5 sm:rounded-xl shadow-2xl overflow-hidden ${mobileTab === "ai" ? "flex" : "hidden"}`}>
+        <div
+          className={`lg:flex flex-1 lg:flex-none w-full lg:w-[22rem] flex-col bg-black border-y sm:border border-white/5 sm:rounded-xl shadow-2xl overflow-hidden ${mobileTab === "ai" ? "flex" : "hidden"}`}
+        >
           <AIAssistantPane
             onGetHint={handleGetHint}
             onPurchase={handlePurchaseAIAssist}
@@ -314,7 +389,9 @@ const ChallengeWorkspace = () => {
             className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === tab.id ? "text-white bg-white/5" : "text-neutral-600"}`}
           >
             <tab.Icon size={16} />
-            <span className="text-[9px] font-bold uppercase tracking-[0.15em]">{tab.label}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.15em]">
+              {tab.label}
+            </span>
           </button>
         ))}
       </div>

@@ -160,12 +160,7 @@ export const SkeletonStats = ({ className, ...props }) => (
 /* --- Layout Wrapper --- */
 
 export const SkeletonPage = ({ children, className }) => (
-  <div
-    className={cn(
-      "w-full text-zinc-400 relative bg-black",
-      className,
-    )}
-  >
+  <div className={cn("w-full text-zinc-400 relative bg-black", className)}>
     {/* Background Decoration to match Home/Achievements */}
     <div className="fixed inset-0 z-0 pointer-events-none">
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/5 blur-[120px] rounded-full opacity-30" />
@@ -222,4 +217,3 @@ export const SkeletonGenericPage = () => (
 );
 
 export { Skeleton };
-

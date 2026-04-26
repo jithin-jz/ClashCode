@@ -11,7 +11,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../components/ui/dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 
 // Components
@@ -69,7 +74,10 @@ const Profile = () => {
   // Auto-scroll to edit form when opened
   useEffect(() => {
     if (isEditing && editSectionRef.current) {
-      editSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      editSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   }, [isEditing]);
 
@@ -126,7 +134,10 @@ const Profile = () => {
               </div>
 
               {/* Middle Column - Feed/Edit */}
-              <div ref={editSectionRef} className="lg:col-span-6 space-y-6 min-w-0">
+              <div
+                ref={editSectionRef}
+                className="lg:col-span-6 space-y-6 min-w-0"
+              >
                 {isEditing && isOwnProfile ? (
                   <EditProfileForm
                     editForm={editForm}

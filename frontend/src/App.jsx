@@ -60,12 +60,18 @@ const AppContent = memo(() => {
   // Root application loader — show layout-accurate skeleton while auth initialises
   // BYPASS: If this is the Boneyard crawler, we skip the initial skeleton to render the actual routes/markers.
   if (authLoading && !isBoneyard()) {
-    if (location.pathname.startsWith("/level")) return <ChallengeWorkspaceSkeleton />;
+    if (location.pathname.startsWith("/level"))
+      return <ChallengeWorkspaceSkeleton />;
     if (location.pathname.startsWith("/admin")) return <AdminSkeleton />;
     if (location.pathname.startsWith("/store")) return <MarketplaceSkeleton />;
-    if (location.pathname.startsWith("/shop") || location.pathname.startsWith("/buy-xp")) return <BuyXpSkeleton />;
+    if (
+      location.pathname.startsWith("/shop") ||
+      location.pathname.startsWith("/buy-xp")
+    )
+      return <BuyXpSkeleton />;
     if (location.pathname.startsWith("/profile")) return <ProfileSkeleton />;
-    if (location.pathname.startsWith("/achievements")) return <AchievementsSkeleton />;
+    if (location.pathname.startsWith("/achievements"))
+      return <AchievementsSkeleton />;
     if (location.pathname === "/home") return <HomeSkeleton />;
     if (location.pathname === "/login") return <LoginSkeleton />;
     return <GenericSkeleton />;

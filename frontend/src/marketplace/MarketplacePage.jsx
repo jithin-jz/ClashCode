@@ -110,10 +110,11 @@ const MarketplacePage = memo(() => {
                       onClick={() => setActiveCategory(cat.id)}
                       className={`
                       flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all border font-mono flex-1 sm:flex-none sm:whitespace-nowrap
-                      ${isActive
+                      ${
+                        isActive
                           ? "bg-[#161616] text-white border-[#333]"
                           : "text-neutral-500 border-transparent hover:text-neutral-300 hover:bg-[#111] hover:border-[#1a1a1a]"
-                        }
+                      }
                     `}
                     >
                       <Icon size={12} />
@@ -152,7 +153,8 @@ const MarketplacePage = memo(() => {
                       const isActive = isItemActive(item);
                       const isOwned = item.is_owned;
                       const canAfford = user?.profile?.xp >= item.cost;
-                      const isMutatingThis = isMutating && activeMutationItemId === item.id;
+                      const isMutatingThis =
+                        isMutating && activeMutationItemId === item.id;
 
                       return (
                         <Motion.div
@@ -164,32 +166,50 @@ const MarketplacePage = memo(() => {
                           transition={{ duration: 0.2 }}
                         >
                           <Card
-                            className={`rounded-lg overflow-hidden transition-all duration-300 group flex flex-col h-full bg-[#0d0d0d] border border-[#1a1a1a] ${isActive ? "border-emerald-500/30" : "hover:border-[#333]"
-                              }`}
+                            className={`rounded-lg overflow-hidden transition-all duration-300 group flex flex-col h-full bg-[#0d0d0d] border border-[#1a1a1a] ${
+                              isActive
+                                ? "border-emerald-500/30"
+                                : "hover:border-[#333]"
+                            }`}
                           >
                             <div
-                              className={`h-28 flex items-center justify-center border-b transition-colors relative shrink-0 ${isActive ? "bg-emerald-500/[0.03] border-emerald-500/10" : "bg-black border-[#1a1a1a]"
-                                }`}
+                              className={`h-28 flex items-center justify-center border-b transition-colors relative shrink-0 ${
+                                isActive
+                                  ? "bg-emerald-500/[0.03] border-emerald-500/10"
+                                  : "bg-black border-[#1a1a1a]"
+                              }`}
                             >
-                              <div className={isActive ? "text-emerald-500" : "text-neutral-600 group-hover:text-neutral-400"}>
+                              <div
+                                className={
+                                  isActive
+                                    ? "text-emerald-500"
+                                    : "text-neutral-600 group-hover:text-neutral-400"
+                                }
+                              >
                                 {renderIcon(item.icon_name)}
                               </div>
 
                               <div className="absolute top-2 right-2 flex gap-1.5">
                                 {isOwned && (
-                                  <Badge className={`text-[8px] px-1.5 py-0.5 rounded-sm border font-bold uppercase tracking-[0.1em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-[#1a1a1a] text-neutral-500 border-[#222]"}`}>
+                                  <Badge
+                                    className={`text-[8px] px-1.5 py-0.5 rounded-sm border font-bold uppercase tracking-[0.1em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-[#1a1a1a] text-neutral-500 border-[#222]"}`}
+                                  >
                                     {isActive ? "Active" : "Owned"}
                                   </Badge>
                                 )}
                               </div>
 
-                              <Badge className={`absolute top-2 left-2 text-[7px] px-1 py-0.5 rounded-sm border font-bold uppercase tracking-[0.2em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400/60 border-emerald-500/20" : "bg-black/40 text-neutral-700 border-[#222]/20"}`}>
+                              <Badge
+                                className={`absolute top-2 left-2 text-[7px] px-1 py-0.5 rounded-sm border font-bold uppercase tracking-[0.2em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400/60 border-emerald-500/20" : "bg-black/40 text-neutral-700 border-[#222]/20"}`}
+                              >
                                 {item.category}
                               </Badge>
                             </div>
 
                             <div className="flex flex-col flex-1 p-3">
-                              <h3 className={`text-[11px] uppercase tracking-wider font-bold truncate font-mono ${isActive ? "text-emerald-400" : "text-neutral-300"}`}>
+                              <h3
+                                className={`text-[11px] uppercase tracking-wider font-bold truncate font-mono ${isActive ? "text-emerald-400" : "text-neutral-300"}`}
+                              >
                                 {item.name}
                               </h3>
                               <p className="text-[9px] mt-1 line-clamp-2 leading-snug text-neutral-600 font-bold uppercase tracking-tight">
@@ -200,27 +220,46 @@ const MarketplacePage = memo(() => {
                             <div className="p-3.5 pt-0 mt-auto">
                               {isOwned ? (
                                 <Button
-                                  className={`w-full h-8 text-[9px] font-bold uppercase tracking-widest transition-all rounded-md font-mono ${isActive
-                                    ? "bg-transparent border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/5 shadow-none"
-                                    : "bg-[#111] border border-[#222] text-neutral-500 hover:bg-[#161616] hover:text-neutral-200"
-                                    }`}
+                                  className={`w-full h-8 text-[9px] font-bold uppercase tracking-widest transition-all rounded-md font-mono ${
+                                    isActive
+                                      ? "bg-transparent border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/5 shadow-none"
+                                      : "bg-[#111] border border-[#222] text-neutral-500 hover:bg-[#161616] hover:text-neutral-200"
+                                  }`}
                                   disabled={isMutatingThis}
-                                  onClick={() => isActive ? handleStickyUnequip(item.category) : handleEquip(item)}
+                                  onClick={() =>
+                                    isActive
+                                      ? handleStickyUnequip(item.category)
+                                      : handleEquip(item)
+                                  }
                                 >
-                                  {isMutatingThis ? "..." : isActive ? "Unequip" : "Equip"}
+                                  {isMutatingThis
+                                    ? "..."
+                                    : isActive
+                                      ? "Unequip"
+                                      : "Equip"}
                                 </Button>
                               ) : (
                                 <Button
-                                  className={`w-full h-8 text-[10px] font-bold tracking-widest transition-all border rounded-md font-mono ${canAfford
-                                    ? "bg-white text-black border-[#1a1a1a] hover:bg-neutral-200"
-                                    : "bg-black text-[#222] border-[#111] cursor-not-allowed"
-                                    }`}
+                                  className={`w-full h-8 text-[10px] font-bold tracking-widest transition-all border rounded-md font-mono ${
+                                    canAfford
+                                      ? "bg-white text-black border-[#1a1a1a] hover:bg-neutral-200"
+                                      : "bg-black text-[#222] border-[#111] cursor-not-allowed"
+                                  }`}
                                   disabled={!canAfford || isMutatingThis}
                                   onClick={() => handleBuy(item)}
                                 >
-                                  {isMutatingThis ? "..." : (
+                                  {isMutatingThis ? (
+                                    "..."
+                                  ) : (
                                     <span className="flex items-center gap-1.5">
-                                      <Gem size={10} className={canAfford ? "text-red-500" : "text-neutral-800"} />
+                                      <Gem
+                                        size={10}
+                                        className={
+                                          canAfford
+                                            ? "text-red-500"
+                                            : "text-neutral-800"
+                                        }
+                                      />
                                       {item.cost.toLocaleString()}
                                     </span>
                                   )}

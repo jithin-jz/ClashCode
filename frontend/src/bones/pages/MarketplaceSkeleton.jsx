@@ -16,7 +16,10 @@ export const MarketplaceSkeleton = () => (
     <div className="px-4 sm:px-6 lg:px-8 py-6">
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-lg overflow-hidden">
+          <div
+            key={i}
+            className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-lg overflow-hidden"
+          >
             <P className="h-28 rounded-none" />
             <div className="p-3 space-y-2">
               <P className="h-3 w-3/4" />

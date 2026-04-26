@@ -1,39 +1,85 @@
 @keyframes fade-in-down {
-  0% { opacity: 0; transform: translateY(-6px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-in-down { animation: fade-in-down 0.22s ease-out; }
+.animate-fade-in-down {
+  animation: fade-in-down 0.22s ease-out;
+}
 
 @keyframes fade-in-up {
-  0% { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-in-up { animation: fade-in-up 0.22s ease-out; }
+.animate-fade-in-up {
+  animation: fade-in-up 0.22s ease-out;
+}
 
 @keyframes slide-in-right {
-  from { transform: translateX(72px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(72px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
-.animate-slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 @keyframes ds-pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
-.animate-ds-pulse { animation: ds-pulse-dot 1.8s ease-in-out infinite; }
+.animate-ds-pulse {
+  animation: ds-pulse-dot 1.8s ease-in-out infinite;
+}
 
 @keyframes ds-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
-.animate-ds-spin { animation: ds-spin 0.9s linear infinite; }
+.animate-ds-spin {
+  animation: ds-spin 0.9s linear infinite;
+}
 
 @keyframes ds-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 .ds-shimmer {
-  background: linear-gradient(90deg, var(--app-surface) 25%, var(--app-surface-2) 50%, var(--app-surface) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--app-surface) 25%,
+    var(--app-surface-2) 50%,
+    var(--app-surface) 75%
+  );
   background-size: 200% 100%;
   animation: ds-shimmer 1.4s ease-in-out infinite;
 }

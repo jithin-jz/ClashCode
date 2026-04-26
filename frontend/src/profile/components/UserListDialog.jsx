@@ -1,7 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 
 const UserListDialog = ({
@@ -50,7 +59,9 @@ const UserListDialog = ({
                   </Avatar>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-white truncate">
-                      {[user.first_name, user.last_name].filter(Boolean).join(" ") || user.username}
+                      {[user.first_name, user.last_name]
+                        .filter(Boolean)
+                        .join(" ") || user.username}
                     </div>
                     <div className="text-[10px] text-neutral-500 font-mono">
                       @{user.username}

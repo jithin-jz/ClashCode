@@ -32,7 +32,7 @@ class SocketService {
       const token = localStorage.getItem("clashcode_access_token");
       this.url = getSocketUrl(token);
       console.log("[WS] Attempting connection to:", this.url);
-      
+
       this.socket = new WebSocket(this.url);
 
       this.socket.onopen = () => {
@@ -49,7 +49,9 @@ class SocketService {
 
           // The backend publishes { type, task_id, task_type, result: { ok, payload, error, status_code } }
           if (data.task_id && this.listeners.has(data.task_id)) {
-            const { resolve, reject, timeout } = this.listeners.get(data.task_id);
+            const { resolve, reject, timeout } = this.listeners.get(
+              data.task_id,
+            );
             const result = data.result || {};
 
             if (result.ok) {
@@ -60,7 +62,10 @@ class SocketService {
               clearTimeout(timeout);
               this.listeners.delete(data.task_id);
               const err = new Error(result.error || "AI task failed");
-              err.response = { status: result.status_code || 500, data: result };
+              err.response = {
+                status: result.status_code || 500,
+                data: result,
+              };
               reject(err);
             }
           }
@@ -115,7 +120,9 @@ class SocketService {
 
       // If already connected, we could send a subscription message if the backend requires it
       if (this.isConnected) {
-        this.socket.send(JSON.stringify({ action: "subscribe", task_id: taskId }));
+        this.socket.send(
+          JSON.stringify({ action: "subscribe", task_id: taskId }),
+        );
       }
     });
   }

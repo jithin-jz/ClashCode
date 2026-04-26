@@ -142,10 +142,11 @@ const LeaderboardDrawer = ({ isLeaderboardOpen, setLeaderboardOpen }) => {
                         <Link
                           to={`/profile/${rankUser.username}`}
                           onClick={() => setLeaderboardOpen(false)}
-                          className={`group relative flex items-center gap-3 p-2.5 rounded-lg transition-all border ${isMe
+                          className={`group relative flex items-center gap-3 p-2.5 rounded-lg transition-all border ${
+                            isMe
                               ? "bg-emerald-500/10 border-emerald-500/20 shadow-sm"
                               : "bg-[#111] border-[#1a1a1a] hover:bg-[#161616] hover:border-[#222]"
-                            }`}
+                          }`}
                         >
                           {/* Rank Circle */}
                           <div

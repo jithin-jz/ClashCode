@@ -28,7 +28,9 @@ export const useReferral = () => {
       const result = await redeemReferral(referralCodeInput);
       const redeemerXp = result.redeemer_xp_awarded ?? result.xp_awarded;
       const referrerXp = result.referrer_xp_awarded ?? 100;
-      notify.success(`Referral redeemed! You got +${redeemerXp} and your referrer got +${referrerXp}.`);
+      notify.success(
+        `Referral redeemed! You got +${redeemerXp} and your referrer got +${referrerXp}.`,
+      );
       setReferralCodeInput("");
     } catch (error) {
       notify.error("Failed to redeem: " + error.message);

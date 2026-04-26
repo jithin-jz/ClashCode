@@ -40,12 +40,12 @@ const UserTable = ({
     handleExport,
     count,
     start,
-    end
+    end,
   } = useUserTable(userList, fetchUsers, userFilters, onUsersQueryChange);
 
   return (
     <div className="space-y-4">
-      <UserTableControls 
+      <UserTableControls
         searchValue={searchValue}
         setSearchValue={setSearchValue}
         userFilters={userFilters}
@@ -63,7 +63,7 @@ const UserTable = ({
       />
 
       <div className="space-y-3 md:hidden">
-        <UserTableMobile 
+        <UserTableMobile
           paginatedUsers={paginatedUsers}
           tableLoading={tableLoading}
           selectedUsers={selectedUsers}
@@ -75,7 +75,7 @@ const UserTable = ({
         />
       </div>
 
-      <UserTableDesktop 
+      <UserTableDesktop
         paginatedUsers={paginatedUsers}
         tableLoading={tableLoading}
         selectedUsers={selectedUsers}
@@ -87,7 +87,7 @@ const UserTable = ({
         handleBlockToggle={handleBlockToggle}
       />
 
-      <UserTablePagination 
+      <UserTablePagination
         start={start}
         end={end}
         count={count}

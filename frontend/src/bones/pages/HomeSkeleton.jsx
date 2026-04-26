@@ -45,7 +45,10 @@ export const HomeSkeleton = () => (
           {/* Card Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {[...Array(4 + trackIdx * 2)].map((_, i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 min-h-[120px] space-y-4">
+              <div
+                key={i}
+                className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 min-h-[120px] space-y-4"
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex items-start gap-2.5">
                     <Circle className="w-8 h-8 rounded-lg" />

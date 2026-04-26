@@ -35,14 +35,14 @@ export const SLog = {
    */
   error: (message, error = null, context = {}) => {
     console.error(`[SLog] ERROR: ${message}`, error || "", context);
-    
+
     if (DSN) {
       Sentry.withScope((scope) => {
         if (context.tags) {
           Object.entries(context.tags).forEach(([k, v]) => scope.setTag(k, v));
         }
         scope.setExtras(context);
-        
+
         if (error instanceof Error) {
           Sentry.captureException(error);
         } else {
@@ -59,7 +59,7 @@ export const SLog = {
     if (!IS_PROD) {
       console.info(`[SLog] INFO: ${message}`, context);
     }
-    
+
     Sentry.addBreadcrumb({
       category: "app.info",
       message,
@@ -73,14 +73,14 @@ export const SLog = {
    */
   warn: (message, context = {}) => {
     console.warn(`[SLog] WARN: ${message}`, context);
-    
+
     Sentry.addBreadcrumb({
       category: "app.warn",
       message,
       data: context,
       level: "warning",
     });
-    
+
     if (IS_PROD && DSN) {
       Sentry.captureMessage(message, "warning");
     }

@@ -61,6 +61,7 @@ The **CLASHCODE Frontend** is a modern, interactive web application built with *
    A ready-to-copy local template now lives at `frontend/.env.example`.
 
 4. **Start the development server:**
+
    ```bash
    npm run dev
    ```

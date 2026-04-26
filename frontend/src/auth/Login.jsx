@@ -127,7 +127,9 @@ const Login = () => {
                   className="space-y-4"
                 >
                   <div>
-                    <label className="ds-eyebrow block mb-2 opacity-60">Email address</label>
+                    <label className="ds-eyebrow block mb-2 opacity-60">
+                      Email address
+                    </label>
                     <div className="ds-input-icon-wrapper">
                       <Mail className="ds-input-icon" size={16} />
                       <input
@@ -231,7 +233,10 @@ const Login = () => {
                 className="ds-btn ds-btn-secondary group h-11 rounded-xl text-sm gap-2 disabled:opacity-50"
                 id="login-github"
               >
-                <Github size={16} className="text-neutral-500 group-hover:text-white transition-colors" />
+                <Github
+                  size={16}
+                  className="text-neutral-500 group-hover:text-white transition-colors"
+                />
                 GitHub
               </button>
               <button
@@ -241,7 +246,10 @@ const Login = () => {
                 className="ds-btn ds-btn-secondary group h-11 rounded-xl text-sm gap-2 disabled:opacity-50"
                 id="login-google"
               >
-                <Chrome size={16} className="text-neutral-500 group-hover:text-white transition-colors" />
+                <Chrome
+                  size={16}
+                  className="text-neutral-500 group-hover:text-white transition-colors"
+                />
                 Google
               </button>
             </div>

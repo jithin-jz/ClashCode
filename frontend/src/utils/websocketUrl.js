@@ -31,7 +31,9 @@ export const buildWebSocketUrl = ({
   label = "WebSocket",
   token = null,
 }) => {
-  console.log(`[buildWebSocketUrl] label=${label} apiUrl=${apiUrl} defaultPath=${defaultPath} window.location.host=${window.location.host}`);
+  console.log(
+    `[buildWebSocketUrl] label=${label} apiUrl=${apiUrl} defaultPath=${defaultPath} window.location.host=${window.location.host}`,
+  );
   let wsUrlString = "";
 
   if (explicitUrl) {

@@ -17,7 +17,7 @@ const UserTableControls = ({
   selectedUsersCount,
   handleExport,
   fetchUsers,
-  tableLoading
+  tableLoading,
 }) => {
   return (
     <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">

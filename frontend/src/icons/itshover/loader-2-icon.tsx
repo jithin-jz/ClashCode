@@ -13,10 +13,10 @@ const Loader2Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
       await animate(
         scope.current,
         { rotate: 360 },
-        { 
-          duration: 1, 
+        {
+          duration: 1,
           ease: "linear",
-          repeat: Infinity
+          repeat: Infinity,
         },
       );
     };
@@ -32,7 +32,7 @@ const Loader2Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
     // For loaders, we might want it to start automatically if it has a certain class or prop,
     // but here we follow the pattern of other icons.
-    
+
     return (
       <motion.svg
         ref={scope}

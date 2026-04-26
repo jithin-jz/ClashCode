@@ -21,7 +21,7 @@ const UserTableDesktop = ({
   currentUser,
   setDetailsUser,
   handleDeleteUser,
-  handleBlockToggle
+  handleBlockToggle,
 }) => {
   return (
     <div className="hidden overflow-hidden md:block admin-panel">

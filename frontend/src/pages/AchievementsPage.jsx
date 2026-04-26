@@ -23,13 +23,9 @@ import { useAchievements } from "../hooks/useAchievements";
 const AchievementsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
-  const {
-    achievements,
-    userAchievements,
-    loading,
-    isUnlocked,
-  } = useAchievements(user);
+
+  const { achievements, userAchievements, loading, isUnlocked } =
+    useAchievements(user);
 
   const trophyScore = (userAchievements?.length || 0) * 10;
 
@@ -50,14 +46,20 @@ const AchievementsPage = () => {
                 onClick={() => navigate(-1)}
                 className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors mb-4 group"
               >
-                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                <span className="text-xs font-bold tracking-widest uppercase font-mono">Back</span>
+                <ArrowLeft
+                  size={16}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
+                <span className="text-xs font-bold tracking-widest uppercase font-mono">
+                  Back
+                </span>
               </button>
               <h1 className="text-4xl font-black tracking-tight text-white uppercase sm:text-5xl">
                 Hall of <span className="text-emerald-500">Fame</span>
               </h1>
               <p className="text-neutral-500 mt-2 font-medium max-w-md">
-                Your journey through the arena. Collect trophies by completing challenges and mastering the arts.
+                Your journey through the arena. Collect trophies by completing
+                challenges and mastering the arts.
               </p>
             </div>
 
@@ -66,7 +68,9 @@ const AchievementsPage = () => {
                 <p className="ds-eyebrow opacity-40">Unlocked</p>
                 <p className="text-3xl font-black font-mono tracking-tighter">
                   {userAchievements?.length || 0}
-                  <span className="text-sm text-neutral-600 ml-1">/{achievements?.length || 0}</span>
+                  <span className="text-sm text-neutral-600 ml-1">
+                    /{achievements?.length || 0}
+                  </span>
                 </p>
               </div>
               <div className="w-px h-10 bg-white/5 hidden md:block" />

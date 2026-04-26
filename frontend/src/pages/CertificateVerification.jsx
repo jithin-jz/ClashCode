@@ -28,7 +28,11 @@ const CertificateVerification = () => {
 
   if (loading) {
     return (
-      <Skeleton name="certificate-verify" loading className="h-screen flex flex-col items-center justify-center p-4 gap-4 overflow-hidden bg-zinc-950">
+      <Skeleton
+        name="certificate-verify"
+        loading
+        className="h-screen flex flex-col items-center justify-center p-4 gap-4 overflow-hidden bg-zinc-950"
+      >
         <div className="h-12 w-full max-w-5xl rounded-xl bg-white/[0.04] animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full max-w-6xl flex-1 min-h-0">
           <div className="lg:col-span-8 h-full rounded-xl bg-white/[0.04] animate-pulse" />

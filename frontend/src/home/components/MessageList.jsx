@@ -102,7 +102,9 @@ const ReactionBar = ({ reactions, onReact, username }) => {
             title={users.join(", ")}
           >
             <span className="text-sm">{emoji}</span>
-            <span className="font-mono text-[10px] font-semibold">{users.length}</span>
+            <span className="font-mono text-[10px] font-semibold">
+              {users.length}
+            </span>
           </button>
         ))}
       <div className="relative" ref={pickerRef}>
@@ -157,7 +159,7 @@ const MessageList = ({
   isSearching = false,
 }) => {
   const scrollRef = React.useRef(null);
-  
+
   // Mark last message as read if it's from others
   useEffect(() => {
     if (!user || !messages.length) return;
@@ -321,9 +323,12 @@ const MessageList = ({
 
       {displayedMessages.map((msg, index) => {
         // Compare using user_id or username as fallback
-        const isOwn = msg.user_id === user?.user_id || 
-                     (msg.user_id && user?.user_id && String(msg.user_id) === String(user.user_id)) ||
-                     msg.username === user?.username;
+        const isOwn =
+          msg.user_id === user?.user_id ||
+          (msg.user_id &&
+            user?.user_id &&
+            String(msg.user_id) === String(user.user_id)) ||
+          msg.username === user?.username;
         const metadata = userMetadata[msg.user_id] || {
           username: msg.username,
           avatar_url: msg.avatar_url,
@@ -342,12 +347,12 @@ const MessageList = ({
 
         // Debug: Log first message to check structure
         if (index === 0) {
-          console.log('Message debug:', { 
-            msgUserId: msg.user_id, 
-            userUserId: user?.user_id, 
-            msgUsername: msg.username, 
-            userUsername: user?.username, 
-            isOwn 
+          console.log("Message debug:", {
+            msgUserId: msg.user_id,
+            userUserId: user?.user_id,
+            msgUsername: msg.username,
+            userUsername: user?.username,
+            isOwn,
           });
         }
 
@@ -398,122 +403,124 @@ const MessageList = ({
                   ${msg.message?.startsWith("IMAGE:") ? "p-2 !rounded-xl" : ""}
                 `}
               >
-                  {msg.message?.startsWith("IMAGE:") ? (
-                    (() => {
-                      const [imageUrl, ownerUsername] = msg.message
-                        .replace("IMAGE:", "")
-                        .split("|");
-                      return (
-                        <div className="space-y-2">
+                {msg.message?.startsWith("IMAGE:") ? (
+                  (() => {
+                    const [imageUrl, ownerUsername] = msg.message
+                      .replace("IMAGE:", "")
+                      .split("|");
+                    return (
+                      <div className="space-y-2">
+                        <Link
+                          to={`/profile/${ownerUsername}`}
+                          className="block overflow-hidden rounded-lg border border-white/5 shadow-lg"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            className="w-full h-auto"
+                          />
+                        </Link>
+                        <div className="flex items-center justify-between px-1 py-0.5">
+                          <p className="text-[8px] font-bold uppercase tracking-widest text-neutral-600">
+                            Transmission
+                          </p>
                           <Link
                             to={`/profile/${ownerUsername}`}
-                            className="block overflow-hidden rounded-lg border border-white/5 shadow-lg"
+                            className="text-[8px] font-bold uppercase tracking-widest text-emerald-500 hover:underline"
                           >
-                            <img
-                              src={imageUrl}
-                              alt=""
-                              className="w-full h-auto"
-                            />
+                            Verify
                           </Link>
-                          <div className="flex items-center justify-between px-1 py-0.5">
-                            <p className="text-[8px] font-bold uppercase tracking-widest text-neutral-600">
-                              Transmission
-                            </p>
-                            <Link
-                              to={`/profile/${ownerUsername}`}
-                              className="text-[8px] font-bold uppercase tracking-widest text-emerald-500 hover:underline"
-                            >
-                              Verify
-                            </Link>
-                          </div>
                         </div>
-                      );
-                    })()
-                  ) : editingMsgId === msg.timestamp ? (
-                    <div className="flex flex-col gap-2 relative z-50">
-                      <input
-                        type="text"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="bg-black/40 border border-emerald-500/50 rounded px-2 py-1.5 text-emerald-100 outline-none w-full min-w-[200px]"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleEditSave(msg.timestamp);
-                          if (e.key === "Escape") setEditingMsgId(null);
-                        }}
-                        autoFocus
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => setEditingMsgId(null)}
-                          className="text-white/50 hover:text-white p-1 bg-black/50 rounded"
-                        >
-                          <X size={12} />
-                        </button>
-                        <button
-                          onClick={() => handleEditSave(msg.timestamp)}
-                          className="text-emerald-500 hover:text-emerald-400 p-1 bg-black/50 rounded"
-                        >
-                          <Check size={12} />
-                        </button>
                       </div>
-                    </div>
-                  ) : (
-                    <RenderMessage text={msg.message} />
-                  )}
-
-                  {/* Time stamp inside bubble */}
-                  <div className="flex items-center justify-end gap-1 mt-1">
-                    <span className="text-[9px] font-mono text-neutral-400/60 tracking-tighter">
-                      {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      })}
-                    </span>
-                    {isOwn && (
-                      <CheckCheck 
-                        size={10} 
-                        className={`${(msg.read_by?.length > 0) ? "text-emerald-400" : "text-neutral-400/40"}`} 
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Buttons (visible on hover) */}
-                {editingMsgId !== msg.timestamp && (
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 pt-0.5">
-                    {isOwn && (
-                      <>
-                        <button
-                          onClick={() => handleEditInit(msg)}
-                          className="text-neutral-600 hover:text-emerald-500 transition-colors p-1 rounded hover:bg-white/5"
-                          title="Edit"
-                        >
-                          <Edit size={11} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(msg.timestamp)}
-                          className="text-neutral-600 hover:text-red-500 transition-colors p-1 rounded hover:bg-white/5"
-                          title="Delete"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      </>
-                    )}
-                    {user?.is_admin && (
+                    );
+                  })()
+                ) : editingMsgId === msg.timestamp ? (
+                  <div className="flex flex-col gap-2 relative z-50">
+                    <input
+                      type="text"
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="bg-black/40 border border-emerald-500/50 rounded px-2 py-1.5 text-emerald-100 outline-none w-full min-w-[200px]"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleEditSave(msg.timestamp);
+                        if (e.key === "Escape") setEditingMsgId(null);
+                      }}
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
                       <button
-                        onClick={() => pinMessage(msg.timestamp, msg.message)}
-                        className="text-neutral-600 hover:text-amber-400 transition-colors p-1 rounded hover:bg-white/5"
-                        title="Pin message"
+                        onClick={() => setEditingMsgId(null)}
+                        className="text-white/50 hover:text-white p-1 bg-black/50 rounded"
                       >
-                        <Pin size={11} />
+                        <X size={12} />
                       </button>
-                    )}
+                      <button
+                        onClick={() => handleEditSave(msg.timestamp)}
+                        className="text-emerald-500 hover:text-emerald-400 p-1 bg-black/50 rounded"
+                      >
+                        <Check size={12} />
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <RenderMessage text={msg.message} />
                 )}
 
+                {/* Time stamp inside bubble */}
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  <span className="text-[9px] font-mono text-neutral-400/60 tracking-tighter">
+                    {new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
+                  </span>
+                  {isOwn && (
+                    <CheckCheck
+                      size={10}
+                      className={`${msg.read_by?.length > 0 ? "text-emerald-400" : "text-neutral-400/40"}`}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons (visible on hover) */}
+              {editingMsgId !== msg.timestamp && (
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 pt-0.5">
+                  {isOwn && (
+                    <>
+                      <button
+                        onClick={() => handleEditInit(msg)}
+                        className="text-neutral-600 hover:text-emerald-500 transition-colors p-1 rounded hover:bg-white/5"
+                        title="Edit"
+                      >
+                        <Edit size={11} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(msg.timestamp)}
+                        className="text-neutral-600 hover:text-red-500 transition-colors p-1 rounded hover:bg-white/5"
+                        title="Delete"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </>
+                  )}
+                  {user?.is_admin && (
+                    <button
+                      onClick={() => pinMessage(msg.timestamp, msg.message)}
+                      className="text-neutral-600 hover:text-amber-400 transition-colors p-1 rounded hover:bg-white/5"
+                      title="Pin message"
+                    >
+                      <Pin size={11} />
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Reaction Bar - positioned below message */}
-              <div className={`flex items-center gap-1 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`flex items-center gap-1 mt-1.5 ${isOwn ? "justify-end" : "justify-start"}`}
+              >
                 <ReactionBar
                   reactions={msg.reactions}
                   onReact={(emoji) => toggleReaction(msg.timestamp, emoji)}

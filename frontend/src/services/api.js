@@ -119,7 +119,8 @@ api.interceptors.response.use(
 
     // Log critical errors to centralized SLog
     if (!error.response || error.response.status >= 500) {
-      const errorDetail = errorData?.error || errorData?.detail || error.message;
+      const errorDetail =
+        errorData?.error || errorData?.detail || error.message;
       const requestId = errorData?.request_id;
 
       SLog.error(`API failure: ${errorDetail}`, error, {

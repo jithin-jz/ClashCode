@@ -26,7 +26,10 @@ export const AchievementsSkeleton = () => (
       {/* Grid Skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {[...Array(10)].map((_, i) => (
-          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-4">
+          <div
+            key={i}
+            className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-4"
+          >
             <P className="w-10 h-10 rounded-lg" />
             <div className="space-y-2">
               <P className="h-3 w-24" />

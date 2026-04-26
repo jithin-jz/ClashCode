@@ -60,7 +60,11 @@ export default defineConfig({
             return "vendor-motion";
           if (pkg.startsWith("@radix-ui/")) return "vendor-radix";
           if (pkg === "emoji-picker-react") return "vendor-emoji";
-          if (pkg === "react-markdown" || pkg.startsWith("remark-") || pkg.startsWith("rehype-")) {
+          if (
+            pkg === "react-markdown" ||
+            pkg.startsWith("remark-") ||
+            pkg.startsWith("rehype-")
+          ) {
             return "vendor-markdown";
           }
           if (pkg === "@sentry/react" || pkg.startsWith("@sentry/")) {
