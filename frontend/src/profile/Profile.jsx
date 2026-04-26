@@ -11,7 +11,6 @@ import PostGrid from "../posts/PostGrid";
 import ContributionGraph from "./components/ContributionGraph";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileInfo from "./components/ProfileInfo";
-import ReferralSection from "./components/ReferralSection";
 import EditProfileForm from "./components/EditProfileForm";
 import UserListDialog from "./components/UserListDialog";
 import UserNotFound from "./components/UserNotFound";
@@ -102,8 +101,6 @@ const Profile = () => {
                     />
                   </div>
                 </Card>
-                {/* Referrals (if own profile) */}
-                {isOwnProfile && <ReferralSection />}
               </div>
 
               {/* Middle Column - Feed/Edit */}
