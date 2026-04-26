@@ -185,6 +185,8 @@ export const Pin = adapt(MapPinIcon);
 export const Activity = adapt(ChartLineIcon);
 export const Clock = adapt(ClockIcon);
 export const ExternalLink = adapt(ExternalLinkIcon);
+export const ChevronRight = adapt(ArrowBigRightIcon);
+
 
 
 // Extra aliases used by marketplace data and seeded backend icon_name values.
