@@ -83,9 +83,6 @@ const useAuthStore = create((set, get) => ({
     const authPromise = (async () => {
       // Boneyard Capture Bypass:
       if (isBoneyard()) {
-        console.log(
-          "[AuthStore] Boneyard crawler detected. Applying mock session.",
-        );
         const mockUser = {
           id: "mock-id",
           username: "boneyard-bot",

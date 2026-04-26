@@ -31,12 +31,11 @@ class SocketService {
       // Get fresh token from store
       const token = localStorage.getItem("clashcode_access_token");
       this.url = getSocketUrl(token);
-      console.log("[WS] Attempting connection to:", this.url);
+      console.info("[WS] Attempting connection...");
 
       this.socket = new WebSocket(this.url);
 
-      this.socket.onopen = () => {
-        console.log("[WS] Connected to", this.url);
+        console.info("[WS] Connected successfully");
         this.isConnected = true;
         this.reconnectAttempts = 0;
         // Resubscribe to any pending tasks if necessary (or the server might handle it)
@@ -45,7 +44,7 @@ class SocketService {
       this.socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("[WS] Message:", data);
+          // Log only in dev if needed
 
           // The backend publishes { type, task_id, task_type, result: { ok, payload, error, status_code } }
           if (data.task_id && this.listeners.has(data.task_id)) {

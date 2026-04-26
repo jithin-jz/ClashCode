@@ -24,9 +24,7 @@ export const SLog = {
         replaysOnErrorSampleRate: 1.0,
         environment: import.meta.env.MODE,
       });
-      console.log("[SLog] Sentry initialized");
-    } else {
-      console.log("[SLog] Sentry DSN not found, using console only.");
+      console.info("[SLog] Monitoring active");
     }
   },
 

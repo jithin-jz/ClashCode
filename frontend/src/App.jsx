@@ -249,13 +249,7 @@ const AppContent = memo(() => {
           {/* Fallback */}
           <Route
             path="/admin"
-            element={
-              <AdminRoute>
-                <Suspense fallback={<AdminSkeleton />}>
-                  <AdminDashboard />
-                </Suspense>
-              </AdminRoute>
-            }
+            element={<Navigate to="/admin/dashboard" replace />}
           />
 
           {/* 404 Route */}

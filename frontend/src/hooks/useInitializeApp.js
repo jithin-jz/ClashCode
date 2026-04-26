@@ -2,13 +2,11 @@ import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useAuthStore from "../stores/useAuthStore";
 import useNotificationStore from "../stores/useNotificationStore";
+import { useNotificationSocket } from "./useNotificationSocket";
+import { useFCM } from "./useFCM";
 
 /**
  * Custom hook to initialize authentication and notifications.
- *
- * Performance: Uses useShallow selectors to subscribe only to the
- * specific state slices needed, preventing re-renders from unrelated
- * auth store mutations (e.g. email/otp field changes on the login page).
  */
 export const useInitializeApp = () => {
   const { checkAuth, user, authLoading } = useAuthStore(
@@ -18,7 +16,10 @@ export const useInitializeApp = () => {
       authLoading: s.loading,
     })),
   );
-  const initNotifications = useNotificationStore((s) => s.initNotifications);
+  
+  const { initFCM } = useFCM();
+  const { connectWS } = useNotificationSocket();
+
   const authInitRef = useRef(false);
   const notifInitUserIdRef = useRef(null);
 
@@ -36,9 +37,13 @@ export const useInitializeApp = () => {
     }
     if (notifInitUserIdRef.current !== userId) {
       notifInitUserIdRef.current = userId;
-      initNotifications();
+      
+      // Modular initialization
+      useNotificationStore.setState({ wsShouldReconnect: true });
+      initFCM();
+      connectWS();
     }
-  }, [user, initNotifications]);
+  }, [user, initFCM, connectWS]);
 
   return { user, authLoading };
 };
