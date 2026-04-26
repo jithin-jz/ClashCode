@@ -182,6 +182,10 @@ export const X = adapt(XIcon);
 export const Youtube = adapt(YoutubeIcon);
 export const Zap = adapt(BatteryChargingIcon);
 export const Pin = adapt(MapPinIcon);
+export const Activity = adapt(ChartLineIcon);
+export const Clock = adapt(ClockIcon);
+export const ExternalLink = adapt(ExternalLinkIcon);
+
 
 // Extra aliases used by marketplace data and seeded backend icon_name values.
 export const Rainbow = adapt(RainbowIcon);
