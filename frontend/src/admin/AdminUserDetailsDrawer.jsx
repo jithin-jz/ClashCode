@@ -365,8 +365,7 @@ const AdminUserDetailsDrawer = ({
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </div>v>
+                </div>
               )}
             </div>
           </div>
