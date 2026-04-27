@@ -200,7 +200,7 @@ const MarketplacePage = memo(() => {
                               </div>
 
                               <Badge
-                                className={`absolute top-2 left-2 text-[7px] px-1 py-0.5 rounded-sm border font-bold uppercase tracking-[0.2em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400/60 border-emerald-500/20" : "bg-black/40 text-neutral-700 border-[#222]/20"}`}
+                                className={`absolute top-2 left-2 text-[7px] px-1 py-0.5 rounded-sm border font-bold uppercase tracking-[0.2em] font-mono ${isActive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-black/60 text-neutral-500 border-[#222]"}`}
                               >
                                 {item.category}
                               </Badge>
@@ -212,7 +212,7 @@ const MarketplacePage = memo(() => {
                               >
                                 {item.name}
                               </h3>
-                              <p className="text-[9px] mt-1 line-clamp-2 leading-snug text-neutral-600 font-bold uppercase tracking-tight">
+                              <p className="text-[9px] mt-1 line-clamp-2 leading-snug text-neutral-500 font-bold uppercase tracking-tight">
                                 {item.description}
                               </p>
                             </div>
@@ -242,8 +242,8 @@ const MarketplacePage = memo(() => {
                                 <Button
                                   className={`w-full h-8 text-[10px] font-bold tracking-widest transition-all border rounded-md font-mono ${
                                     canAfford
-                                      ? "bg-white text-black border-[#1a1a1a] hover:bg-neutral-200"
-                                      : "bg-black text-[#222] border-[#111] cursor-not-allowed"
+                                      ? "bg-white text-black border-transparent hover:bg-neutral-200"
+                                      : "bg-[#0d0d0d] text-neutral-600 border-[#1a1a1a] cursor-not-allowed"
                                   }`}
                                   disabled={!canAfford || isMutatingThis}
                                   onClick={() => handleBuy(item)}
@@ -256,8 +256,8 @@ const MarketplacePage = memo(() => {
                                         size={10}
                                         className={
                                           canAfford
-                                            ? "text-red-500"
-                                            : "text-neutral-800"
+                                            ? "text-red-500 fill-red-500/20"
+                                            : "text-neutral-700"
                                         }
                                       />
                                       {item.cost.toLocaleString()}
