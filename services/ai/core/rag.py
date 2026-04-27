@@ -2,8 +2,7 @@ import asyncio
 import logging
 
 from config import settings
-from langchain_pinecone import PineconeVectorStore
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_pinecone import PineconeVectorStore, PineconeEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +14,12 @@ def get_vector_db():
     global _vector_db
     if _vector_db is None:
         try:
-            logger.info("Initializing Pinecone RAG components...")
-            embeddings = HuggingFaceInferenceAPIEmbeddings(
-                api_key=settings.HUGGINGFACE_API_KEY,
-                model_name=settings.EMBEDDING_MODEL,
+            logger.info("Initializing Pinecone RAG components with native embeddings...")
+            
+            # Using Pinecone's native embedding model (matching your 1024-dim index)
+            embeddings = PineconeEmbeddings(
+                model=settings.EMBEDDING_MODEL, 
+                pinecone_api_key=settings.PINECONE_API_KEY
             )
             
             _vector_db = PineconeVectorStore(
