@@ -15,7 +15,7 @@ ACHIEVEMENTS = [
         "description": "Complete your first challenge",
         "icon": "Zap",
         "category": "challenge",
-        "xp_reward": 25,
+        "xp_reward": 10,
         "order": 1,
         "target_value": 1,  # First challenge completed
     },
@@ -25,7 +25,7 @@ ACHIEVEMENTS = [
         "description": "Complete 5 challenges",
         "icon": "TrendingUp",
         "category": "challenge",
-        "xp_reward": 50,
+        "xp_reward": 25,
         "order": 2,
         "target_value": 5,  # Requires 5 challenges
     },
@@ -35,7 +35,7 @@ ACHIEVEMENTS = [
         "description": "Complete 10 challenges",
         "icon": "Medal",
         "category": "challenge",
-        "xp_reward": 100,
+        "xp_reward": 50,
         "order": 3,
         "target_value": 10,  # Requires 10 challenges
     },
@@ -45,7 +45,7 @@ ACHIEVEMENTS = [
         "description": "Complete 25 challenges",
         "icon": "Crown",
         "category": "challenge",
-        "xp_reward": 250,
+        "xp_reward": 100,
         "order": 4,
         "target_value": 25,  # Requires 25 challenges
     },
@@ -55,7 +55,7 @@ ACHIEVEMENTS = [
         "description": "Solve a challenge in under 2 minutes",
         "icon": "Flame",
         "category": "challenge",
-        "xp_reward": 75,
+        "xp_reward": 40,
         "order": 5,
         "target_value": 1,  # One speed completion
     },
@@ -65,7 +65,7 @@ ACHIEVEMENTS = [
         "description": "Earn 3 stars on a challenge",
         "icon": "Star",
         "category": "challenge",
-        "xp_reward": 50,
+        "xp_reward": 30,
         "order": 6,
         "target_value": 1,  # One 3-star completion
     },
@@ -76,7 +76,7 @@ ACHIEVEMENTS = [
         "description": "Maintain a 3-day login streak",
         "icon": "Calendar",
         "category": "streak",
-        "xp_reward": 30,
+        "xp_reward": 15,
         "order": 10,
         "target_value": 3,  # Requires 3 consecutive days
     },
@@ -86,7 +86,7 @@ ACHIEVEMENTS = [
         "description": "Maintain a 7-day login streak",
         "icon": "Flame",
         "category": "streak",
-        "xp_reward": 100,
+        "xp_reward": 60,
         "order": 11,
         "target_value": 7,  # Requires 7 consecutive days
     },
@@ -97,7 +97,7 @@ ACHIEVEMENTS = [
         "description": "Follow your first user",
         "icon": "UserPlus",
         "category": "social",
-        "xp_reward": 10,
+        "xp_reward": 5,
         "order": 20,
         "target_value": 1,  # First follow
     },
@@ -107,7 +107,7 @@ ACHIEVEMENTS = [
         "description": "Follow 10 users",
         "icon": "Users",
         "category": "social",
-        "xp_reward": 50,
+        "xp_reward": 25,
         "order": 21,
         "target_value": 10,  # Requires 10 follows
     },
