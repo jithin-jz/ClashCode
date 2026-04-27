@@ -71,15 +71,6 @@ services:
     networks:
       - default
 
-  chroma:
-    image: chromadb/chroma:1.4.1
-    restart: unless-stopped
-    environment:
-      IS_PERSISTENT: "TRUE"
-    volumes:
-      - chroma_data:/chroma/data
-    networks:
-      - default
 
   # ---------------- APPLICATION SERVICES ----------------
   core:
@@ -153,16 +144,12 @@ services:
     env_file: ./ai/.env
     environment:
       CORE_SERVICE_URL: http://core:8000
-      CHROMA_SERVER_HOST: chroma
-      CHROMA_SERVER_HTTP_PORT: 8000
       REDIS_URL: redis://redis:6379/0
       INTERNAL_REQUIRE_SIGNATURE: ${INTERNAL_REQUIRE_SIGNATURE:-true}
       INTERNAL_SIGNING_SECRET: ${INTERNAL_SIGNING_SECRET:?Set INTERNAL_SIGNING_SECRET}
     depends_on:
       core:
         condition: service_healthy
-      chroma:
-        condition: service_started
       redis:
         condition: service_healthy
     healthcheck:
@@ -265,5 +252,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
-  chroma_data:
   dynamodb_data:

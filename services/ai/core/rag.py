@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from config import settings
-from langchain_chroma import Chroma
+from langchain_pinecone import PineconeVectorStore
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 logger = logging.getLogger(__name__)
@@ -15,25 +15,20 @@ def get_vector_db():
     global _vector_db
     if _vector_db is None:
         try:
-            logger.info("Initializing Chroma RAG components...")
+            logger.info("Initializing Pinecone RAG components...")
             embeddings = HuggingFaceInferenceAPIEmbeddings(
                 api_key=settings.HUGGINGFACE_API_KEY,
                 model_name=settings.EMBEDDING_MODEL,
             )
-            # Connect to stand-alone ChromaDB server
-            import chromadb
-
-            _vector_db = Chroma(
-                client=chromadb.HttpClient(
-                    host=settings.CHROMA_SERVER_HOST,
-                    port=settings.CHROMA_SERVER_HTTP_PORT,
-                ),
-                embedding_function=embeddings,
-                collection_name="challenges",
+            
+            _vector_db = PineconeVectorStore(
+                index_name=settings.PINECONE_INDEX_NAME,
+                embedding=embeddings,
+                pinecone_api_key=settings.PINECONE_API_KEY
             )
-            logger.info("Chroma RAG components initialized successfully.")
+            logger.info("Pinecone RAG components initialized successfully.")
         except Exception as e:
-            logger.error(f"Failed to initialize Chroma RAG: {e}")
+            logger.error(f"Failed to initialize Pinecone RAG: {e}")
             _vector_db = None
     return _vector_db
 

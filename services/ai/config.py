@@ -23,8 +23,8 @@ class Settings(BaseSettings):
 
     # RAG Settings
     EMBEDDING_MODEL: str
-    CHROMA_SERVER_HOST: str
-    CHROMA_SERVER_HTTP_PORT: int
+    PINECONE_API_KEY: str
+    PINECONE_INDEX_NAME: str
 
     # Security
     CORS_ORIGINS: Union[str, List[str]]
