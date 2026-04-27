@@ -11,7 +11,15 @@ from drf_spectacular.views import (
 from project.health import HealthCheckView
 from project.views import ServiceIndexView, TaskResultsListView, TaskStatusView
 
+from django.views.generic import RedirectView
+
+admin.site.site_header = "CLASHCODE Admin Portal"
+admin.site.site_title = "CLASHCODE Admin"
+admin.site.index_title = "Welcome to CLASHCODE Admin Portal"
+
 urlpatterns = [
+    # Flower Redirect
+    path("admin/flower/", RedirectView.as_view(url="http://localhost:5555"), name="admin-flower"),
     # Health check
     path("", ServiceIndexView.as_view(), name="service-index"),
     path("health/", HealthCheckView.as_view(), name="health-check"),

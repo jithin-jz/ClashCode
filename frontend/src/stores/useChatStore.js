@@ -19,7 +19,6 @@ const useChatStore = create((set, get) => ({
   isLoadingMore: false,
   searchResults: [],
   isSearching: false,
-  error: null,
 
   // Actions
   connect: async (roomName = "global") => {

@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Flag,
   Home,
+  Activity,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ const AdminSidebar = ({ user, activeTab, setActiveTab, handleLogout }) => {
     { id: "store", label: "Store", icon: <ShoppingBag size={18} /> },
     { id: "broadcast", label: "Announcements", icon: <Shield size={18} /> },
     { id: "audit", label: "Audit Logs", icon: <Layers size={18} /> },
+    { id: "celery", label: "Worker Tasks", icon: <Activity size={18} /> },
     { id: "reports", label: "Reports", icon: <Flag size={18} /> },
   ];
 

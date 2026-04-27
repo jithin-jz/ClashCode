@@ -27,3 +27,4 @@ black==24.10.0
 
 whitenoise==6.7.0
 sentry-sdk==2.16.0
+flower==2.0.1

@@ -10,6 +10,7 @@ import AdminBroadcast from "./AdminBroadcast";
 import AdminAuditLogs from "./AdminAuditLogs";
 import AdminStore from "./AdminStore";
 import AdminReports from "./AdminReports";
+import AdminCeleryMonitor from "./AdminCeleryMonitor";
 import AppBackdrop from "../components/AppBackdrop";
 import SystemOverview from "./components/SystemOverview";
 
@@ -105,6 +106,12 @@ const AdminDashboard = () => {
               {activeTab === "reports" && (
                 <div className="animate-in slide-in-from-bottom-4 duration-500">
                   <AdminReports />
+                </div>
+              )}
+
+              {activeTab === "celery" && (
+                <div className="animate-in slide-in-from-bottom-4 duration-500">
+                  <AdminCeleryMonitor />
                 </div>
               )}
             </div>

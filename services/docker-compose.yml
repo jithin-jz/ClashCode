@@ -192,6 +192,28 @@ services:
     networks:
       - default
 
+  flower:
+    build: ./core
+    restart: unless-stopped
+    command: celery -A project flower --port=5555
+    env_file: ./core/.env
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DB_HOST: ${DB_HOST:?Set DB_HOST}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      DB_PORT: ${DB_PORT:-6543}
+    depends_on:
+      redis:
+        condition: service_healthy
+      core:
+        condition: service_healthy
+    networks:
+      - default
+
   # ---------------- PYTHON CODE EXECUTION ----------------
   executor:
     build: ./executor
