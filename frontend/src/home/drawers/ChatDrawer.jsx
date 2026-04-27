@@ -205,7 +205,7 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
                 pickerRef={pickerRef}
                 emojiButtonRef={emojiButtonRef}
                 sendTyping={sendTyping}
-                placeholder="Message global chat..."
+                placeholder="Message global chat... (Ctrl+B)"
               />
             </div>
 
