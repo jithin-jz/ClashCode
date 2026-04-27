@@ -221,6 +221,11 @@ const LeaderboardDrawer = ({ isLeaderboardOpen, setLeaderboardOpen }) => {
                 )}
               </Skeleton>
             </main>
+            <footer className="shrink-0 p-4 border-t border-[#1a1a1a] bg-[#070707] flex items-center justify-center">
+               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-600 font-mono">
+                  Press <span className="text-neutral-400 bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5 mx-1">Ctrl + L</span> to toggle
+               </p>
+            </footer>
           </Motion.div>
         </>
       )}
