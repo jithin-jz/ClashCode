@@ -247,7 +247,7 @@ const MarketplacePage = memo(() => {
                                   className={`w-full h-8 text-[10px] font-bold tracking-widest transition-all border rounded-md font-mono shadow-sm ${
                                     canAfford
                                       ? "bg-white text-black border-transparent hover:bg-neutral-200 active:scale-95"
-                                      : "bg-[#0d0d0d] text-neutral-400 border-[#1a1a1a] cursor-not-allowed opacity-80"
+                                      : "bg-[#0d0d0d] text-neutral-200 border-[#1a1a1a] cursor-not-allowed"
                                   }`}
                                   disabled={!canAfford || isMutatingThis}
                                   onClick={() => handleBuy(item)}
@@ -261,7 +261,7 @@ const MarketplacePage = memo(() => {
                                         className={
                                           canAfford
                                             ? "text-red-500 fill-red-500/20"
-                                            : "text-neutral-700"
+                                            : "text-amber-500/70"
                                         }
                                       />
                                       {item.cost.toLocaleString()}
