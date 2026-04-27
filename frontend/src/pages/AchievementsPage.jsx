@@ -57,10 +57,7 @@ const AchievementsPage = () => {
               <h1 className="text-4xl font-black tracking-tight text-white uppercase sm:text-5xl">
                 Hall of <span className="text-emerald-500">Fame</span>
               </h1>
-              <p className="text-neutral-500 mt-2 font-medium max-w-md">
-                Your journey through the arena. Collect trophies by completing
-                challenges and mastering the arts.
-              </p>
+
             </div>
 
             <div className="flex items-center gap-8 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
