@@ -50,7 +50,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           # Update the images in kustomization.yaml to the new SHA-tagged versions
-          cd k8s/overlays/dev
+          cd infra/k8s/overlays/dev
           kustomize edit set image core=$ECR_REGISTRY/$ECR_REPOSITORY:core-${{ github.sha }}
           kustomize edit set image chat=$ECR_REGISTRY/$ECR_REPOSITORY:chat-${{ github.sha }}
           kustomize edit set image ai=$ECR_REGISTRY/$ECR_REPOSITORY:ai-${{ github.sha }}

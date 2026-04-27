@@ -45,6 +45,11 @@ graph TD
 
 ---
 
+## 📂 Project Structure
+- **[frontend/](frontend/)**: React 19 Client
+- **[services/](services/)**: Microservices (Core, Chat, AI, Executor, Analytics)
+- **[infra/](infra/)**: Cloud Infrastructure (Terraform, Kubernetes, Nginx)
+
 ## 📂 Services Overview
 
 | Service | Technology | Primary Function |
