@@ -260,9 +260,6 @@ const LandingPage = () => {
                   <span className="font-['Geist_Mono'] text-[9px] font-bold text-neutral-700 uppercase tracking-widest">
                     Python 3.11
                   </span>
-                  <span className="ds-pill ds-pill-success text-[10px] bg-emerald-500/5 text-emerald-500/80 border-emerald-500/10">
-                    All tests passed
-                  </span>
                 </div>
               </div>
             </Motion.div>
