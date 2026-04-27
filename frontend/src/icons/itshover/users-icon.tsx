@@ -10,58 +10,70 @@ const UsersIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     const [scope, animate] = useAnimate();
 
     const start = useCallback(async () => {
-      // Primary user bounces up slightly
-      animate(
-        ".user-primary",
-        {
-          y: -2,
-          scale: 1.05,
-        },
-        {
-          duration: 0.3,
-          ease: "easeOut",
-        },
-      );
+      if (!scope.current) return;
+      try {
+        // Primary user bounces up slightly
+        animate(
+          ".user-primary",
+          {
+            y: -2,
+            scale: 1.05,
+          },
+          {
+            duration: 0.3,
+            ease: "easeOut",
+          },
+        );
 
-      // Secondary user (right side) moves slightly
-      animate(
-        ".user-secondary",
-        {
-          x: 1,
-          opacity: 0.8,
-        },
-        {
-          duration: 0.3,
-          ease: "easeOut",
-        },
-      );
-    }, [animate]);
+        if (!scope.current) return;
+        // Secondary user (right side) moves slightly
+        animate(
+          ".user-secondary",
+          {
+            x: 1,
+            opacity: 0.8,
+          },
+          {
+            duration: 0.3,
+            ease: "easeOut",
+          },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
     const stop = useCallback(async () => {
-      animate(
-        ".user-primary",
-        {
-          y: 0,
-          scale: 1,
-        },
-        {
-          duration: 0.25,
-          ease: "easeInOut",
-        },
-      );
+      if (!scope.current) return;
+      try {
+        animate(
+          ".user-primary",
+          {
+            y: 0,
+            scale: 1,
+          },
+          {
+            duration: 0.25,
+            ease: "easeInOut",
+          },
+        );
 
-      animate(
-        ".user-secondary",
-        {
-          x: 0,
-          opacity: 1,
-        },
-        {
-          duration: 0.25,
-          ease: "easeInOut",
-        },
-      );
-    }, [animate]);
+        if (!scope.current) return;
+        animate(
+          ".user-secondary",
+          {
+            x: 0,
+            opacity: 1,
+          },
+          {
+            duration: 0.25,
+            ease: "easeInOut",
+          },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
     useImperativeHandle(ref, () => ({
       startAnimation: start,

@@ -13,10 +13,12 @@ router = APIRouter()
 @router.websocket("/ws/chat/{room}")
 @router.websocket("/ws/chat/{room}/")
 async def chat_ws(ws: WebSocket, room: str):
-    if room != "global":
-        logger.warning(f"Unauthorized room access attempt: {room}")
-        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
+    # Basic validation for room name
+    if not room or len(room) > 50 or not room.isalnum() and room != "global":
+        if room != "global": # Allow global even if it doesn't match isalnum logic in some cases
+             logger.warning(f"Invalid room access attempt: {room}")
+             await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+             return
 
     token = get_token(ws)
     if not token:

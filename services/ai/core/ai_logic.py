@@ -16,6 +16,47 @@ from core.rag import get_rag_context
 logger = logging.getLogger(__name__)
 
 
+async def stream_hint_logic(
+    challenge_slug: str,
+    user_code: str,
+    hint_level: int,
+    user_xp: int,
+    challenge_context: dict,
+):
+    challenge_title = challenge_context.get("challenge_title", challenge_context.get("title", ""))
+    challenge_description = challenge_context.get("challenge_description", challenge_context.get("description", ""))
+
+    rag_context = await get_rag_context(
+        challenge_description=challenge_description,
+        user_code=user_code,
+        challenge_slug=challenge_slug,
+    )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", HINT_GENERATION_SYSTEM_PROMPT),
+            ("user", HINT_GENERATION_USER_TEMPLATE),
+        ]
+    )
+
+    try:
+        llm = LLMFactory.get_llm()
+        chain = prompt | llm | StrOutputParser()
+        
+        async for chunk in chain.astream({
+            "challenge_title": challenge_title,
+            "challenge_description": challenge_description,
+            "user_code": user_code,
+            "hint_level": hint_level,
+            "user_xp": user_xp,
+            "rag_context": rag_context,
+        }):
+            yield chunk
+    except Exception as e:
+        logger.error(f"Streaming LLM Error: {e}")
+        yield f"Error: {str(e)}"
+
+
 async def generate_hint_logic(
     challenge_slug: str,
     user_code: str,

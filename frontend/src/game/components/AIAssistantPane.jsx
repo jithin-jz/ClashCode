@@ -39,7 +39,8 @@ const AIAssistantPane = ({
   hintLevel,
   ai_hints_purchased,
   userXp,
-  isCodePassed = false, // New prop: whether code has passed tests
+  isCodePassed = false,
+  streamingHint = "", // New prop for real-time text
 }) => {
   const [hintHistory, setHintHistory] = React.useState([]);
   const scrollRef = React.useRef(null);
@@ -203,15 +204,25 @@ const AIAssistantPane = ({
                 <div className="flex-none w-full h-full min-h-0 snap-start p-4 flex flex-col">
                   <div className="flex items-center gap-2 mb-3">
                     <Spinner className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-bold text-[#00af9b]/50 uppercase tracking-widest">
-                      Generating...
+                    <span className="text-[10px] font-bold text-[#00af9b] uppercase tracking-widest">
+                      {streamingHint ? "Thinking..." : "Consulting AI..."}
                     </span>
                   </div>
-                  <PulseCard className="flex-1 bg-white/[0.05] border border-white/10 p-4 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Sparkles size={20} className="text-[#00af9b]/20" />
-                    </div>
-                  </PulseCard>
+                  
+                  <div className="flex-1 min-h-0 bg-black border border-[#00af9b]/20 rounded-lg p-4 overflow-y-auto">
+                    {streamingHint ? (
+                       <div className="prose prose-invert prose-sm max-w-none prose-p:text-neutral-300 prose-p:text-[12px] animate-in fade-in duration-500">
+                         <ReactMarkdown>{streamingHint}</ReactMarkdown>
+                         <span className="inline-block w-1.5 h-3.5 bg-[#00af9b] ml-1 animate-pulse" />
+                       </div>
+                    ) : (
+                      <PulseCard className="h-full bg-white/[0.02] border border-white/5 relative">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Sparkles size={20} className="text-[#00af9b]/10" />
+                        </div>
+                      </PulseCard>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

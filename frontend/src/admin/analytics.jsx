@@ -20,6 +20,40 @@ import {
 } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
 import { AnalyticsSkeleton } from "./AdminSkeletons";
+import ClusterHealthMonitor from "./components/ClusterHealthMonitor";
+
+// --- Helper Components ---
+
+const StatCard = ({ title, value, sub, icon, color }) => (
+  <div className="admin-panel cursor-default p-5 transition-colors hover:border-white/12">
+    <div className="flex items-center justify-between mb-4">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+        {title}
+      </span>
+      <div className={`rounded bg-white/[0.04] p-1.5 ${color}`}>{icon}</div>
+    </div>
+    <div className="space-y-0.5">
+      <h3 className="text-2xl font-bold text-neutral-100 tracking-tight">
+        {value}
+      </h3>
+      <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
+        {sub}
+      </p>
+    </div>
+  </div>
+);
+
+const CardSection = ({ title, icon, children }) => (
+  <div className="admin-panel space-y-5 p-6">
+    <div className="flex items-center gap-2.5">
+      <div className="rounded bg-white/[0.04] p-1.5">{icon}</div>
+      <h2 className="text-lg font-bold text-neutral-100 tracking-tight">
+        {title}
+      </h2>
+    </div>
+    {children}
+  </div>
+);
 
 const Analytics = () => {
   const [data, setData] = useState(null);
@@ -53,7 +87,6 @@ const Analytics = () => {
     top_challenges,
     top_items,
     community_leaders,
-    system_health,
   } = data;
 
   return (
@@ -156,6 +189,9 @@ const Analytics = () => {
         </div>
       </div>
 
+      {/* Live Cluster Monitor */}
+      <ClusterHealthMonitor />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 3. Competitive Performance */}
         <CardSection
@@ -254,24 +290,6 @@ const Analytics = () => {
         </CardSection>
       </div>
 
-      <CardSection
-        icon={<Box size={18} className="text-neutral-200" />}
-        title="System Health"
-      >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {Object.entries(system_health || {}).map(([key, value]) => (
-            <div key={key} className="admin-subpanel p-3">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-                {key.replace(/_/g, " ")}
-              </div>
-              <div className="mt-1 text-sm text-neutral-200">
-                {String(value || "N/A")}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardSection>
-
       {/* 5. Population Leaders */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -328,37 +346,5 @@ const Analytics = () => {
   );
 };
 
-// --- Helper Components ---
-
-const StatCard = ({ title, value, sub, icon, color }) => (
-  <div className="admin-panel cursor-default p-5 transition-colors hover:border-white/12">
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-        {title}
-      </span>
-      <div className={`rounded bg-white/[0.04] p-1.5 ${color}`}>{icon}</div>
-    </div>
-    <div className="space-y-0.5">
-      <h3 className="text-2xl font-bold text-neutral-100 tracking-tight">
-        {value}
-      </h3>
-      <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wide">
-        {sub}
-      </p>
-    </div>
-  </div>
-);
-
-const CardSection = ({ title, icon, children }) => (
-  <div className="admin-panel space-y-5 p-6">
-    <div className="flex items-center gap-2.5">
-      <div className="rounded bg-white/[0.04] p-1.5">{icon}</div>
-      <h2 className="text-lg font-bold text-neutral-100 tracking-tight">
-        {title}
-      </h2>
-    </div>
-    {children}
-  </div>
-);
 
 export default Analytics;

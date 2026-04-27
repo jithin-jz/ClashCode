@@ -11,50 +11,62 @@ const SparklesIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
     const start = useCallback(async () => {
       if (!scope.current) return;
-      // main sparkle
-      animate(
-        ".sparkle-main",
-        { rotate: 180, scale: [1, 1.2, 1] },
-        { duration: 0.6, ease: "easeInOut" },
-      );
+      try {
+        // main sparkle
+        animate(
+          ".sparkle-main",
+          { rotate: 180, scale: [1, 1.2, 1] },
+          { duration: 0.6, ease: "easeInOut" },
+        );
 
-      // top sparkle
-      animate(
-        ".sparkle-top",
-        {
-          rotate: -90,
-          scale: [1, 0.8, 1.1],
-          opacity: [1, 0.6, 1],
-        },
-        { duration: 0.5, ease: "easeInOut", delay: 0.1 },
-      );
+        if (!scope.current) return;
+        // top sparkle
+        animate(
+          ".sparkle-top",
+          {
+            rotate: -90,
+            scale: [1, 0.8, 1.1],
+            opacity: [1, 0.6, 1],
+          },
+          { duration: 0.5, ease: "easeInOut", delay: 0.1 },
+        );
 
-      // bottom sparkle
-      animate(
-        ".sparkle-bottom",
-        {
-          rotate: 90,
-          scale: [1, 1.15, 0.9],
-          opacity: [1, 0.7, 1],
-        },
-        { duration: 0.5, ease: "easeInOut", delay: 0.05 },
-      );
-    }, [animate]);
+        if (!scope.current) return;
+        // bottom sparkle
+        animate(
+          ".sparkle-bottom",
+          {
+            rotate: 90,
+            scale: [1, 1.15, 0.9],
+            opacity: [1, 0.7, 1],
+          },
+          { duration: 0.5, ease: "easeInOut", delay: 0.05 },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
     const stop = useCallback(() => {
       if (!scope.current) return;
-      animate(".sparkle-main", { rotate: 0, scale: 1 }, { duration: 0.25 });
-      animate(
-        ".sparkle-top",
-        { rotate: 0, scale: 1, opacity: 1 },
-        { duration: 0.25 },
-      );
-      animate(
-        ".sparkle-bottom",
-        { rotate: 0, scale: 1, opacity: 1 },
-        { duration: 0.25 },
-      );
-    }, [animate]);
+      try {
+        animate(".sparkle-main", { rotate: 0, scale: 1 }, { duration: 0.25 });
+        if (!scope.current) return;
+        animate(
+          ".sparkle-top",
+          { rotate: 0, scale: 1, opacity: 1 },
+          { duration: 0.25 },
+        );
+        if (!scope.current) return;
+        animate(
+          ".sparkle-bottom",
+          { rotate: 0, scale: 1, opacity: 1 },
+          { duration: 0.25 },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
     useImperativeHandle(ref, () => ({
       startAnimation: start,

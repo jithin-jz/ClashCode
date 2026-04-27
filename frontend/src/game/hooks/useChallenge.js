@@ -26,8 +26,10 @@ export const useChallenge = (id) => {
 
   // AI Assistant State
   const [hint, setHint] = useState("");
+  const [streamingHint, setStreamingHint] = useState("");
   const [hintLevel, setHintLevel] = useState(1);
   const [review, setReview] = useState("");
+  const [isHintStreaming, setIsHintStreaming] = useState(false);
 
   // --- Data Fetching ---
   const {
@@ -147,7 +149,8 @@ export const useChallenge = (id) => {
   const submitMutation = useMutation({
     mutationFn: (userCode) => challengesApi.submit(id, userCode),
     onMutate: () => {
-      setLastRunPassed(false);
+      // Don't reset passed status during submission to maintain UI feedback
+      // setLastRunPassed(false); 
       setOutput([
         {
           type: "log",
@@ -177,13 +180,15 @@ export const useChallenge = (id) => {
         useChallengesStore.getState().applySubmissionResult(id, result);
         void useChallengesStore.getState().ensureFreshChallenges(0);
 
-        // Optimistically update local challenge data
+        // Optimistically update local challenge data including the final code
         queryClient.setQueryData(["challenge", id], (old) =>
           old
             ? {
                 ...old,
                 status: "COMPLETED",
                 stars: Math.max(old.stars || 0, result.stars || 0),
+                user_code: code, // Persist the submitted code locally
+                is_completed: true
               }
             : old,
         );
@@ -365,6 +370,61 @@ export const useChallenge = (id) => {
     ]);
   }, [runMutation, submitMutation]);
 
+  const handleGetHintStream = useCallback(async (level) => {
+    const targetLevel = level || hintLevel;
+    setIsHintStreaming(true);
+    setStreamingHint("");
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL}/hints/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Internal API keys would go here if not handled by a proxy
+        },
+        body: JSON.stringify({
+          challenge_slug: id,
+          user_code: code,
+          hint_level: targetLevel,
+          user_xp: user?.profile?.xp || 0
+        })
+      });
+
+      if (!response.ok) throw new Error("Hint stream failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedHint = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const content = line.replace('data: ', '');
+            if (content) {
+              accumulatedHint += content;
+              setStreamingHint(accumulatedHint);
+            }
+          }
+        }
+      }
+
+      setHint(accumulatedHint);
+      setHintLevel((prev) => Math.min(prev + 1, 3));
+    } catch (err) {
+      console.error("Hint streaming error:", err);
+      toast.error("AI stream interrupted");
+    } finally {
+      setIsHintStreaming(false);
+      setStreamingHint("");
+    }
+  }, [id, code, hintLevel, user?.profile?.xp]);
+
   return {
     challenge,
     isLoadingChallenge,
@@ -379,17 +439,18 @@ export const useChallenge = (id) => {
     completionData,
     setCompletionData,
     hint,
+    streamingHint,
     hintLevel,
     review,
     runCode: () => runMutation.mutate(code),
     submitCode: () => submitMutation.mutate(code),
-    handleGetHint: () => getHintMutation.mutate(),
+    handleGetHint: handleGetHintStream,
     handlePurchaseAIAssist: () => purchaseHintMutation.mutate(),
     handleAnalyzeCode: () => analyzeMutation.mutate(),
     stopCode,
     isRunning: runMutation.isPending,
     isSubmitting: submitMutation.isPending,
-    isHintLoading: getHintMutation.isPending || purchaseHintMutation.isPending,
+    isHintLoading: isHintStreaming || purchaseHintMutation.isPending,
     isReviewLoading: analyzeMutation.isPending,
   };
 };

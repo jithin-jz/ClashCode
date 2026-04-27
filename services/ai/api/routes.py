@@ -3,10 +3,11 @@ import logging
 from typing import Optional
 
 from config import settings
-from core.ai_logic import analyze_code_logic, generate_hint_logic
+from core.ai_logic import analyze_code_logic, generate_hint_logic, stream_hint_logic
 from core.rag import get_vector_db
 from core.security import authorize_internal_request
 from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from langchain_core.documents import Document
 from models.schemas import AnalyzeRequest, HintRequest
 from utils.core_client import fetch_challenge_context, fetch_internal_challenges
@@ -97,6 +98,40 @@ async def generate_hint(
         return {"hint": safe_hint, "hint_level": request.hint_level, "max_hints": 3}
     except Exception:
         raise HTTPException(status_code=500, detail="Error generating hint")
+
+
+@router.post("/hints/stream")
+async def generate_hint_stream(
+    request: HintRequest,
+    http_request: Request,
+    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+):
+    if not authorize_internal_request(
+        path=http_request.url.path,
+        api_key=x_internal_api_key,
+        timestamp=x_internal_timestamp,
+        signature=x_internal_signature,
+    ):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    context_data = await fetch_challenge_context(request.challenge_slug)
+
+    async def event_generator():
+        try:
+            async for chunk in stream_hint_logic(
+                challenge_slug=request.challenge_slug,
+                user_code=request.user_code,
+                hint_level=request.hint_level,
+                user_xp=request.user_xp,
+                challenge_context=context_data,
+            ):
+                yield f"data: {chunk}\n\n"
+        except Exception as e:
+            yield f"data: Error generating stream: {str(e)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/analyze")

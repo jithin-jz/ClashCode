@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: core-monitor
+  labels:
+    release: prometheus # This must match the helm release name
+spec:
+  selector:
+    matchLabels:
+      app: core
+  endpoints:
+  - port: metrics # We'll add this port to your app later
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: chat-monitor
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: chat
+  endpoints:
+  - port: metrics
+    path: /metrics

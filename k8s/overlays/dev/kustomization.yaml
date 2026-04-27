@@ -1,0 +1,13 @@
+resources:
+  - ../../base
+  - ./secrets.yaml
+  - ./ingress.yaml
+  - ../../base/cluster-issuer.yaml
+
+images:
+  - name: core
+    newName: core-latest # This will be replaced by the CI/CD pipeline
+  - name: chat
+    newName: chat-latest
+  - name: ai
+    newName: ai-latest

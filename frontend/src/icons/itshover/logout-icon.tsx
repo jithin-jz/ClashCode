@@ -11,37 +11,45 @@ const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
     const start = useCallback(async () => {
       if (!scope.current) return;
-      await animate(
-        ".logout-arrow, .logout-arrow-bottom",
-        {
-          x: [0, 6, 0],
-        },
-        {
-          duration: 0.3,
-          ease: "easeInOut",
-        },
-      );
-      if (!scope.current) return;
-      animate(
-        ".logout-door",
-        {
-          x: [0, -2, 0],
-        },
-        {
-          duration: 0.25,
-          ease: "easeOut",
-        },
-      );
-    }, [animate]);
+      try {
+        await animate(
+          ".logout-arrow, .logout-arrow-bottom",
+          {
+            x: [0, 6, 0],
+          },
+          {
+            duration: 0.3,
+            ease: "easeInOut",
+          },
+        );
+        if (!scope.current) return;
+        await animate(
+          ".logout-door",
+          {
+            x: [0, -2, 0],
+          },
+          {
+            duration: 0.25,
+            ease: "easeOut",
+          },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
-    const stop = useCallback(() => {
+    const stop = useCallback(async () => {
       if (!scope.current) return;
-      animate(
-        ".logout-arrow, .logout-arrow-bottom, .logout-door",
-        { x: 0 },
-        { duration: 0.2, ease: "easeInOut" },
-      );
-    }, [animate]);
+      try {
+        await animate(
+          ".logout-arrow, .logout-arrow-bottom, .logout-door",
+          { x: 0 },
+          { duration: 0.2, ease: "easeInOut" },
+        );
+      } catch (err) {
+        // Ignore animation errors during unmount
+      }
+    }, [animate, scope]);
 
     useImperativeHandle(ref, () => ({
       startAnimation: start,

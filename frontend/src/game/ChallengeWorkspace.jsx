@@ -44,6 +44,7 @@ const ChallengeWorkspace = () => {
     completionData,
     setCompletionData,
     hint,
+    streamingHint,
     hintLevel,
     review,
     runCode,
@@ -240,6 +241,7 @@ const ChallengeWorkspace = () => {
             onPurchase={handlePurchaseAIAssist}
             onAnalyze={handleAnalyzeCode}
             hint={hint}
+            streamingHint={streamingHint}
             review={review}
             isHintLoading={isHintLoading}
             isReviewLoading={isReviewLoading}
