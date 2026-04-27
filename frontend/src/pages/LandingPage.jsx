@@ -7,26 +7,26 @@ import Magnetic from "../components/ui/Magnetic";
 import { Skeleton } from "boneyard-js/react";
 
 const stats = [
-  { label: "Skill Tracks", value: "12+", sub: "structured paths" },
-  { label: "Coding Rounds", value: "150+", sub: "hands-on challenges" },
-  { label: "Progress", value: "Real-time", sub: "live feedback" },
+  { label: "Curated Tracks", value: "12+", sub: "professional paths" },
+  { label: "Coding Sprints", value: "150+", sub: "technical challenges" },
+  { label: "Performance", value: "Instant", sub: "validation feedback" },
 ];
 
 const features = [
   {
     icon: Terminal,
-    title: "Live Code Execution",
-    desc: "Run your code directly in the browser with instant output and rich error messages.",
+    title: "Live Runtime",
+    desc: "Execute Python code in a high-performance sandbox with instant telemetry and rich error analysis.",
   },
   {
     icon: Layers,
-    title: "Structured Tracks",
-    desc: "Progress through carefully ordered tracks from Python basics to OOP mastery.",
+    title: "Curated Tracks",
+    desc: "Master Python through industrially-aligned paths, from fundamental logic to advanced architecture.",
   },
   {
     icon: Zap,
-    title: "Rewards & Growth",
-    desc: "Gain rewards, unlock new levels, and track your growth over time.",
+    title: "Reward Protocol",
+    desc: "Gain XP, unlock premium content, and visualize your professional evolution with every milestone.",
   },
 ];
 
@@ -123,22 +123,29 @@ const LandingPage = () => {
             </div>
 
             {/* Stats bar */}
-            <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mx-auto mt-14 grid max-w-3xl grid-cols-1 sm:grid-cols-3 gap-4">
               {stats.map((item, i) => (
                 <Motion.div
                   key={item.label}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + i * 0.07, duration: 0.4 }}
-                  className="ds-card p-4 text-center group bg-black border-white/5 hover:border-white/10 transition-colors"
+                  className="relative group"
                 >
-                  <p className="ds-eyebrow mb-2">{item.label}</p>
-                  <p className="text-xl font-bold text-white font-['Space_Grotesk'] tabular-nums">
-                    {item.value}
-                  </p>
-                  <p className="mt-1 text-[11px] text-neutral-700 font-['Geist_Mono'] uppercase tracking-tight">
-                    {item.sub}
-                  </p>
+                  <div className="absolute -inset-px bg-gradient-to-b from-white/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="relative ds-card p-6 text-center bg-[#050505]/60 backdrop-blur-md border-white/[0.03] overflow-hidden">
+                    <p className="ds-eyebrow mb-2 text-neutral-500 group-hover:text-neutral-300 transition-colors">
+                      {item.label}
+                    </p>
+                    <p className="text-3xl font-bold text-white font-['Space_Grotesk'] tracking-tight mb-1">
+                      {item.value}
+                    </p>
+                    <p className="text-[10px] font-bold text-neutral-700 font-['Geist_Mono'] uppercase tracking-[0.1em] group-hover:text-neutral-500 transition-colors">
+                      {item.sub}
+                    </p>
+                    {/* Subtle ambient glow */}
+                    <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-white/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </Motion.div>
               ))}
             </div>
