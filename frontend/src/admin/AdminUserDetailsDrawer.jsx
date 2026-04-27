@@ -289,88 +289,84 @@ const AdminUserDetailsDrawer = ({
                 </div>
               )}
 
-              {activeTab === "moderation" && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {activeTab === "moderation" &&                 <div className="grid sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {/* Admin Notes */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                      <h3 className="text-xs font-semibold text-white flex items-center gap-2 uppercase tracking-widest">
-                        <MessageSquare size={14} className="text-neutral-500" /> Admin Notes
+                      <h3 className="text-[10px] font-bold text-white flex items-center gap-2 uppercase tracking-[0.15em]">
+                        <MessageSquare size={12} className="text-neutral-500" /> Admin Notes
                       </h3>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 focus-within:border-white/20 transition-colors">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 focus-within:border-white/20 transition-colors">
                       <Textarea
                         value={noteBody}
                         onChange={(e) => setNoteBody(e.target.value)}
                         placeholder="Type an internal note..."
-                        className="bg-transparent border-none p-0 min-h-[60px] text-sm resize-none focus-visible:ring-0 placeholder:text-neutral-600"
+                        className="bg-transparent border-none p-0 min-h-[40px] text-[11px] resize-none focus-visible:ring-0 placeholder:text-neutral-600"
                       />
                       <div className="mt-2 flex justify-end">
                         <Button
                           onClick={handleAddNote}
                           disabled={savingNote || !noteBody.trim()}
                           size="sm"
-                          className="h-7 px-3 bg-white text-black hover:bg-neutral-200 text-[11px] font-bold"
+                          className="h-6 px-2.5 bg-white text-black hover:bg-neutral-200 text-[10px] font-black"
                         >
-                          {savingNote ? "Saving..." : "Add Note"}
+                          {savingNote ? "..." : "Add Note"}
                         </Button>
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 max-h-[180px] overflow-y-auto ds-scrollbar pr-1">
                       {(details.notes || []).length === 0 ? (
-                        <p className="text-center text-xs text-neutral-600 py-4 italic">No notes recorded yet.</p>
+                        <p className="text-center text-[10px] text-neutral-600 py-4 italic uppercase tracking-wider">No notes recorded.</p>
                       ) : (
                         details.notes.map((note) => (
-                          <div key={note.id} className="rounded-xl border border-white/5 bg-white/[0.01] p-3 group">
+                          <div key={note.id} className="rounded-lg border border-white/5 bg-white/[0.01] p-2.5 group">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-tighter">{note.admin}</span>
-                              <span className="text-[9px] text-neutral-600 font-mono uppercase">
+                              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">{note.admin}</span>
+                              <span className="text-[8px] text-neutral-600 font-mono uppercase">
                                 {new Date(note.created_at).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-xs text-neutral-400 leading-relaxed">{note.body}</p>
+                            <p className="text-[10px] text-neutral-500 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all">{note.body}</p>
                           </div>
                         ))
                       )}
                     </div>
                   </div>
 
-                  {/* Divider */}
-                  <div className="h-px bg-white/5 mx-2" />
-
                   {/* Reports Queue */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                      <h3 className="text-xs font-semibold text-white flex items-center gap-2 uppercase tracking-widest">
-                        <Flag size={14} className="text-neutral-500" /> Create Report
+                      <h3 className="text-[10px] font-bold text-white flex items-center gap-2 uppercase tracking-[0.15em]">
+                        <Flag size={12} className="text-neutral-500" /> Create Report
                       </h3>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 space-y-2.5">
                       <input
                         value={reportTitle}
                         onChange={(e) => setReportTitle(e.target.value)}
                         placeholder="Subject title..."
-                        className="w-full bg-transparent border-b border-white/5 pb-2 text-sm text-white focus:outline-none placeholder:text-neutral-600"
+                        className="w-full bg-transparent border-b border-white/5 pb-1.5 text-xs text-white focus:outline-none placeholder:text-neutral-600 font-bold"
                       />
                       <Textarea
                         value={reportSummary}
                         onChange={(e) => setReportSummary(e.target.value)}
                         placeholder="Context/Reasoning..."
-                        className="bg-transparent border-none p-0 min-h-[60px] text-sm resize-none focus-visible:ring-0 placeholder:text-neutral-600"
+                        className="bg-transparent border-none p-0 min-h-[40px] text-[11px] resize-none focus-visible:ring-0 placeholder:text-neutral-600"
                       />
                       <div className="flex justify-end">
                         <Button
                           onClick={handleCreateReport}
                           disabled={savingReport || !reportTitle.trim() || !reportSummary.trim()}
                           size="sm"
-                          className="h-7 px-3 border border-white/10 bg-transparent text-white hover:bg-white/5 text-[11px] font-bold"
+                          className="h-6 px-2.5 border border-white/10 bg-transparent text-white hover:bg-white/5 text-[10px] font-black"
                         >
                           {savingReport ? "..." : "File Report"}
                         </Button>
                       </div>
                     </div>
                   </div>
-                </div>
+                </div>v>
               )}
             </div>
           </div>
