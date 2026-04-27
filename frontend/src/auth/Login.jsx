@@ -87,7 +87,7 @@ const Login = () => {
 
   return (
     <Skeleton name="login-page">
-      <div className="relative flex w-full items-center justify-center px-4 py-10">
+      <div className="relative flex min-h-screen w-full items-center justify-center px-4 py-12">
         {/* Background */}
         <div className="pointer-events-none absolute inset-0 ds-dot-grid opacity-60" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(108,99,255,0.07),transparent)]" />
