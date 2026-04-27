@@ -97,7 +97,7 @@ const LeaderboardDrawer = ({ isLeaderboardOpen, setLeaderboardOpen }) => {
               <div className="flex items-center gap-2">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-[#444] uppercase font-mono">
-                    Leaderboard
+                    Leaderboard (Ctrl+L)
                   </span>
                   <div className="flex items-center gap-1 leading-none">
                     <span className="w-1 h-1 rounded-full bg-amber-500" />
