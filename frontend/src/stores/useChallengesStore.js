@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { challengesApi } from "../services/challengesApi";
+import { isBoneyard } from "../utils/isBoneyard";
 
 /**
  * Centralized store for challenge data management.
@@ -37,6 +38,8 @@ const useChallengesStore = create((set, get) => ({
     if (!force && hasCachedData && isCacheFresh) {
       return state.challenges;
     }
+
+    if (isBoneyard()) return [];
 
     set({
       isLoading: !hasCachedData,

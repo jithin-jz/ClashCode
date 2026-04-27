@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { checkInApi } from "../services/checkInApi";
+import { isBoneyard } from "../utils/isBoneyard";
 
 /**
  * Hook to manage daily check-in rewards status and modal state.
@@ -10,6 +11,12 @@ export const useDailyReward = (userId) => {
 
   const checkRewardStatus = useCallback(async () => {
     if (!userId) return;
+
+    if (isBoneyard()) {
+      setHasUnclaimedReward(false);
+      return;
+    }
+
     try {
       const data = await checkInApi.getCheckInStatus();
       setHasUnclaimedReward(!data.checked_in_today);

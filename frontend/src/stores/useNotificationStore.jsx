@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { notificationsAPI } from "../services/api";
 import { notify } from "../services/notification";
 import { buildWebSocketUrl } from "../utils/websocketUrl";
+import { isBoneyard } from "../utils/isBoneyard";
 
 /**
  * Centralized notification management.
@@ -95,6 +96,8 @@ const useNotificationStore = create((set, get) => ({
   fetchNotifications: async (force = false, options = {}) => {
     const state = get();
     const now = Date.now();
+    if (isBoneyard()) return [];
+
     const page = Math.max(options.page || 1, 1);
     const append = Boolean(options.append && page > 1);
     const pageSize = Math.max(options.pageSize || state.pageSize || 50, 1);

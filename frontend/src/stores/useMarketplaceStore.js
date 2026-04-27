@@ -47,7 +47,7 @@ const useMarketplaceStore = create((set, get) => ({
   purchaseItem: async (itemId) => {
     set({ isMutating: true, activeMutationItemId: itemId, error: null });
     try {
-      const response = await storeAPI.buyItem(itemId);
+      const response = await storeAPI.purchaseItem(itemId);
       set((state) => ({
         items: state.items.map((item) =>
           item.id === itemId ? { ...item, is_owned: true } : item,

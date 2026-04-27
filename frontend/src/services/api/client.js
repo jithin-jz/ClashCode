@@ -1,6 +1,7 @@
 import axios from "axios";
 import { notify } from "../notification";
 import { SLog } from "../logger";
+import { isBoneyard } from "../../utils/isBoneyard";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -18,6 +19,24 @@ let isRefreshing = false;
 let failedQueue = [];
 let refreshBlockedUntil = 0;
 let lastRateLimitNoticeAt = 0;
+
+// 1. Request Interceptor: Auth injection and Crawler short-circuiting
+api.interceptors.request.use(async (config) => {
+  if (isBoneyard()) {
+    // List of endpoints crawlers are allowed to hit (mostly public or mockable)
+    const publicEndpoints = ["/challenges/", "/profiles/user/", "/health/"];
+    const isPublic = publicEndpoints.some(ep => config.url?.includes(ep));
+    
+    if (!isPublic) {
+      // Cancel the request to prevent backend 401/403/429 spam
+      const controller = new AbortController();
+      config.signal = controller.signal;
+      controller.abort("CRAWLER_SKIP");
+      return config;
+    }
+  }
+  return config;
+}, (error) => Promise.reject(error));
 
 // Cross-tab synchronization using BroadcastChannel
 const refreshChannel = typeof window !== "undefined" ? new BroadcastChannel("auth_refresh_channel") : null;
@@ -101,11 +120,19 @@ api.interceptors.response.use(
     const isRefreshRequest = originalRequest?.url?.includes("/auth/refresh/");
     const isCurrentUserProbe = originalRequest?.url?.includes("/profiles/user/");
     
+    const isCrawler = isBoneyard();
+
     if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
-      if (isCurrentUserProbe) return Promise.reject(error);
+      if (isCurrentUserProbe || isCrawler) {
+        // Crawlers/Boneyard should not trigger refresh flows
+        return Promise.reject(error);
+      }
       
       // Check if we are globally blocked or currently refreshing
-      if (Date.now() < refreshBlockedUntil) return Promise.reject(error);
+      const now = Date.now();
+      if (now < refreshBlockedUntil) {
+        return Promise.reject(error);
+      }
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -123,7 +150,9 @@ api.interceptors.response.use(
       }
 
       try {
-        await api.post(`/auth/refresh/`, {});
+        // Use a clean axios instance for refresh to avoid interceptor complications
+        await axios.post(`${API_BASE_URL}/auth/refresh/`, {}, { withCredentials: true });
+        
         refreshBlockedUntil = 0;
         isRefreshing = false;
         
@@ -134,8 +163,8 @@ api.interceptors.response.use(
         processQueue(null, true);
         return api(originalRequest);
       } catch (err) {
-        // More aggressive blocking if refresh fails
-        refreshBlockedUntil = Date.now() + 30000;
+        // More aggressive blocking if refresh fails to prevent rapid loops
+        refreshBlockedUntil = Date.now() + 15000;
         isRefreshing = false;
         
         if (refreshChannel) {
@@ -144,7 +173,8 @@ api.interceptors.response.use(
         
         processQueue(err, null);
         
-        if (window.location.pathname !== "/login") {
+        // Only redirect if not already on login and not a crawler
+        if (window.location.pathname !== "/login" && !isCrawler) {
           window.location.href = "/login";
         }
         return Promise.reject(err);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useNotificationStore from "../stores/useNotificationStore";
 import { buildWebSocketUrl } from "../utils/websocketUrl";
+import { isBoneyard } from "../utils/isBoneyard";
 
 /**
  * Hook to manage the Notification WebSocket connection.
@@ -20,6 +21,7 @@ export const useNotificationSocket = (userId) => {
 
   const connectWS = useCallback((id) => {
     if (!id) return;
+    if (isBoneyard()) return;
     
     // Prevent double connection for same user
     if (socketRef.current) {

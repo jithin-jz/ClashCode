@@ -156,15 +156,18 @@ export const useChallenge = (id) => {
       ]);
     },
     onSuccess: (result) => {
-      // Update XP in auth store
-      if (result.xp_earned > 0 && user) {
-        setUser({
-          ...user,
-          profile: {
-            ...user.profile,
-            xp: (user.profile.xp || 0) + result.xp_earned,
-          },
-        });
+      // Update XP in auth store with latest state to prevent reverting concurrent changes
+      if (result.xp_earned > 0) {
+        const latestUser = useAuthStore.getState().user;
+        if (latestUser) {
+          setUser({
+            ...latestUser,
+            profile: {
+              ...latestUser.profile,
+              xp: (latestUser.profile.xp || 0) + result.xp_earned,
+            },
+          });
+        }
       }
 
       if (
@@ -221,8 +224,11 @@ export const useChallenge = (id) => {
 
   // Get Hint Mutation
   const getHintMutation = useMutation({
-    mutationFn: () =>
-      challengesApi.getAIHint(id, { user_code: code, hint_level: hintLevel }),
+    mutationFn: ({ level, code: customCode } = {}) =>
+      challengesApi.getAIHint(id, {
+        user_code: customCode || code,
+        hint_level: level || hintLevel,
+      }),
     onSuccess: (data) => {
       setHint(data.hint);
       setHintLevel((prev) => Math.min(prev + 1, 3));
@@ -242,12 +248,13 @@ export const useChallenge = (id) => {
   // Purchase Hint Mutation
   const purchaseHintMutation = useMutation({
     mutationFn: () => challengesApi.purchaseAIHint(id),
-    onSuccess: async (data) => {
-      // Update local XP
-      if (data.remaining_xp !== undefined && user) {
+    onSuccess: (data) => {
+      // Update local XP with latest state to prevent race conditions
+      const latestUser = useAuthStore.getState().user;
+      if (data.remaining_xp !== undefined && latestUser) {
         setUser({
-          ...user,
-          profile: { ...user.profile, xp: data.remaining_xp },
+          ...latestUser,
+          profile: { ...latestUser.profile, xp: data.remaining_xp },
         });
       }
 
@@ -280,42 +287,30 @@ export const useChallenge = (id) => {
 
       // Automatically fetch the hint after purchase
       if (code) {
-        try {
-          const hintData = await challengesApi.getAIHint(id, {
-            user_code: code,
-            hint_level: data.hints_purchased,
-          });
-          setHint(hintData.hint);
-          setHintLevel(Math.min(data.hints_purchased + 1, 3));
-          setOutput((prev) => [
-            ...prev,
-            { type: "success", content: "🤖 AI Hint Generated!" },
-          ]);
-        } catch (err) {
-          console.error("Auto-hint fetch failed:", err);
-        }
+        getHintMutation.mutate({ level: data.hints_purchased, code });
+      } else {
+        setHintLevel(Math.min(data.hints_purchased + 1, 3));
       }
     },
     onError: (err) => {
       const errorResponse = err.response?.data;
-      if (err.response?.status === 402 && errorResponse) {
-        setOutput((prev) => [
-          ...prev,
-          {
-            type: "error",
-            content: `❌ ${errorResponse.error}: ${errorResponse.detail || "Insufficient Balance"}`,
-          },
-          {
-            type: "log",
-            content: `💰 Balance: ${errorResponse.current_xp} | Required: ${errorResponse.required_xp} | Short by: ${errorResponse.shortage}`,
-          },
-        ]);
+      const errorMessage = errorResponse?.error || "Failed to purchase assistance.";
+
+      setOutput((prev) => [
+        ...prev,
+        {
+          type: "error",
+          content: `❌ ${errorMessage}`,
+        },
+      ]);
+
+      if (err.response?.status === 402) {
         toast.error("Insufficient Balance", {
-          description: `You need ${errorResponse.shortage} more points.`,
+          description: errorMessage,
         });
       } else {
         toast.error("Error", {
-          description: errorResponse?.error || "Failed to purchase assistance.",
+          description: errorMessage,
         });
       }
     },

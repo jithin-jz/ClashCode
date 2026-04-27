@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { buildWebSocketUrl } from "../utils/websocketUrl";
+import { isBoneyard } from "../utils/isBoneyard";
 
 const useChatStore = create((set, get) => ({
   // State
@@ -21,8 +22,10 @@ const useChatStore = create((set, get) => ({
   error: null,
 
   // Actions
-  connect: (roomName = "global") => {
+  connect: async (roomName = "global") => {
     set({ shouldReconnect: true, currentRoom: roomName });
+
+    if (isBoneyard()) return;
 
     // Prevent multiple connections to the SAME room
     const state = get();

@@ -84,15 +84,14 @@ const useAuthStore = create((set, get) => ({
       // Boneyard Capture Bypass:
       if (isBoneyard()) {
         const mockUser = {
-          id: "mock-id",
+          id: "boneyard-bot",
           username: "boneyard-bot",
-          email: "bot@boneyard.js",
-          role: "user",
-          profile: {
-            display_name: "Boneyard Bot",
-            avatar_url: null,
-            bio: "I am a headless crawler capturing your beautiful UI.",
-          },
+          email: "boneyard@clashcode.ai",
+          avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=boneyard",
+          isCrawler: true,
+          is_staff: true,
+          level: 99,
+          xp: 0,
         };
         set({
           user: mockUser,

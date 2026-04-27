@@ -89,16 +89,16 @@ const LandingPage = () => {
           >
             {/* Main heading */}
             <h1 className="ds-heading text-center text-4xl text-white sm:text-6xl lg:text-7xl">
-              Master Python
+              Master the Art of Python
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-300 to-neutral-500">
-                One Round at a Time
+                One Clash at a Time
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-center text-base leading-relaxed text-neutral-300 sm:text-lg">
-              CLASHCODE is a precision-built coding platform for developers who
-              want structured progression, real feedback, and verifiable skills.
+              CLASHCODE is the precision-built arena for developers who demand
+              structured growth, instant feedback, and verifiable expertise.
             </p>
 
             {/* CTA */}

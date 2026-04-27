@@ -79,10 +79,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: false,
+    host: true,
     strictPort: false,
     hmr: {
-      clientPort: 80,
+      clientPort: 5173,
     },
     proxy: {
       "/api": {
