@@ -13,6 +13,8 @@ class HealthCheckView(APIView):
     """
 
     permission_classes = []  # Public endpoint
+    authentication_classes = []  # No auth needed
+    throttle_classes = []  # Exempt from rate limiting (K8s probes)
 
     @extend_schema(
         responses={
