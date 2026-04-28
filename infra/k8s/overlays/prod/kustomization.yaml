@@ -2,7 +2,6 @@ namespace: clashcode
 
 resources:
   - ../../base
-  - ./secrets.yaml
   - ./ingress.yaml
 
 images:
@@ -22,6 +21,7 @@ images:
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-executor
     newTag: prod
 
-commonLabels:
-  environment: production
-  project: clashcode
+labels:
+  - pairs:
+      environment: production
+      project: clashcode
