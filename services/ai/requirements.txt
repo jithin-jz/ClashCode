@@ -1,13 +1,14 @@
 fastapi==0.128.1
 uvicorn==0.40.0
-langchain==1.2.8
-langchain-openai==1.1.7
+
+# LangChain — pinned to the stable 0.3.x ecosystem where all integrations agree
+langchain-core==0.3.78
+langchain-openai==0.3.35
+langchain-pinecone==0.2.11
+pinecone==6.0.2
+
 python-dotenv==1.2.1
-langchain-community
-langchain-huggingface
 pydantic-settings==2.12.0
 httpx==0.28.1
 numpy==2.4.2
-langchain-pinecone
-pinecone-client
 sentry-sdk[fastapi]==2.16.0

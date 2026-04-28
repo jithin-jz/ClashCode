@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-south-1"
 }
 
 variable "environment" {
   description = "Deployment environment"
   type        = string
-  default     = "dev"
+  default     = "prod"
 }
 
 variable "project_name" {
@@ -19,33 +19,33 @@ variable "project_name" {
 variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "10.1.0.0/16" # Different CIDR for prod to avoid overlap if peered
 }
 
 variable "db_host" {
-  description = "Supabase DB Host"
+  description = "DB Host"
   type        = string
 }
 
 variable "db_port" {
-  description = "Supabase DB Port"
+  description = "DB Port"
   type        = string
-  default     = "6543"
+  default     = "5432"
 }
 
 variable "db_name" {
-  description = "Supabase DB Name"
+  description = "DB Name"
   type        = string
-  default     = "postgres"
+  default     = "clashcode_prod"
 }
 
 variable "db_user" {
-  description = "Supabase DB User"
+  description = "DB User"
   type        = string
 }
 
 variable "db_password" {
-  description = "Supabase DB Password"
+  description = "DB Password"
   type        = string
   sensitive   = true
 }

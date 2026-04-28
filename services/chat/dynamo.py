@@ -8,11 +8,11 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 # Credentials
-DYNAMODB_URL = os.getenv("DYNAMODB_URL", "http://dynamodb:8000")
+DYNAMODB_URL = os.getenv("DYNAMODB_URL")  # Defaults to None for real AWS
 REGION_NAME = os.getenv("AWS_REGION", "ap-south-1")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "dummy")
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "dummy")
-TABLE_NAME = "ChatMessages"
+TABLE_NAME = os.getenv("DYNAMODB_TABLE", "ChatMessages")
 logger = logging.getLogger(__name__)
 
 

@@ -1,0 +1,31 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+    "**/migrations/**",
+    "**/__pycache__/**",
+    "**/staticfiles/**",
+    "**/media/**",
+    "**/node_modules/**",
+    "frontend/**",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "C4",   # comprehensions
+    "SIM",  # simplify
+]
+ignore = [
+    "E501",  # line length handled by formatter
+    "B008",  # function call in default arg (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["B011", "F401"]
+"**/settings.py" = ["F401", "E402"]

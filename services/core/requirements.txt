@@ -13,7 +13,6 @@ Pillow==10.2.0
 cloudinary==1.41.0
 django-cloudinary-storage==0.3.0
 
-
 # Celery
 celery==5.4.0
 redis==5.0.1
@@ -21,9 +20,9 @@ django-celery-beat==2.6.0
 django-celery-results==2.5.1
 firebase-admin==6.6.0
 gunicorn==23.0.0
+
 # Razorpay 1.4.x still imports pkg_resources, removed in newer setuptools (>=81)
 setuptools<81
-black==24.10.0
 
 whitenoise==6.7.0
 sentry-sdk==2.16.0

@@ -1,0 +1,24 @@
+namespace: clashcode
+
+resources:
+  - ../../base
+  - ./secrets.yaml
+  - ./ingress.yaml
+
+images:
+  - name: core
+    newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-core
+    newTag: prod
+  - name: chat
+    newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-chat
+    newTag: prod
+  - name: ai
+    newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-ai
+    newTag: prod
+  - name: analytics
+    newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-analytics
+    newTag: prod
+
+commonLabels:
+  environment: production
+  project: clashcode

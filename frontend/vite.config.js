@@ -27,8 +27,17 @@ export default defineConfig({
       skipInitial: true,
     }),
     sentryVitePlugin({
-      org: "clashcode",
-      project: "frontend",
+      org: process.env.SENTRY_ORG || "clashcode",
+      project: process.env.SENTRY_PROJECT || "frontend",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      release: {
+        name:
+          process.env.SENTRY_RELEASE ||
+          process.env.GITHUB_SHA ||
+          process.env.VITE_APP_VERSION,
+      },
+      sourcemaps: { assets: "./dist/**" },
+      disable: !process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
     }),
   ],
@@ -40,6 +49,7 @@ export default defineConfig({
     },
   },
   build: {
+    sourcemap: true,
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
@@ -58,8 +68,7 @@ export default defineConfig({
           if (pkg === "monaco-editor" || pkg === "@monaco-editor/react") {
             return "vendor-monaco";
           }
-          if (pkg === "framer-motion" || pkg === "motion")
-            return "vendor-motion";
+          if (pkg === "framer-motion") return "vendor-motion";
           if (pkg.startsWith("@radix-ui/")) return "vendor-radix";
           if (pkg === "emoji-picker-react") return "vendor-emoji";
           if (

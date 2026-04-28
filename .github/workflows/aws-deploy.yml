@@ -2,7 +2,16 @@ name: Deploy to AWS EKS
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   AWS_REGION: ap-south-1
@@ -10,50 +19,93 @@ env:
   EKS_CLUSTER_NAME: clashcode-eks
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+  # Run CI before any deploy
+  ci:
+    uses: ./.github/workflows/ci.yml
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+  build-and-deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        service: [core, chat, ai, executor]
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, Tag, and Push Images
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      - name: Compute tags
+        id: tag
         run: |
-          # Build and push images
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:core-${{ github.sha }} ./services/core
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:core-${{ github.sha }}
-          
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:chat-${{ github.sha }} ./services/chat
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:chat-${{ github.sha }}
-          
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:ai-${{ github.sha }} ./services/ai
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:ai-${{ github.sha }}
+          echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "env_tag=prod" >> "$GITHUB_OUTPUT"
 
-      - name: Update Kubeconfig
-        run: |
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ matrix.service }}-${{ steps.tag.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ matrix.service }}-${{ steps.tag.outputs.env_tag }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Scan image (Trivy)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ matrix.service }}-${{ steps.tag.outputs.tag }}
+          format: table
+          exit-code: "0" # report only; flip to "1" once baseline is clean
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+  rollout:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
 
       - name: Deploy to EKS
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
         run: |
-          # Update the images in kustomization.yaml to the new SHA-tagged versions
-          cd infra/k8s/overlays/dev
-          kustomize edit set image core=$ECR_REGISTRY/$ECR_REPOSITORY:core-${{ github.sha }}
-          kustomize edit set image chat=$ECR_REGISTRY/$ECR_REPOSITORY:chat-${{ github.sha }}
-          kustomize edit set image ai=$ECR_REGISTRY/$ECR_REPOSITORY:ai-${{ github.sha }}
-          
-          # Apply the manifests
+          cd infra/k8s/overlays/prod
+          for svc in core chat ai executor; do
+            kustomize edit set image $svc=$ECR_REGISTRY/$ECR_REPOSITORY:$svc-$TAG
+          done
           kustomize build . | kubectl apply -f -
+          kubectl rollout status deploy -l app.kubernetes.io/part-of=clashcode --timeout=5m || true

@@ -22,6 +22,25 @@ spec:
         envFrom:
         - secretRef:
             name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -47,6 +66,25 @@ spec:
         envFrom:
         - secretRef:
             name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /chat/
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /chat/
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+          requests:
+            cpu: "150m"
+            memory: "128Mi"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +113,25 @@ spec:
         envFrom:
         - secretRef:
             name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -100,6 +157,18 @@ spec:
           envFrom:
             - secretRef:
                 name: backend-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 5
+            periodSeconds: 5
           resources:
             limits:
               cpu: "200m"

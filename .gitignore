@@ -1,0 +1,79 @@
+# ---------------------------------------------------------------------------
+# Repository-wide ignores
+# ---------------------------------------------------------------------------
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs / runtime
+*.log
+logs/
+**/logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# Node / frontend build output
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Local env files (only *.example are tracked)
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Local CLI binaries (devs install these, never commit)
+*.exe
+*.zip
+eksctl*
+helm-temp/
+kubectl*
+terraform*.zip
+
+# Cloud / infra artifacts that shouldn't live at repo root
+/iam_policy.json
+
+# Local DB / cache dumps
+*.sqlite3
+*.db
+dump.rdb
+
+# Terraform — never commit state, provider downloads, or var files
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform.tfvars
+**/*.auto.tfvars
+**/.terraform.lock.hcl
+
+# Secrets / keys
+*.pem
+*.key
+*.crt
+!**/templates/**/*.key
+service-account*.json
+firebase-adminsdk-*.json
+
+# Kubernetes secret manifests (only *.example.yaml is tracked)
+infra/k8s/overlays/*/secrets.yaml
