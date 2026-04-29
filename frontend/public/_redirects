@@ -1,12 +1,12 @@
-# Proxy API and WebSocket requests to the AWS ALB backend
-/api/*  http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/api/:splat  200
-/ai/*   http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/ai/:splat   200
-/chat/* http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/chat/:splat 200
-/ws/*   http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/ws/:splat   200
-/media/* http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/media/:splat 200
-/health/* http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/health/:splat 200
-/admin/* http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/admin/:splat 200
-/socket.io/* http://k8s-clashcodeprodgrou-85be469269-426753335.ap-south-1.elb.amazonaws.com/socket.io/:splat 200
+# Proxy API and WebSocket requests to the backend
+/api/*       https://api.jithin.site/api/:splat       200
+/ai/*        https://api.jithin.site/ai/:splat        200
+/chat/*      https://api.jithin.site/chat/:splat      200
+/ws/*        https://api.jithin.site/ws/:splat        200
+/media/*     https://api.jithin.site/media/:splat     200
+/health/*    https://api.jithin.site/health/:splat    200
+/admin/*     https://api.jithin.site/admin/:splat     200
+/socket.io/* https://api.jithin.site/socket.io/:splat 200
 
 # SPA fallback — must be last
 /*  /index.html  200
