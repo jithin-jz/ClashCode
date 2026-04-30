@@ -60,7 +60,10 @@ async def on_startup():
 
 
 # Include Routers
+# Default routes (for local Nginx stripping /api)
 app.include_router(http_router)
+# Production routes (for AWS ALB which does NOT strip /api)
+app.include_router(http_router, prefix="/api")
 app.include_router(ws_router)
 
 
