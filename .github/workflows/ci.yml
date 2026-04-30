@@ -1,8 +1,8 @@
 name: CI
 
+# Removed push trigger because aws-deploy.yml already reuses this workflow on push to main.
+# This prevents concurrency conflicts and "cancelled" check statuses.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_call:
