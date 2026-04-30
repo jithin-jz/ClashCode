@@ -20,18 +20,28 @@ redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
 
 # Initialize Firebase Admin SDK
 try:
-    if settings.FIREBASE_SERVICE_ACCOUNT_PATH and not firebase_admin._apps:
-        firebase_key_path = Path(settings.FIREBASE_SERVICE_ACCOUNT_PATH)
-        if firebase_key_path.exists():
-            cred = credentials.Certificate(str(firebase_key_path))
-            firebase_admin.initialize_app(cred)
+    if not firebase_admin._apps:
+        cred = None
+        if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+            try:
+                service_account_info = json.loads(settings.FIREBASE_SERVICE_ACCOUNT_JSON)
+                cred = credentials.Certificate(service_account_info)
+            except json.JSONDecodeError:
+                logger.warning("FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON; push notifications are disabled.")
+        elif settings.FIREBASE_SERVICE_ACCOUNT_PATH:
+            firebase_key_path = Path(settings.FIREBASE_SERVICE_ACCOUNT_PATH)
+            if firebase_key_path.exists():
+                cred = credentials.Certificate(str(firebase_key_path))
+            else:
+                logger.warning(
+                    "FIREBASE_SERVICE_ACCOUNT_PATH=%s was not found; push notifications are disabled.",
+                    firebase_key_path,
+                )
         else:
-            logger.warning(
-                "FIREBASE_SERVICE_ACCOUNT_PATH=%s was not found; push notifications are disabled.",
-                firebase_key_path,
-            )
-    elif not settings.FIREBASE_SERVICE_ACCOUNT_PATH:
-        logger.warning("FIREBASE_SERVICE_ACCOUNT_PATH is not configured; push notifications are disabled.")
+            logger.warning("No Firebase service account configured; push notifications are disabled.")
+
+        if cred:
+            firebase_admin.initialize_app(cred)
 except Exception as e:
     logger.warning(f"Failed to initialize Firebase Admin SDK: {e}")
 
