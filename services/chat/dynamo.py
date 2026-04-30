@@ -20,13 +20,24 @@ class DynamoClient:
     def __init__(self):
         self.session = aioboto3.Session()
         self.endpoint_url = DYNAMODB_URL
-        # Explicit credentials block
-        self.creds = {
-            "aws_access_key_id": ACCESS_KEY,
-            "aws_secret_access_key": SECRET_KEY,
-            "region_name": REGION_NAME,
-            "endpoint_url": self.endpoint_url,
-        }
+        
+        # Build credentials only if they are real
+        self.creds = {"region_name": REGION_NAME}
+        
+        if self.endpoint_url:
+            self.creds["endpoint_url"] = self.endpoint_url
+            
+        if ACCESS_KEY and ACCESS_KEY != "dummy":
+            self.creds["aws_access_key_id"] = ACCESS_KEY
+        if SECRET_KEY and SECRET_KEY != "dummy":
+            self.creds["aws_secret_access_key"] = SECRET_KEY
+            
+        if self.endpoint_url:
+            logger.info(f"DynamoDB connecting to local endpoint: {self.endpoint_url}")
+        elif "aws_access_key_id" in self.creds:
+            logger.info("DynamoDB connecting with provided credentials")
+        else:
+            logger.info("DynamoDB connecting via IAM/Default chain")
 
     async def create_table_if_not_exists(self):
         try:
