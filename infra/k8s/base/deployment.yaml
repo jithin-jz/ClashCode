@@ -73,13 +73,13 @@ spec:
             name: backend-secrets
         livenessProbe:
           httpGet:
-            path: /chat/
+            path: /health
             port: 8001
           initialDelaySeconds: 15
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /chat/
+            path: /health
             port: 8001
           initialDelaySeconds: 5
           periodSeconds: 5
