@@ -57,7 +57,7 @@ const useChatStore = create((set, get) => ({
       explicitUrl: import.meta.env.VITE_WS_URL || import.meta.env.VITE_CHAT_URL,
       apiUrl: import.meta.env.VITE_API_URL,
       defaultPath: `/ws/chat/${roomName}`,
-      legacyPaths: ["/chat", "/ws"],
+      legacyPaths: ["/chat", "/ws", "/ws/chat"],
       label: "Chat",
       token: localStorage.getItem("clashcode_access_token"),
     });
