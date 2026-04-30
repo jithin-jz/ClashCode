@@ -13,6 +13,14 @@ REGION_NAME = os.getenv("AWS_REGION", "ap-south-1")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "dummy")
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "dummy")
 TABLE_NAME = os.getenv("DYNAMODB_TABLE", "ChatMessages")
+
+# CRITICAL: If credentials are "dummy", unset them from the environment 
+# to prevent the AWS SDK from trying to use them instead of the IAM Role (IRSA).
+if ACCESS_KEY == "dummy":
+    os.environ.pop("AWS_ACCESS_KEY_ID", None)
+if SECRET_KEY == "dummy":
+    os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
+
 logger = logging.getLogger(__name__)
 
 
