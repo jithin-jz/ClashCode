@@ -19,7 +19,7 @@ const ReferralSection = ({
   isRedeeming,
 }) => {
   const handleShare = () => {
-    const text = `Join me on CLASHCODE! Use my referral code ${currentUser?.profile?.referral_code} to get 50 bonus XP: ${window.location.origin}`;
+    const text = `Join me on CLASHCODE! Use my referral code ${currentUser?.profile?.referral_code} to get 100 bonus XP: ${window.location.origin}`;
     if (navigator.share) {
       navigator.share({
         title: "Join CLASHCODE",
@@ -72,7 +72,7 @@ const ReferralSection = ({
           {[
             { label: "Share Code", color: "text-neutral-500" },
             { label: "Friend Joins", color: "text-neutral-500" },
-            { label: "Earn 50 XP", color: "text-emerald-500" },
+            { label: "Earn 100 XP", color: "text-emerald-500" },
           ].map((step, i) => (
             <React.Fragment key={i}>
               <div className="text-[10px] font-bold uppercase tracking-tight whitespace-nowrap">
