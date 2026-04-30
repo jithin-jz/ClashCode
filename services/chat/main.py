@@ -43,6 +43,11 @@ app.add_middleware(
 )
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "chat"}
+
+
 @app.on_event("startup")
 async def on_startup():
     try:
@@ -50,6 +55,8 @@ async def on_startup():
         logger.info("DynamoDB table ready")
     except Exception as e:
         logger.error(f"Failed to initialize DynamoDB on startup: {e}")
+        # We don't re-raise here so the app can still start and serve health checks
+        # even if DB is temporarily unreachable or has permission issues.
 
 
 # Include Routers
