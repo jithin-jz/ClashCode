@@ -40,6 +40,8 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
     clearSearch,
     searchResults,
     isSearching,
+    error: chatError,
+    isConnected,
   } = useChatStore();
 
   const [showPicker, setShowPicker] = useState(false);
@@ -169,6 +171,22 @@ const ChatDrawer = ({ isOpen, setOpen, user }) => {
               user={user}
               unpinMessage={unpinMessage}
             />
+
+            {/* Connection / Error Banners */}
+            {!isConnected && (
+              <div className="shrink-0 px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                  ⚠ Disconnected — Reconnecting...
+                </span>
+              </div>
+            )}
+            {chatError && (
+              <div className="shrink-0 px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                  {chatError}
+                </span>
+              </div>
+            )}
 
             {/* Messages Feed */}
             <main className="flex-1 min-h-0 relative flex flex-col bg-[#050505]">

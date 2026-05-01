@@ -173,6 +173,7 @@ const useChatStore = create(
             } else if (data.type === "presence") {
               set({ onlineCount: data.count });
             } else if (data.type === "error") {
+              console.warn("[Chat] Server error:", data.message, data.action || "");
               set({ error: data.message });
               setTimeout(() => set({ error: null }), 3000);
             }
@@ -219,7 +220,13 @@ const useChatStore = create(
       _send: (payload) => {
         const { socket, isConnected, currentRoom } = get();
         if (socket && isConnected && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ ...payload, room: currentRoom }));
+          const msg = JSON.stringify({ ...payload, room: currentRoom });
+          socket.send(msg);
+        } else {
+          console.warn(
+            "[Chat] Message dropped — socket not ready:",
+            { connected: isConnected, readyState: socket?.readyState, action: payload.action }
+          );
         }
       },
 

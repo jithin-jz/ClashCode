@@ -37,16 +37,39 @@ async def chat_ws(ws: WebSocket, room: str):
     try:
         while True:
             raw = await ws.receive_text()
-            incoming = IncomingMessage.model_validate_json(raw)
+            try:
+                incoming = IncomingMessage.model_validate_json(raw)
+            except Exception as parse_err:
+                logger.warning(f"Invalid WS message from user {payload.get('user_id')}: {parse_err}")
+                await ws.send_json({"type": "error", "message": "Invalid message format"})
+                continue
 
-            result = await ChatService.process_message(room, payload, incoming)
-            if result and "error" in result:
-                await ws.send_json({"type": "error", "message": result["error"]})
+            try:
+                result = await ChatService.process_message(room, payload, incoming)
+                if result:
+                    if result.get("error"):
+                        await ws.send_json({"type": "error", "message": result["error"]})
+                    elif result.get("ok") is False:
+                        reason = result.get("reason", "unknown")
+                        logger.warning(
+                            f"Action '{incoming.action}' failed for user {payload.get('user_id')}: {reason}"
+                        )
+                        await ws.send_json({
+                            "type": "error",
+                            "message": f"Action failed: {reason}",
+                            "action": incoming.action,
+                        })
+            except Exception as proc_err:
+                logger.exception(f"Error processing '{incoming.action}' from user {payload.get('user_id')}: {proc_err}")
+                try:
+                    await ws.send_json({"type": "error", "message": "Server error processing action"})
+                except Exception:
+                    pass
 
     except WebSocketDisconnect:
         await ChatService.handle_disconnect(ws, room, payload)
     except Exception as e:
-        logger.error(f"Chat WS error: {e}")
+        logger.error(f"Chat WS fatal error: {e}")
         await ChatService.handle_disconnect(ws, room, payload)
 
 

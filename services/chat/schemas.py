@@ -35,3 +35,4 @@ class IncomingMessage(BaseModel):
     target_timestamp: Optional[str] = None
     message: Optional[str] = Field(None, max_length=1000)
     emoji: Optional[str] = None  # For reactions
+    room: Optional[str] = None  # Sent by frontend, but room is taken from URL path
