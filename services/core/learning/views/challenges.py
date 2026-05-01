@@ -1,4 +1,8 @@
 import logging
+import os
+
+import requests
+from django.http import StreamingHttpResponse
 
 from authentication.throttles import CodeExecutionRateThrottle
 from celery.result import AsyncResult
@@ -287,6 +291,57 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             {"task_id": async_result.id, "status": "queued"},
             status=status.HTTP_202_ACCEPTED,
         )
+
+    @extend_schema(
+        request=AIHintRequestSerializer,
+        responses={200: OpenApiTypes.STR, 402: OpenApiTypes.OBJECT},
+        description="INTERNAL PROXY: Request a streaming AI hint. Requires assistance level to be purchased.",
+    )
+    @decorators.action(detail=True, methods=["post"], url_path="ai-hint-stream")
+    def ai_hint_stream(self, request, slug=None):
+        challenge = self.get_object()
+        user = request.user
+        progress, _ = UserProgress.objects.get_or_create(user=user, challenge=challenge)
+
+        try:
+            hint_level = int(request.data.get("hint_level", 1))
+        except (TypeError, ValueError):
+            return Response({"error": "hint_level must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if progress.ai_hints_purchased < hint_level:
+            return Response(
+                {"error": f"AI Hint Level {hint_level} is not yet purchased."},
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
+
+        ai_url = os.getenv("AI_SERVICE_URL", "http://ai:8002")
+        headers = _build_internal_headers("/hints/stream")
+        payload = {
+            "user_code": request.data.get("user_code", ""),
+            "challenge_slug": challenge.slug,
+            "hint_level": hint_level,
+            "user_xp": user.profile.xp,
+        }
+
+        def stream_generator():
+            try:
+                # Proxy the request to the AI service with internal auth headers
+                with requests.post(
+                    f"{ai_url}/hints/stream",
+                    json=payload,
+                    headers=headers,
+                    stream=True,
+                    timeout=60
+                ) as r:
+                    r.raise_for_status()
+                    for chunk in r.iter_content(chunk_size=None):
+                        if chunk:
+                            yield chunk
+            except Exception as e:
+                logger.error(f"AI hint streaming proxy failed: {e}")
+                yield f"data: Error in AI proxy: {str(e)}\n\n".encode("utf-8")
+
+        return StreamingHttpResponse(stream_generator(), content_type="text/event-stream")
 
     @extend_schema(
         request=AIAnalysisRequestSerializer,

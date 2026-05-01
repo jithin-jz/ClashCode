@@ -371,22 +371,23 @@ export const useChallenge = (id) => {
   }, [runMutation, submitMutation]);
 
   const handleGetHintStream = useCallback(async (level) => {
-    const targetLevel = level || hintLevel;
+    // If level is an event object (from onClick), fallback to hintLevel
+    const targetLevel = typeof level === "number" ? level : hintLevel;
     setIsHintStreaming(true);
     setStreamingHint("");
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_AI_SERVICE_URL}/hints/stream`, {
+      // Use the Core service as a proxy to handle internal auth and security
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/challenges/${id}/ai-hint-stream/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Internal API keys would go here if not handled by a proxy
         },
+        credentials: 'include', // Ensure session cookies are sent
         body: JSON.stringify({
-          challenge_slug: id,
           user_code: code,
           hint_level: targetLevel,
-          user_xp: user?.profile?.xp || 0
+          // user_xp will be added by the backend from the user's actual profile
         })
       });
 
