@@ -101,23 +101,23 @@ const useChatStore = create(
             } else if (data.type === "chat_edit") {
               set((state) => ({
                 messages: state.messages.map((msg) =>
-                  msg.timestamp === data.timestamp
-                    ? { ...msg, message: data.message }
+                  msg.timestamp === data.timestamp || msg.timestamp === data.original_timestamp
+                    ? { ...msg, message: data.message, timestamp: data.timestamp }
                     : msg,
                 ),
               }));
             } else if (data.type === "chat_delete") {
               set((state) => ({
                 messages: state.messages.filter(
-                  (msg) => msg.timestamp !== data.timestamp,
+                  (msg) => msg.timestamp !== data.timestamp && msg.timestamp !== data.original_timestamp,
                 ),
               }));
             } else if (data.type === "chat_react") {
               set((state) => ({
                 messages: state.messages.map((msg) => {
-                  if (msg.timestamp !== data.timestamp) return msg;
+                  if (msg.timestamp !== data.timestamp && msg.timestamp !== data.original_timestamp) return msg;
                   // Use server-provided reactions as the source of truth
-                  return { ...msg, reactions: data.reactions || {} };
+                  return { ...msg, reactions: data.reactions || {}, timestamp: data.timestamp };
                 }),
               }));
             } else if (data.type === "typing") {
@@ -148,14 +148,15 @@ const useChatStore = create(
               set({ pinnedMessage: null });
             } else if (data.type === "chat_read") {
               set((state) => ({
-                messages: state.messages.map((msg) => {
-                  if (msg.timestamp !== data.timestamp) return msg;
-                  const readBy = new Set(msg.read_by || []);
-                  readBy.add(data.username);
-                  return { ...msg, read_by: Array.from(readBy) };
-                }),
+                messages: state.messages.map((msg) =>
+                  msg.timestamp === data.timestamp || msg.timestamp === data.original_timestamp
+                    ? { ...msg, read_by: [...new Set([...(msg.read_by || []), data.username])] }
+                    : msg
+                )
               }));
+            }
             } else if (data.type === "history") {
+
               set((state) => {
                 const existingTimestamps = new Set(
                   state.messages.map((msg) => msg.timestamp),

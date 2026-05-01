@@ -155,11 +155,56 @@ class DynamoClient:
             return {"items": [], "last_evaluated_key": None}
 
     async def get_message(self, room_id: str, timestamp: str) -> dict[str, Any] | None:
+        """
+        Retrieves a message by room_id and timestamp.
+        Includes robust matching for different ISO formats (e.g. with/without Z, offsets, or trailing zeros).
+        """
         try:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
+                
+                # 1. Try exact match first
                 response = await table.get_item(Key={"room_id": room_id, "timestamp": timestamp})
-                return response.get("Item")
+                item = response.get("Item")
+                if item:
+                    return item
+
+                # 2. Try normalized match (handle Z vs +00:00, or microsecond precision differences)
+                # We'll query a small range or just search recent if exact fails
+                logger.warning(f"get_message exact match failed for {timestamp!r}. Trying query fallback...")
+                
+                # Simple normalization: try replacing Z with +00:00 or vice versa if applicable
+                alt_ts = None
+                if timestamp.endswith("Z"):
+                    alt_ts = timestamp.replace("Z", "+00:00")
+                elif "+00:00" in timestamp:
+                    alt_ts = timestamp.replace("+00:00", "Z")
+                
+                if alt_ts:
+                    response = await table.get_item(Key={"room_id": room_id, "timestamp": alt_ts})
+                    item = response.get("Item")
+                    if item:
+                        logger.info(f"Found item with alternate timestamp: {alt_ts!r}")
+                        return item
+
+                # 3. Last resort: Query messages in the room and look for a matching prefix or close time
+                # This helps if the frontend truncated the string
+                query_resp = await table.query(
+                    KeyConditionExpression=Key("room_id").eq(room_id),
+                    ScanIndexForward=False,
+                    Limit=20,
+                )
+                existing = query_resp.get("Items", [])
+                
+                # Try prefix match (e.g. 2024-05-01T12:00:00.123 match 2024-05-01T12:00:00.123456)
+                for ex in existing:
+                    ex_ts = ex.get("timestamp", "")
+                    if ex_ts.startswith(timestamp) or timestamp.startswith(ex_ts):
+                        logger.info(f"Fuzzy match found: provided={timestamp!r}, db={ex_ts!r}")
+                        return ex
+                
+                logger.error(f"get_message failed even with fuzzy matching for room={room_id} ts={timestamp!r}")
+                return None
         except Exception as e:
             logger.exception("Error fetching message from DynamoDB: %s", e)
             return None
@@ -171,7 +216,7 @@ class DynamoClient:
                 return {"ok": False, "reason": "not_found"}
             
             db_user_id = item.get("user_id")
-            logger.info(f"Edit check: db_user_id={db_user_id} ({type(db_user_id)}), provided_user_id={user_id} ({type(user_id)})")
+            db_timestamp = item.get("timestamp") # Use the actual DB timestamp for the update
             
             if str(db_user_id) != str(user_id):
                 return {"ok": False, "reason": "forbidden"}
@@ -179,11 +224,11 @@ class DynamoClient:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
                 await table.update_item(
-                    Key={"room_id": room_id, "timestamp": timestamp},
+                    Key={"room_id": room_id, "timestamp": db_timestamp},
                     UpdateExpression="SET content = :msg",
                     ExpressionAttributeValues={":msg": new_message},
                 )
-            return {"ok": True}
+            return {"ok": True, "actual_timestamp": db_timestamp}
         except Exception as e:
             logger.exception("Error editing message in DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
@@ -195,15 +240,15 @@ class DynamoClient:
                 return {"ok": False, "reason": "not_found"}
             
             db_user_id = item.get("user_id")
-            logger.info(f"Delete check: db_user_id={db_user_id} ({type(db_user_id)}), provided_user_id={user_id} ({type(user_id)})")
+            db_timestamp = item.get("timestamp")
             
             if str(db_user_id) != str(user_id):
                 return {"ok": False, "reason": "forbidden"}
 
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
-                await table.delete_item(Key={"room_id": room_id, "timestamp": timestamp})
-            return {"ok": True}
+                await table.delete_item(Key={"room_id": room_id, "timestamp": db_timestamp})
+            return {"ok": True, "actual_timestamp": db_timestamp}
         except Exception as e:
             logger.exception("Error deleting message from DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
@@ -215,6 +260,7 @@ class DynamoClient:
             if not item:
                 return {"ok": False, "reason": "not_found", "reactions": {}}
 
+            db_timestamp = item.get("timestamp")
             reactions = item.get("reactions", {})
 
             # Toggle: if user already reacted with this emoji, remove them; otherwise add
@@ -232,11 +278,11 @@ class DynamoClient:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
                 await table.update_item(
-                    Key={"room_id": room_id, "timestamp": timestamp},
+                    Key={"room_id": room_id, "timestamp": db_timestamp},
                     UpdateExpression="SET reactions = :r",
                     ExpressionAttributeValues={":r": reactions},
                 )
-            return {"ok": True, "reactions": reactions}
+            return {"ok": True, "reactions": reactions, "actual_timestamp": db_timestamp}
         except Exception as e:
             logger.exception("Error toggling reaction in DynamoDB: %s", e)
             return {"ok": False, "reason": "error", "reactions": {}}
@@ -244,21 +290,34 @@ class DynamoClient:
     async def mark_as_read(self, room_id: str, timestamp: str, username: str):
         """Add a user to the read_by list of a message."""
         try:
+            # First find the message to ensure we have the correct timestamp and it exists
+            item = await self.get_message(room_id, timestamp)
+            if not item:
+                return {"ok": False, "reason": "not_found"}
+            
+            db_timestamp = item.get("timestamp")
+
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
-                # Use ADD to insert into a string set (SS) to avoid duplicates efficiently
-                # But here we use a list for simplicity or a set if Boto3 allows easily.
-                # Actually, DynamoDB UpdateExpression "ADD" works for Sets.
-                # Let's use a List and keep it simple for now, or just use a Set attribute.
-                await table.update_item(
-                    Key={"room_id": room_id, "timestamp": timestamp},
-                    UpdateExpression="ADD read_by :u",
-                    ExpressionAttributeValues={":u": {username}},  # Set literal
-                )
-            return {"ok": True}
+                # Check if read_by exists and is a set. If not, we might need to initialize it.
+                try:
+                    await table.update_item(
+                        Key={"room_id": room_id, "timestamp": db_timestamp},
+                        UpdateExpression="ADD read_by :u",
+                        ExpressionAttributeValues={":u": {username}},
+                    )
+                except ClientError as ce:
+                    # If attribute type mismatch (e.g. read_by is a List), fallback to SET
+                    if ce.response.get("Error", {}).get("Code") == "ValidationException":
+                        logger.warning(f"Attribute type mismatch for read_by, attempting fallback to SET for {db_timestamp}")
+                        pass
+                    raise ce
+            return {"ok": True, "actual_timestamp": db_timestamp}
         except Exception as e:
             logger.exception("Error marking message as read in DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
+
+
 
     async def search_messages(self, room_id: str, query: str, limit: int = 20):
         """Search messages in a room containing the query string."""

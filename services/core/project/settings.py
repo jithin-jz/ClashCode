@@ -435,14 +435,20 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = f"{FRONTEND_URL}/auth/google/callback"
 
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+# Email Configuration
+# Default to SMTP if EMAIL_HOST is provided, otherwise fallback to Console for safety in dev
+_EMAIL_HOST = os.getenv("EMAIL_HOST")
+_DEFAULT_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" if _EMAIL_HOST else "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND") or _DEFAULT_EMAIL_BACKEND
+EMAIL_HOST = _EMAIL_HOST or "smtp.gmail.com"
+EMAIL_PORT = int(os.getenv("EMAIL_PORT") or "587")
 EMAIL_USE_TLS = _parse_bool(os.getenv("EMAIL_USE_TLS"), default=True)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "CLASHCODE <no-reply@localhost>")
-OTP_EMAIL_ASYNC = os.getenv("OTP_EMAIL_ASYNC", "true").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") or "jzdieheart@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") or "nrko gatv zahv megs"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or "CLASHCODE <jzdieheart@gmail.com>"
+OTP_EMAIL_ASYNC = (os.getenv("OTP_EMAIL_ASYNC") or "true").lower() == "true"
+
+
 
 # Razorpay
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")

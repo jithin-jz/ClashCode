@@ -90,7 +90,10 @@ class ChatService:
         username = user_payload.get("username", f"user-{user_id}")
         avatar_url = user_payload.get("avatar_url")
 
-        logger.info(f"Processing action '{incoming.action}' from user {user_id} in room '{room}'")
+        logger.info(
+            f"Processing action '{incoming.action}' from user {user_id} in room '{room}' "
+            f"target_ts={incoming.target_timestamp!r} emoji={incoming.emoji!r}"
+        )
 
         # Rate Limiting
         if not await rate_limiter.check_message_rate(user_id) or not await rate_limiter.check_burst_rate(user_id):
@@ -121,13 +124,15 @@ class ChatService:
     async def _handle_delete(room: str, user_id: int, incoming: IncomingMessage):
         result = await dynamo_client.delete_message(room, incoming.target_timestamp, user_id)
         if result.get("ok"):
-            logger.info(f"Broadcast delete in {room} for {incoming.target_timestamp}")
+            actual_ts = result.get("actual_timestamp", incoming.target_timestamp)
+            logger.info(f"Broadcast delete in {room} for {actual_ts}")
             await redis_client.publish(
                 channel_key(room),
                 json_dumps(
                     {
                         "type": "chat_delete",
-                        "timestamp": incoming.target_timestamp,
+                        "timestamp": actual_ts,
+                        "original_timestamp": incoming.target_timestamp,
                         "user_id": user_id,
                         "room": room,
                     }
@@ -141,13 +146,15 @@ class ChatService:
     async def _handle_edit(room: str, user_id: int, incoming: IncomingMessage):
         result = await dynamo_client.edit_message(room, incoming.target_timestamp, user_id, incoming.message)
         if result.get("ok"):
-            logger.info(f"Broadcast edit in {room} for {incoming.target_timestamp}")
+            actual_ts = result.get("actual_timestamp", incoming.target_timestamp)
+            logger.info(f"Broadcast edit in {room} for {actual_ts}")
             await redis_client.publish(
                 channel_key(room),
                 json_dumps(
                     {
                         "type": "chat_edit",
-                        "timestamp": incoming.target_timestamp,
+                        "timestamp": actual_ts,
+                        "original_timestamp": incoming.target_timestamp,
                         "message": incoming.message,
                         "user_id": user_id,
                         "room": room,
@@ -168,19 +175,25 @@ class ChatService:
 
     @staticmethod
     async def _handle_react(room: str, user_id: int, username: str, incoming: IncomingMessage):
-        result = await dynamo_client.toggle_reaction(room, incoming.target_timestamp, username, incoming.emoji)
-        logger.info(f"Reaction result for {incoming.target_timestamp}: {result.get('ok')}")
+        if not incoming.emoji:
+            return {"ok": False, "reason": "missing_emoji"}
+        
+        result = await dynamo_client.toggle_reaction(
+            room, incoming.target_timestamp, username, incoming.emoji
+        )
         if result.get("ok"):
+            actual_ts = result.get("actual_timestamp", incoming.target_timestamp)
             await redis_client.publish(
                 channel_key(room),
                 json_dumps(
                     {
                         "type": "chat_react",
-                        "timestamp": incoming.target_timestamp,
+                        "timestamp": actual_ts,
+                        "original_timestamp": incoming.target_timestamp,
                         "emoji": incoming.emoji,
+                        "reactions": result.get("reactions"),
                         "username": username,
                         "user_id": user_id,
-                        "reactions": result.get("reactions", {}),
                         "room": room,
                     }
                 ),
