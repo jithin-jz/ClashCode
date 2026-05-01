@@ -43,7 +43,9 @@ class AchievementService:
 
             # Validate current_value is meaningful
             if current_value <= 0:
-                logger.debug(f"Ignoring invalid progress update for {slug}: current_value={current_value} (must be > 0)")
+                logger.debug(
+                    f"Ignoring invalid progress update for {slug}: current_value={current_value} (must be > 0)"
+                )
                 return False
 
             # Check if already unlocked

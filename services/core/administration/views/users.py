@@ -109,7 +109,9 @@ class AdminUserViewSet(viewsets.ViewSet):
     )
     def destroy(self, request, username=None):
         reason = (request.query_params.get("reason") or "").strip()
-        message = UserService.soft_delete_user(username=username, admin_user=request.user, reason=reason, request=request)
+        message = UserService.soft_delete_user(
+            username=username, admin_user=request.user, reason=reason, request=request
+        )
         return Response({"message": message}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="toggle-block")

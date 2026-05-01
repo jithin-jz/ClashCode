@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -10,8 +11,6 @@ from drf_spectacular.views import (
 
 from project.health import HealthCheckView
 from project.views import ServiceIndexView, TaskResultsListView, TaskStatusView
-
-from django.views.generic import RedirectView
 
 admin.site.site_header = "CLASHCODE Admin Portal"
 admin.site.site_title = "CLASHCODE Admin"

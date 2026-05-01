@@ -88,7 +88,9 @@ class OTPService(BaseAuthService):
 
         expiry_time = datetime.now(timezone.utc) - timedelta(minutes=10)
         otp_hash = hash_otp(email, otp)
-        otp_candidates = list(EmailOTP.objects.filter(email__iexact=email, created_at__gte=expiry_time).order_by("-created_at")[:5])
+        otp_candidates = list(
+            EmailOTP.objects.filter(email__iexact=email, created_at__gte=expiry_time).order_by("-created_at")[:5]
+        )
         otp_record = next(
             (item for item in otp_candidates if hmac.compare_digest(item.otp, otp_hash)),
             None,

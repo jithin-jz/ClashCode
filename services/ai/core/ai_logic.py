@@ -42,15 +42,17 @@ async def stream_hint_logic(
     try:
         llm = LLMFactory.get_llm()
         chain = prompt | llm | StrOutputParser()
-        
-        async for chunk in chain.astream({
-            "challenge_title": challenge_title,
-            "challenge_description": challenge_description,
-            "user_code": user_code,
-            "hint_level": hint_level,
-            "user_xp": user_xp,
-            "rag_context": rag_context,
-        }):
+
+        async for chunk in chain.astream(
+            {
+                "challenge_title": challenge_title,
+                "challenge_description": challenge_description,
+                "user_code": user_code,
+                "hint_level": hint_level,
+                "user_xp": user_xp,
+                "rag_context": rag_context,
+            }
+        ):
             yield chunk
     except Exception as e:
         logger.error(f"Streaming LLM Error: {e}")

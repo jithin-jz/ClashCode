@@ -132,7 +132,9 @@ class AdminReportCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=200)
     summary = serializers.CharField(max_length=2000)
     category = serializers.CharField(required=False, default="GENERAL")
-    priority = serializers.ChoiceField(choices=[choice for choice, _ in AdminReport.Priority.choices], default="MEDIUM")
+    priority = serializers.ChoiceField(
+        choices=[choice for choice, _ in AdminReport.Priority.choices], default="MEDIUM"
+    )
     context = serializers.JSONField(required=False, default=dict)
 
 

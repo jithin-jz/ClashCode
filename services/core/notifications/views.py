@@ -88,7 +88,11 @@ class NotificationViewSet(
 
     def get_queryset(self):
         """Optimized queryset with select_related for performance."""
-        return Notification.objects.select_related("actor", "actor__profile").filter(recipient=self.request.user).order_by("-created_at")
+        return (
+            Notification.objects.select_related("actor", "actor__profile")
+            .filter(recipient=self.request.user)
+            .order_by("-created_at")
+        )
 
     @extend_schema(
         responses={200: NotificationListResponseSerializer},

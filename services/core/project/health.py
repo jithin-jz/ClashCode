@@ -48,6 +48,8 @@ class HealthCheckView(APIView):
             health_status["checks"]["cache"] = f"error: {str(e)}"
 
         # Determine HTTP status code
-        status_code = status.HTTP_200_OK if health_status["status"] == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+        status_code = (
+            status.HTTP_200_OK if health_status["status"] == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 
         return Response(health_status, status=status_code)

@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from config import settings
-from langchain_pinecone import PineconeVectorStore, PineconeEmbeddings
+from langchain_pinecone import PineconeEmbeddings, PineconeVectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -15,17 +15,14 @@ def get_vector_db():
     if _vector_db is None:
         try:
             logger.info("Initializing Pinecone RAG components with native embeddings...")
-            
+
             # Using Pinecone's native embedding model (matching your 1024-dim index)
-            embeddings = PineconeEmbeddings(
-                model=settings.EMBEDDING_MODEL, 
-                pinecone_api_key=settings.PINECONE_API_KEY
-            )
-            
+            embeddings = PineconeEmbeddings(model=settings.EMBEDDING_MODEL, pinecone_api_key=settings.PINECONE_API_KEY)
+
             _vector_db = PineconeVectorStore(
                 index_name=settings.PINECONE_INDEX_NAME,
                 embedding=embeddings,
-                pinecone_api_key=settings.PINECONE_API_KEY
+                pinecone_api_key=settings.PINECONE_API_KEY,
             )
             logger.info("Pinecone RAG components initialized successfully.")
         except Exception as e:

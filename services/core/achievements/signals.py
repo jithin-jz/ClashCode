@@ -120,7 +120,9 @@ def check_streak_achievements(sender, instance, created, **kwargs):
         else:
             break  # Streak broken
 
-    logger.info(f"User {user.username} check-in on {today}: consecutive_streak={consecutive_streak}, cycle_day={instance.streak_day}")
+    logger.info(
+        f"User {user.username} check-in on {today}: consecutive_streak={consecutive_streak}, cycle_day={instance.streak_day}"
+    )
 
     # Update progress for streak achievements
     # Only if consecutive_streak >= 1 (meaning they actually have a streak)

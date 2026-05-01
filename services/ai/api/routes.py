@@ -48,7 +48,9 @@ async def index_challenges(
 
     docs = []
     for c in challenges:
-        content = f"Title: {c.get('title')}\nDescription: {c.get('description')}\nInitial Code:\n{c.get('initial_code')}\n"
+        content = (
+            f"Title: {c.get('title')}\nDescription: {c.get('description')}\nInitial Code:\n{c.get('initial_code')}\n"
+        )
         docs.append(
             Document(
                 page_content=content,

@@ -74,7 +74,9 @@ class BroadcastResendView(APIView):
         description="Resend a previously sent broadcast by request id.",
     )
     def post(self, request, request_id):
-        success, msg, code = NotificationService.resend_broadcast(admin=request.user, request_id=request_id, request=request)
+        success, msg, code = NotificationService.resend_broadcast(
+            admin=request.user, request_id=request_id, request=request
+        )
 
         if not success:
             return Response({"error": msg}, status=code)

@@ -68,7 +68,9 @@ async def load_asyncpg():
     try:
         import asyncpg
     except ImportError as exc:
-        raise RuntimeError("asyncpg is required for migration. Install it with `pip install -r requirements-migrate.txt`.") from exc
+        raise RuntimeError(
+            "asyncpg is required for migration. Install it with `pip install -r requirements-migrate.txt`."
+        ) from exc
     return asyncpg
 
 

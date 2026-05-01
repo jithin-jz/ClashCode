@@ -9,15 +9,16 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
+
 class DynamoClient:
     def __init__(self):
         self.session = aioboto3.Session()
         self.endpoint_url = os.getenv("DYNAMODB_URL")
         self.region_name = os.getenv("AWS_REGION", "ap-south-1")
         self.table_name = os.getenv("DYNAMODB_TABLE", "ChatMessages")
-        
+
         self.creds = {"region_name": self.region_name}
-        
+
         if self.endpoint_url:
             self.creds["endpoint_url"] = self.endpoint_url
             # For local dev, we might still want to use provided keys if they aren't "dummy"
@@ -38,7 +39,6 @@ class DynamoClient:
             if os.environ.get("AWS_SECRET_ACCESS_KEY"):
                 os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
             logger.info("DynamoDB connecting via IAM/Default chain")
-
 
     async def create_table_if_not_exists(self):
         try:

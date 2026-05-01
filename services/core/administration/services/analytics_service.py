@@ -148,7 +148,9 @@ class AnalyticsService:
 
         # 3. Auth Provider Distribution
         auth_dist_qs = UserProfile.objects.values("provider").annotate(count=Count("user_id"))
-        auth_distribution = [{"provider": item["provider"] or "email", "count": item["count"]} for item in auth_dist_qs]
+        auth_distribution = [
+            {"provider": item["provider"] or "email", "count": item["count"]} for item in auth_dist_qs
+        ]
 
         # 4. Top Users by XP
         top_profiles = (
@@ -250,7 +252,9 @@ class AnalyticsService:
                 "attempts": row["attempts"],
                 "completions": row["completions"],
                 "abandonment_rate": (
-                    (max((row["unlocked"] or 0) - row["completions"], 0) / row["attempts"] * 100) if row["attempts"] > 0 else 0
+                    (max((row["unlocked"] or 0) - row["completions"], 0) / row["attempts"] * 100)
+                    if row["attempts"] > 0
+                    else 0
                 ),
                 "average_time_seconds": (row["avg_duration"].total_seconds() if row.get("avg_duration") else 0),
                 "avg_stars": row["avg_stars"] or 0,
@@ -259,7 +263,9 @@ class AnalyticsService:
         ]
 
         # 5. Top Items
-        item_stats = [{"name": item.name, "revenue": item.sales * item.cost, "sales": item.sales} for item in store_items]
+        item_stats = [
+            {"name": item.name, "revenue": item.sales * item.cost, "sales": item.sales} for item in store_items
+        ]
         top_items = sorted(item_stats, key=lambda x: x["revenue"], reverse=True)[:5]
 
         # 6. Community Leaders
@@ -268,7 +274,9 @@ class AnalyticsService:
             .annotate(followers_count=Count("user__followers", distinct=True))
             .order_by("-xp")[:10]
         )
-        community_leaders = [{"username": p.user.username, "xp": p.xp, "followers": p.followers_count} for p in top_profiles]
+        community_leaders = [
+            {"username": p.user.username, "xp": p.xp, "followers": p.followers_count} for p in top_profiles
+        ]
 
         # 7. System Health
         last_broadcast = (

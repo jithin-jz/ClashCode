@@ -50,5 +50,7 @@ class NotificationService:
     @staticmethod
     def register_fcm_token(user, token, device_id=None):
         """Registers or updates an FCM token for a user."""
-        fcm_token, created = FCMToken.objects.update_or_create(token=token, defaults={"user": user, "device_id": device_id})
+        fcm_token, created = FCMToken.objects.update_or_create(
+            token=token, defaults={"user": user, "device_id": device_id}
+        )
         return fcm_token, created

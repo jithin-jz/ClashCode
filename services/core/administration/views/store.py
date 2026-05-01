@@ -17,7 +17,9 @@ class StoreItemDuplicateView(APIView):
         description="Duplicate an existing store item to speed up admin catalog management.",
     )
     def post(self, request, item_id):
-        duplicate, error, code = StoreService.duplicate_store_item(admin=request.user, item_id=item_id, request=request)
+        duplicate, error, code = StoreService.duplicate_store_item(
+            admin=request.user, item_id=item_id, request=request
+        )
 
         if error:
             return Response({"error": error}, status=code)

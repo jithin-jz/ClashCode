@@ -21,7 +21,9 @@ def admin_exception_handler(exc, context):
     # If it's one of our custom administrative exceptions, DRF handler won't know it
     # unless it inherits from APIException (which ours do), but we want to add extra logging.
     if isinstance(exc, AdminBaseException):
-        logger.warning(f"Admin Action Warning: {exc.detail} | User: {context['request'].user} | Path: {context['request'].path}")
+        logger.warning(
+            f"Admin Action Warning: {exc.detail} | User: {context['request'].user} | Path: {context['request'].path}"
+        )
         # APIException already handles the response if it's caught by DRF's handler.
         # But we ensure it has a consistent structure.
         if response is None:
