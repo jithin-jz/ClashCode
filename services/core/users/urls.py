@@ -4,7 +4,6 @@ from .views import (
     ContributionHistoryView,
     CurrentUserView,
     FollowToggleView,
-    MediaUploadView,
     ProfileDetailView,
     ProfileUpdateView,
     RedeemReferralView,
@@ -35,5 +34,4 @@ urlpatterns = [
         UserFollowingView.as_view(),
         name="user_following",
     ),
-    path("media/upload/", MediaUploadView.as_view(), name="media_upload"),
 ]

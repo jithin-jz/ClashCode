@@ -16,11 +16,4 @@ export const userService = {
   redeemReferral: (code) => api.post("/profiles/user/redeem-referral/", { code }),
   getSuggestedUsers: () => api.get("/profiles/users/suggestions/"),
   getContributionHistory: (username) => api.get(`/profiles/users/${username}/stats/contributions/`),
-  uploadMedia: (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return api.post("/profiles/media/upload/", formData, {
-      headers: { "Content-Type": undefined },
-    });
-  },
 };
