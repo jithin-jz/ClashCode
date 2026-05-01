@@ -15,7 +15,7 @@ async def fetch_challenge_context(challenge_slug: str):
         headers = build_internal_headers(path)
         logger.info(f"Fetching context from: {url}")
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, timeout=5)
+            response = await client.get(url, headers=headers, timeout=15)
             if response.status_code != 200:
                 logger.error(f"Core service error: {response.status_code} - {response.text}")
                 raise HTTPException(
@@ -36,7 +36,7 @@ async def fetch_internal_challenges():
 
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(url, headers=headers, timeout=10)
+            resp = await client.get(url, headers=headers, timeout=30)
             if resp.status_code != 200:
                 logger.error(f"Failed to fetch challenges for indexing: {resp.text}")
                 return None
