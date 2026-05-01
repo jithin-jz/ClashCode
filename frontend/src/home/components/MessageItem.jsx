@@ -83,7 +83,11 @@ const MessageItem = ({
                     to={`/profile/${ownerUsername}`}
                     className="block overflow-hidden rounded-lg border border-white/5 shadow-lg"
                   >
-                    <img src={imageUrl} alt="" className="w-full h-auto" />
+                    <img 
+                      src={imageUrl.startsWith("http") ? imageUrl : `${import.meta.env.VITE_API_URL}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`} 
+                      alt="" 
+                      className="w-full h-auto" 
+                    />
                   </Link>
                   <div className="flex items-center justify-between px-1 py-0.5">
                     <p className="text-[8px] font-bold uppercase tracking-widest text-neutral-600">

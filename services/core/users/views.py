@@ -342,6 +342,6 @@ class MediaUploadView(APIView):
 
         # If it's a relative URL, prepend the backend URL
         if not url.startswith("http"):
-            url = build_file_url(request, url)
+            url = build_media_url(url, request)
 
         return Response({"url": url}, status=status.HTTP_200_OK)

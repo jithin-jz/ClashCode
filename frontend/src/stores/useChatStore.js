@@ -116,30 +116,8 @@ const useChatStore = create(
               set((state) => ({
                 messages: state.messages.map((msg) => {
                   if (msg.timestamp !== data.timestamp) return msg;
-                  const reactions = { ...(msg.reactions || {}) };
-                  const currentUsers = reactions[data.emoji] || [];
-                  const isRemoving = currentUsers.includes(data.username);
-
-                  if (isRemoving) {
-                    const filtered = currentUsers.filter((u) => u !== data.username);
-                    if (filtered.length === 0) {
-                      delete reactions[data.emoji];
-                    } else {
-                      reactions[data.emoji] = filtered;
-                    }
-                  } else {
-                    Object.keys(reactions).forEach((emoji) => {
-                      reactions[emoji] = reactions[emoji].filter(
-                        (u) => u !== data.username,
-                      );
-                      if (reactions[emoji].length === 0) delete reactions[emoji];
-                    });
-                    reactions[data.emoji] = [
-                      ...(reactions[data.emoji] || []),
-                      data.username,
-                    ];
-                  }
-                  return { ...msg, reactions };
+                  // Use server-provided reactions as the source of truth
+                  return { ...msg, reactions: data.reactions || {} };
                 }),
               }));
             } else if (data.type === "typing") {

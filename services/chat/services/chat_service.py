@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 class ChatService:
     @staticmethod
-    async def handle_connect(ws: WebSocket, room: str, user_payload: Dict[str, Any]) -> bool:
+    async def handle_connect(cls, ws: WebSocket, room: str, user_payload: Dict[str, Any]) -> bool:
         """Handles new WebSocket connection, sends history and joins presence."""
-        user_id = user_payload["user_id"]
+        user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
         avatar_url = user_payload.get("avatar_url")
 
@@ -66,9 +66,9 @@ class ChatService:
         return True
 
     @staticmethod
-    async def handle_disconnect(ws: WebSocket, room: str, user_payload: Dict[str, Any]):
+    async def handle_disconnect(cls, ws: WebSocket, room: str, user_payload: Dict[str, Any]):
         """Handles WebSocket disconnection and leaves presence."""
-        user_id = user_payload["user_id"]
+        user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
         avatar_url = user_payload.get("avatar_url")
 
@@ -84,9 +84,9 @@ class ChatService:
         await redis_client.publish(channel_key(room), leave.model_dump_json())
 
     @staticmethod
-    async def process_message(room: str, user_payload: Dict[str, Any], incoming: IncomingMessage):
+    async def process_message(cls, room: str, user_payload: Dict[str, Any], incoming: IncomingMessage):
         """Processes incoming chat messages based on action type."""
-        user_id = user_payload["user_id"]
+        user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
         avatar_url = user_payload.get("avatar_url")
 
@@ -119,6 +119,7 @@ class ChatService:
     async def _handle_delete(room: str, user_id: int, incoming: IncomingMessage):
         result = await dynamo_client.delete_message(room, incoming.target_timestamp, user_id)
         if result.get("ok"):
+            logger.info(f"Broadcast delete in {room} for {incoming.target_timestamp}")
             await redis_client.publish(
                 channel_key(room),
                 json_dumps(
@@ -130,12 +131,15 @@ class ChatService:
                     }
                 ),
             )
+        else:
+            logger.warning(f"Delete failed in {room}: {result.get('reason')} (user {user_id})")
         return result
 
     @staticmethod
     async def _handle_edit(room: str, user_id: int, incoming: IncomingMessage):
         result = await dynamo_client.edit_message(room, incoming.target_timestamp, user_id, incoming.message)
         if result.get("ok"):
+            logger.info(f"Broadcast edit in {room} for {incoming.target_timestamp}")
             await redis_client.publish(
                 channel_key(room),
                 json_dumps(
@@ -148,6 +152,8 @@ class ChatService:
                     }
                 ),
             )
+        else:
+            logger.warning(f"Edit failed in {room}: {result.get('reason')} (user {user_id})")
         return result
 
     @staticmethod
