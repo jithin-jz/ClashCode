@@ -84,7 +84,7 @@ const MessageItem = ({
                     className="block overflow-hidden rounded-lg border border-white/5 shadow-lg"
                   >
                     <img 
-                      src={imageUrl.startsWith("http") ? imageUrl : `${import.meta.env.VITE_API_URL}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`} 
+                      src={imageUrl} 
                       alt="" 
                       className="w-full h-auto" 
                     />
@@ -165,7 +165,7 @@ const MessageItem = ({
           />
 
           {editingMsgId !== msg.timestamp && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0 bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 border border-white/5">
+            <div className="flex items-center gap-1 shrink-0 bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 border border-white/5">
               {isOwn && (
                 <>
                   <button

@@ -217,9 +217,9 @@ const useChatStore = create(
       },
 
       _send: (payload) => {
-        const { socket, isConnected } = get();
+        const { socket, isConnected, currentRoom } = get();
         if (socket && isConnected && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify(payload));
+          socket.send(JSON.stringify({ ...payload, room: currentRoom }));
         }
       },
 
@@ -345,20 +345,6 @@ const useChatStore = create(
         }
       },
 
-      sendImage: async (file) => {
-        try {
-          const { authAPI } = await import("../services/api");
-          const response = await authAPI.uploadMedia(file);
-          const url = response.data.url;
-          const { user } = (await import("./useAuthStore")).default.getState();
-          const messageContent = `IMAGE:${url}|${user?.username || "user"}`;
-          get().sendMessage(messageContent);
-        } catch (err) {
-          console.error("Failed to upload image", err);
-          set({ error: "Failed to upload image" });
-          setTimeout(() => set({ error: null }), 3000);
-        }
-      },
 
       markAsRead: (timestamp) => {
         const socket = get().socket;
