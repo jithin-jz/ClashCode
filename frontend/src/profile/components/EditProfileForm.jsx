@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { Camera } from "lucide-react";
 import {
   Card,
@@ -12,13 +12,10 @@ const EditProfileForm = ({
   editForm,
   setEditForm,
   setIsEditing,
-  uploadingBanner,
-  handleImageUpload,
   setDeleteDialogOpen,
   handleSaveProfile,
   savingProfile,
 }) => {
-  const bannerInputRef = useRef(null);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">

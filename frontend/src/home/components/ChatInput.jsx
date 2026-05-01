@@ -1,6 +1,5 @@
-import React, { memo, useState, useRef } from "react";
+import React, { memo } from "react";
 import { Send, Smile, X } from "lucide-react";
-import useChatStore from "../../stores/useChatStore";
 import EmojiPicker from "emoji-picker-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -25,14 +24,6 @@ const ChatInput = ({
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      sendImage(file);
-      // Reset input
-      e.target.value = "";
-    }
-  };
 
   const handleEmojiClick = (emojiData) => {
     setInputMessage((prev) => prev + emojiData.emoji);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +44,7 @@ const AdminUserDetailsDrawer = ({
   const [savingNote, setSavingNote] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
 
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async () => {
     if (!username) return;
     setLoading(true);
     try {
@@ -55,14 +55,14 @@ const AdminUserDetailsDrawer = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
 
   useEffect(() => {
     if (open && username) {
       fetchDetails();
       setActiveTab("overview");
     }
-  }, [open, username]);
+  }, [open, username, fetchDetails]);
 
   const roleValue = useMemo(() => details?.role || "user", [details?.role]);
 

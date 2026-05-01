@@ -13,7 +13,6 @@ import { generateLocalCodeReview } from "../../utils/localCodeReview";
  */
 export const useChallenge = (id) => {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
   const { setUser } = useAuthStore.getState();
 
   // --- Local UI State ---
@@ -424,7 +423,7 @@ export const useChallenge = (id) => {
       setIsHintStreaming(false);
       setStreamingHint("");
     }
-  }, [id, code, hintLevel, user?.profile?.xp]);
+  }, [id, code, hintLevel]);
 
   return {
     challenge,

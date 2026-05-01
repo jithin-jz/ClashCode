@@ -1,5 +1,4 @@
 import { useEffect, useRef, useCallback, useMemo } from "react";
-import { useShallow } from "zustand/react/shallow";
 import useNotificationStore from "../stores/useNotificationStore";
 import { buildWebSocketUrl } from "../utils/websocketUrl";
 import { isBoneyard } from "../utils/isBoneyard";
@@ -9,12 +8,6 @@ import { isBoneyard } from "../utils/isBoneyard";
  * Handles auto-reconnect and message routing to the store.
  */
 export const useNotificationSocket = (userId) => {
-  const { isWSConnected } = useNotificationStore(
-    useShallow((s) => ({
-      isWSConnected: s.isWSConnected,
-    })),
-  );
-  
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const activeUserIdRef = useRef(null);

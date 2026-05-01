@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Button } from "../components/ui/button";
 import { authAPI } from "../services/api";
 import { notify } from "../services/notification";
@@ -11,7 +11,7 @@ const AdminReports = () => {
   const [priorityFilter, setPriorityFilter] = useState("");
   const [reportsUnavailable, setReportsUnavailable] = useState(false);
 
-  const fetchReports = async (overrides = {}, options = {}) => {
+  const fetchReports = useCallback(async (overrides = {}, options = {}) => {
     setLoading(true);
     try {
       const params = {
@@ -20,8 +20,8 @@ const AdminReports = () => {
       };
       const response = await authAPI.getReports(params);
       setReports(response.data?.results || []);
-      setStatusFilter(params.status || "");
-      setPriorityFilter(params.priority || "");
+      setStatusFilter(params.status ?? statusFilter);
+      setPriorityFilter(params.priority ?? priorityFilter);
       setReportsUnavailable(false);
     } catch (error) {
       const unavailable = error?.response?.status === 404;
@@ -32,11 +32,11 @@ const AdminReports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, priorityFilter]);
 
   useEffect(() => {
     fetchReports({}, { silent: true });
-  }, []);
+  }, [fetchReports]);
 
   const updateStatus = async (reportId, status) => {
     try {

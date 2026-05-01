@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { notificationsAPI } from "../services/api";
 import { notify } from "../services/notification";
-import { buildWebSocketUrl } from "../utils/websocketUrl";
 import { isBoneyard } from "../utils/isBoneyard";
 import { playNotificationSound } from "../utils/playNotificationSound";
 

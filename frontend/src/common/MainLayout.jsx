@@ -100,7 +100,7 @@ const MainLayout = memo(({ children }) => {
   }, [logout, navigate]);
 
   const handleCloseNotification = useCallback(() => setNotificationOpen(false), []);
-  const handleCloseCheckIn = useCallback(() => setCheckInOpen(false), []);
+  const handleCloseCheckIn = useCallback(() => setCheckInOpen(false), [setCheckInOpen]);
 
   // ---- Early exit for gameplay screens ----
   if (hideNav) return children;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { BookOpen, Terminal, Bot, Play, Sparkles } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 

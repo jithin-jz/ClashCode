@@ -13,7 +13,7 @@ const waitForTaskResult = async (taskId) => {
   try {
     // Primary: Try WebSocket
     return await socketService.waitForTask(taskId, AI_TASK_POLL_TIMEOUT_MS);
-  } catch (err) {
+  } catch {
     // If WS times out or fails, fallback to polling
     console.warn(
       "[API] WebSocket failed, falling back to polling for taskId:",

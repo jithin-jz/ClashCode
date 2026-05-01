@@ -11,7 +11,6 @@ import MessageItem from "./MessageItem";
 const MessageList = ({
   user,
   messages,
-  viewportHeight,
   editMessage,
   deleteMessage,
   toggleReaction,
@@ -21,7 +20,6 @@ const MessageList = ({
   isLoadingMore,
   markAsRead,
   searchResults = [],
-  isSearching = false,
   isSearchMode = false,
 }) => {
   const scrollRef = React.useRef(null);
@@ -67,7 +65,7 @@ const MessageList = ({
     if (shouldScrollToBottom) {
       scrollToBottom();
     }
-  }, [messages, shouldScrollToBottom, viewportHeight]);
+  }, [messages, shouldScrollToBottom]);
 
   useEffect(() => {
     scrollToBottom();

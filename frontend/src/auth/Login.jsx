@@ -29,7 +29,7 @@ const Login = () => {
   } = useAuthStore();
   const [otpCooldownSeconds, setOtpCooldownSeconds] = useState(0);
 
-  const getRedirectPath = (u) => {
+  const getRedirectPath = () => {
     return "/home";
   };
 

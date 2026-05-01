@@ -1,21 +1,15 @@
 import { useState } from "react";
 import { notify } from "../../services/notification";
-import { userService } from "../../services/api/userService";
 import useUserStore from "../../stores/useUserStore";
 
 export const useProfileActions = (profileUser, setProfileUser, isOwnProfile) => {
   const { updateProfile, followUser } = useUserStore();
   
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   const handleImageUpload = async (event, type) => {
     const file = event.target.files[0];
     if (!file) return;
-
-    if (type === "avatar") setUploadingAvatar(true);
-    if (type === "banner") setUploadingBanner(true);
 
     try {
       const updatedUser = await updateProfile({ type, file }, true);
@@ -24,9 +18,6 @@ export const useProfileActions = (profileUser, setProfileUser, isOwnProfile) => 
     } catch (error) {
       console.error(error);
       notify.error(`Failed to upload ${type}`);
-    } finally {
-      if (type === "avatar") setUploadingAvatar(false);
-      if (type === "banner") setUploadingBanner(false);
     }
   };
 
@@ -73,10 +64,7 @@ export const useProfileActions = (profileUser, setProfileUser, isOwnProfile) => 
       notify.error("Failed to update follow status.");
     }
   };
-
   return {
-    uploadingAvatar,
-    uploadingBanner,
     savingProfile,
     handleImageUpload,
     handleSaveProfile,
