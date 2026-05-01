@@ -114,7 +114,7 @@ spec:
         ports:
         - containerPort: 8002
         env:
-        - name: CORE_API_URL
+        - name: CORE_SERVICE_URL
           value: "http://core-service:8000"
         envFrom:
         - secretRef:
