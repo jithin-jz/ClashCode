@@ -49,7 +49,11 @@ class CheckInView(APIView):
             return Response(
                 {
                     "error": str(e),
-                    "check_in": (DailyCheckInSerializer(status_data["today_checkin"]).data if status_data["today_checkin"] else None),
+                    "check_in": (
+                        DailyCheckInSerializer(status_data["today_checkin"]).data
+                        if status_data["today_checkin"]
+                        else None
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

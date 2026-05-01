@@ -1,7 +1,8 @@
 import resource
-import time
 import subprocess
+import time
 from typing import Any, Dict
+
 
 def set_resource_limits():
     """
@@ -14,12 +15,13 @@ def set_resource_limits():
     # Limit file size creation
     resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
 
+
 async def run_python_code(code: str, stdin: str = "") -> Dict[str, Any]:
     """
     Executes Python code in a child process with strict resource limits.
     """
     start_time = time.perf_counter()
-    
+
     try:
         process = subprocess.Popen(
             ["python3", "-c", code],
@@ -27,7 +29,7 @@ async def run_python_code(code: str, stdin: str = "") -> Dict[str, Any]:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            preexec_fn=set_resource_limits
+            preexec_fn=set_resource_limits,
         )
 
         stdout, stderr = process.communicate(input=stdin, timeout=5)
@@ -41,25 +43,13 @@ async def run_python_code(code: str, stdin: str = "") -> Dict[str, Any]:
                 "output": stdout if process.returncode == 0 else stderr,
                 "metadata": {
                     "duration": duration,
-                    "memory": "N/A" # Accurate child memory tracking requires more complex syscalls in Python
-                }
+                    "memory": "N/A",  # Accurate child memory tracking requires more complex syscalls in Python
+                },
             }
         }
     except subprocess.TimeoutExpired:
         return {
-            "run": {
-                "stdout": "",
-                "stderr": "Error: Execution timed out (Limit: 5s)",
-                "code": 124,
-                "output": "Timeout"
-            }
+            "run": {"stdout": "", "stderr": "Error: Execution timed out (Limit: 5s)", "code": 124, "output": "Timeout"}
         }
     except Exception as e:
-        return {
-            "run": {
-                "stdout": "",
-                "stderr": f"Execution Error: {str(e)}",
-                "code": 1,
-                "output": str(e)
-            }
-        }
+        return {"run": {"stdout": "", "stderr": f"Execution Error: {str(e)}", "code": 1, "output": str(e)}}

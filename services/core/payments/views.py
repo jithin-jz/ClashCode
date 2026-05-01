@@ -39,7 +39,9 @@ class CreateOrderView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            order_details = PaymentService.create_order(user=request.user, amount_inr=serializer.validated_data["amount"])
+            order_details = PaymentService.create_order(
+                user=request.user, amount_inr=serializer.validated_data["amount"]
+            )
             return Response(order_details, status=status.HTTP_201_CREATED)
 
         except ValueError as e:

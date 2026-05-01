@@ -107,8 +107,18 @@ class UserService:
         """Lists users with filtering and pagination."""
         from users.models import UserFollow
 
-        followers_sq = UserFollow.objects.filter(following_id=OuterRef("id")).values("following_id").annotate(c=Count("id")).values("c")
-        following_sq = UserFollow.objects.filter(follower_id=OuterRef("id")).values("follower_id").annotate(c=Count("id")).values("c")
+        followers_sq = (
+            UserFollow.objects.filter(following_id=OuterRef("id"))
+            .values("following_id")
+            .annotate(c=Count("id"))
+            .values("c")
+        )
+        following_sq = (
+            UserFollow.objects.filter(follower_id=OuterRef("id"))
+            .values("follower_id")
+            .annotate(c=Count("id"))
+            .values("c")
+        )
 
         users = User.objects.select_related("profile").annotate(
             followers_total=Coalesce(Subquery(followers_sq), 0),
@@ -172,7 +182,9 @@ class UserService:
         completed_qs = progress_qs.filter(status=UserProgress.Status.COMPLETED)
 
         purchases = Purchase.objects.filter(user=target).select_related("item").order_by("-purchased_at")[:8]
-        recent_logs = AdminAuditLog.objects.filter(Q(target_user=target) | Q(target_username=target.username)).order_by("-timestamp")[:8]
+        recent_logs = AdminAuditLog.objects.filter(
+            Q(target_user=target) | Q(target_username=target.username)
+        ).order_by("-timestamp")[:8]
 
         notes = AdminNote.objects.filter(target_user=target).order_by("-created_at")[:8]
         reports = AdminReport.objects.filter(target_user=target).order_by("-created_at")[:8]
@@ -223,7 +235,9 @@ class UserService:
                 "total_attempts": progress_qs.count(),
                 "avg_completion_time_seconds": avg_seconds,
                 "purchase_count": Purchase.objects.filter(user=target).count(),
-                "open_reports": AdminReport.objects.filter(target_user=target).exclude(status=AdminReport.Status.RESOLVED).count(),
+                "open_reports": AdminReport.objects.filter(target_user=target)
+                .exclude(status=AdminReport.Status.RESOLVED)
+                .count(),
             },
             "recent_completions": recent_completions,
             "recent_purchases": purchase_rows,

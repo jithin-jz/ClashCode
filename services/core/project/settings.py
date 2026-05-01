@@ -163,7 +163,9 @@ if not all(
         os.getenv("DB_PORT"),
     ]
 ):
-    raise ImproperlyConfigured("Database configuration incomplete. Ensure DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT are set.")
+    raise ImproperlyConfigured(
+        "Database configuration incomplete. Ensure DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT are set."
+    )
 
 
 # Password validation
@@ -362,10 +364,14 @@ REST_FRAMEWORK = {
         "otp": os.getenv("THROTTLE_OTP_RATE", "5/minute"),  # Strict limit for OTP requests (SMS cost)
         "auth": os.getenv("THROTTLE_AUTH_RATE", "10/minute"),  # Login/register attempts (brute force protection)
         "store": os.getenv("THROTTLE_STORE_RATE", "30/minute"),  # Store/purchase operations
-        "notifications": os.getenv("THROTTLE_NOTIFICATIONS_RATE", "180/minute"),  # Notification polling/read operations
+        "notifications": os.getenv(
+            "THROTTLE_NOTIFICATIONS_RATE", "180/minute"
+        ),  # Notification polling/read operations
         "sensitive": os.getenv("THROTTLE_SENSITIVE_RATE", "5/minute"),  # Password reset, email change
         "burst": os.getenv("THROTTLE_BURST_RATE", "10/second"),  # Short burst protection
-        "code_execution": os.getenv("THROTTLE_CODE_EXECUTION_RATE", "100/minute"),  # Sandbox-backed code run/submission endpoints
+        "code_execution": os.getenv(
+            "THROTTLE_CODE_EXECUTION_RATE", "100/minute"
+        ),  # Sandbox-backed code run/submission endpoints
     },
 }
 
@@ -393,7 +399,9 @@ if not JWT_PRIVATE_KEY and not JWT_PUBLIC_KEY:
     JWT_PRIVATE_KEY = fallback_secret
     JWT_PUBLIC_KEY = fallback_secret
 elif not JWT_PRIVATE_KEY or not JWT_PUBLIC_KEY:
-    raise ImproperlyConfigured("JWT configuration incomplete. Both JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be set for asymmetric signing.")
+    raise ImproperlyConfigured(
+        "JWT configuration incomplete. Both JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be set for asymmetric signing."
+    )
 
 JWT_ACCESS_TOKEN_LIFETIME = 60 * 60
 JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 7

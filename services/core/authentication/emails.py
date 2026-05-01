@@ -84,7 +84,9 @@ def send_otp_email(email, otp):
         html_message = render_to_string("emails/otp_email.html", context)
 
         plain_message = (
-            f"Your CLASHCODE login code is {otp}.\n\nThis code expires in 10 minutes.\nIf you didn’t request this, ignore this email."
+            f"Your CLASHCODE login code is {otp}.\n\n"
+            "This code expires in 10 minutes.\n"
+            "If you didn’t request this, ignore this email."
         )
 
         send_mail(

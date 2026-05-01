@@ -31,7 +31,9 @@ class StoreTests(APITestCase):
             item_data={"font_family": "Monospace"},
             icon_name="type",
         )
-        self.inactive = StoreItem.objects.create(name="Old", cost=50, category="THEME", is_active=False, icon_name="clock")
+        self.inactive = StoreItem.objects.create(
+            name="Old", cost=50, category="THEME", is_active=False, icon_name="clock"
+        )
 
     def test_list_active_items(self):
         url = reverse("store-item-list")

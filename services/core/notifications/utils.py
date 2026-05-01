@@ -92,7 +92,9 @@ def send_fcm_push(user, title, body, data=None):
             tokens=tokens,
         )
         response = messaging.send_each_for_multicast(message)
-        logger.info(f"Successfully sent FCM push to {user.username}: {response.success_count} success, {response.failure_count} failure")
+        logger.info(
+            f"Successfully sent FCM push to {user.username}: {response.success_count} success, {response.failure_count} failure"
+        )
 
         # Optional: Clean up failed tokens
         if response.failure_count > 0:

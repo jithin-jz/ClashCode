@@ -90,7 +90,11 @@ class PurchasedItemsView(APIView):
         description="Get a list of all purchased items and the currently equipped cosmetics.",
     )
     def get(self, request):
-        purchases = Purchase.objects.select_related("item").filter(user=request.user, item__is_active=True).order_by("-purchased_at")
+        purchases = (
+            Purchase.objects.select_related("item")
+            .filter(user=request.user, item__is_active=True)
+            .order_by("-purchased_at")
+        )
 
         items = [p.item for p in purchases]
         profile = request.user.profile

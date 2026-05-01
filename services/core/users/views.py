@@ -14,7 +14,7 @@ from drf_spectacular.utils import (
     extend_schema,
     inline_serializer,
 )
-from project.media import build_file_url
+from project.media import build_media_url
 from rest_framework import parsers, serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -297,7 +297,11 @@ class ContributionHistoryView(APIView):
             .order_by("-date")[:365]
         )
 
-        formatted_data = [{"date": row["date"].isoformat(), "count": row["count"]} for row in contributions if row["date"] is not None]
+        formatted_data = [
+            {"date": row["date"].isoformat(), "count": row["count"]}
+            for row in contributions
+            if row["date"] is not None
+        ]
 
         return Response(formatted_data, status=status.HTTP_200_OK)
 
