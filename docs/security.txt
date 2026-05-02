@@ -1,0 +1,26 @@
+CLASHCODE - SECURITY DESIGN
+==========================
+
+Keeping the platform safe is a top priority. We use multiple layers of protection:
+
+1. User Authentication
+----------------------
+- We use JWT (JSON Web Tokens) that are short-lived.
+- Refresh tokens are stored in "HttpOnly" cookies so hackers can't steal them via script.
+- Support for GitHub and Google logins (OAuth 2.0).
+
+2. Safe Code Execution
+----------------------
+- When you submit code, we check it first (AST Validation) to block dangerous stuff like "import os" or "import sys".
+- The code runs inside a Docker container that has NO access to the internet and very limited memory/CPU.
+- After the code finishes, the container is instantly deleted.
+
+3. Network Security
+-------------------
+- Only the "Inbound" traffic (like your browser) can reach the services.
+- Databases are hidden deep in a private network and cannot be reached from the internet.
+
+4. Data Privacy
+---------------
+- Passwords are never stored in plain text; we use high-security hashing (bcrypt).
+- We use "IRSA" in AWS to make sure our code only has permission to touch exactly what it needs.

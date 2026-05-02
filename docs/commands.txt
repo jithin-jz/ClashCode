@@ -1,0 +1,42 @@
+CLASHCODE - COMMAND REFERENCE
+===========================
+
+Docker / Backend Stack:
+-----------------------
+- Start services: docker compose up -d --build
+- Stop services:  docker compose down
+- View logs:      docker compose logs -f
+- Service status: docker compose ps
+
+Django (Core Service):
+----------------------
+- Run migrations:    docker compose exec core python manage.py migrate
+- Create admin user: docker compose exec core python manage.py createsuperuser
+- Load challenges:   docker compose exec core python manage.py load_challenges
+- Shell access:      docker compose exec core python manage.py shell
+
+Database:
+---------
+- Postgres shell: docker compose exec db psql -U clashcode
+- Redis shell:    docker compose exec redis redis-cli
+
+Frontend (React/Vite):
+----------------------
+- Install deps: npm install
+- Start dev:    npm run dev
+- Build prod:   npm run build
+- Preview:      npm run preview
+
+Git:
+----
+- Add changes:    git add .
+- Commit:         git commit -m "Your message"
+- Push:           git push origin main
+- Pull:           git pull origin main
+
+Infrastructure (Terraform):
+---------------------------
+- Init:    terraform init
+- Plan:    terraform plan
+- Apply:   terraform apply
+- Destroy: terraform destroy

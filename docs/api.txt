@@ -1,0 +1,31 @@
+CLASHCODE - API OVERVIEW
+========================
+
+The frontend talks to the backend using these main paths:
+
+Core API (Port 8000)
+--------------------
+- /api/auth/        - Login, Signup, OTP, OAuth
+- /api/challenges/  - Browse and submit challenges
+- /api/profile/     - View and update user info
+- /api/store/       - Buy items with XP
+- /api/posts/       - Social feed and comments
+
+Chat Service (Port 8001)
+------------------------
+- /ws/chat/         - Real-time WebSocket connection
+- /chat/history/    - Fetch old messages (pagination)
+- /chat/presence/   - See who is online
+
+AI Service (Port 8002)
+----------------------
+- /ai/hint/         - Get a contextual hint for a problem
+- /ai/analyze/      - Get a code review from the AI
+
+Executor (Port 8011)
+--------------------
+- /execute          - Internal only. Runs the code and returns results.
+
+Format:
+-------
+All APIs use JSON format. You must include a "Bearer Token" in the header to access most of these endpoints.

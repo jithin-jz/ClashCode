@@ -1,0 +1,28 @@
+CLASHCODE - DATABASE DETAILS
+==========================
+
+We use a mix of databases to handle different types of data efficiently:
+
+1. PostgreSQL (Primary)
+-----------------------
+- Role: Main storage for structured data.
+- Stores: Users, profiles, challenges, submissions, XP transactions, and posts.
+- Why: Relational integrity and reliable transactions.
+
+2. Redis (Cache & Broker)
+-------------------------
+- Role: Fast, temporary data storage.
+- Stores: User sessions, rate limits, OTP codes, and Celery task queues.
+- Why: Extremely low latency and built-in support for Pub/Sub (used in Chat).
+
+3. Amazon DynamoDB (NoSQL)
+--------------------------
+- Role: Scalable message storage.
+- Stores: Chat history and user activity logs.
+- Why: Handles massive amounts of unstructured data without slowing down.
+
+4. ChromaDB / Pinecone (Vector DB)
+----------------------------------
+- Role: AI context storage.
+- Stores: Embeddings for challenges and hint templates.
+- Why: Allows the AI to search for "meaning" rather than just keywords.

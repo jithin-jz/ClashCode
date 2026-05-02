@@ -1,0 +1,26 @@
+CLASHCODE - DEPLOYMENT & CLOUD
+==============================
+
+How we put the code online:
+
+1. Amazon Web Services (AWS)
+----------------------------
+- We use Amazon EKS (Kubernetes) to manage all our microservices.
+- It automatically handles scaling if many users join at once.
+
+2. Infrastructure as Code (Terraform)
+-------------------------------------
+- We don't click around the AWS dashboard to set things up.
+- Instead, we write "code" (Terraform files) that describes our servers and networks. This makes it easy to rebuild everything if something goes wrong.
+
+3. Automated Pipeline (CI/CD)
+-----------------------------
+- When we push code to GitHub, "GitHub Actions" automatically:
+  1. Runs tests to make sure nothing is broken.
+  2. Builds a new Docker image.
+  3. Deploys it to our Kubernetes cluster.
+
+4. Monitoring
+-------------
+- We use tools like Sentry to catch errors before users even notice them.
+- Everything is logged and tracked to ensure the system stays healthy.
