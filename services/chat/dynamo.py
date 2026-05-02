@@ -19,26 +19,31 @@ class DynamoClient:
 
         self.creds = {"region_name": self.region_name}
 
+        access_key = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        session_token = os.getenv("AWS_SESSION_TOKEN")
+
         if self.endpoint_url:
             self.creds["endpoint_url"] = self.endpoint_url
             # For local dev, we might still want to use provided keys if they aren't "dummy"
-            access_key = os.getenv("AWS_ACCESS_KEY_ID")
-            secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
             if access_key and access_key != "dummy":
                 self.creds["aws_access_key_id"] = access_key
             if secret_key and secret_key != "dummy":
                 self.creds["aws_secret_access_key"] = secret_key
+            if session_token and session_token != "dummy":
+                self.creds["aws_session_token"] = session_token
             logger.info(f"DynamoDB connecting to local endpoint: {self.endpoint_url}")
         else:
-            # In production, we explicitly do NOT pass aws_access_key_id if it's not provided
-            # to allow the SDK to fall back to IRSA/Instance Metadata.
-            # We also clear them from environment to be safe.
-            if os.environ.get("AWS_ACCESS_KEY_ID"):
-                logger.info("Clearing AWS_ACCESS_KEY_ID to enable IRSA")
-                os.environ.pop("AWS_ACCESS_KEY_ID", None)
-            if os.environ.get("AWS_SECRET_ACCESS_KEY"):
-                os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
-            logger.info("DynamoDB connecting via IAM/Default chain")
+            if access_key and secret_key:
+                self.creds["aws_access_key_id"] = access_key
+                self.creds["aws_secret_access_key"] = secret_key
+                if session_token:
+                    self.creds["aws_session_token"] = session_token
+                logger.info("DynamoDB connecting with explicit AWS credentials")
+            else:
+                # No static credentials were configured, so aioboto3 can fall back to
+                # IRSA, instance metadata, or any other default provider chain source.
+                logger.info("DynamoDB connecting via IAM/Default chain")
 
     async def create_table_if_not_exists(self):
         try:
@@ -162,7 +167,7 @@ class DynamoClient:
         try:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
-                
+
                 # 1. Try exact match first
                 response = await table.get_item(Key={"room_id": room_id, "timestamp": timestamp})
                 item = response.get("Item")
@@ -172,14 +177,14 @@ class DynamoClient:
                 # 2. Try normalized match (handle Z vs +00:00, or microsecond precision differences)
                 # We'll query a small range or just search recent if exact fails
                 logger.warning(f"get_message exact match failed for {timestamp!r}. Trying query fallback...")
-                
+
                 # Simple normalization: try replacing Z with +00:00 or vice versa if applicable
                 alt_ts = None
                 if timestamp.endswith("Z"):
                     alt_ts = timestamp.replace("Z", "+00:00")
                 elif "+00:00" in timestamp:
                     alt_ts = timestamp.replace("+00:00", "Z")
-                
+
                 if alt_ts:
                     response = await table.get_item(Key={"room_id": room_id, "timestamp": alt_ts})
                     item = response.get("Item")
@@ -195,14 +200,14 @@ class DynamoClient:
                     Limit=20,
                 )
                 existing = query_resp.get("Items", [])
-                
+
                 # Try prefix match (e.g. 2024-05-01T12:00:00.123 match 2024-05-01T12:00:00.123456)
                 for ex in existing:
                     ex_ts = ex.get("timestamp", "")
                     if ex_ts.startswith(timestamp) or timestamp.startswith(ex_ts):
                         logger.info(f"Fuzzy match found: provided={timestamp!r}, db={ex_ts!r}")
                         return ex
-                
+
                 logger.error(f"get_message failed even with fuzzy matching for room={room_id} ts={timestamp!r}")
                 return None
         except Exception as e:
@@ -214,10 +219,10 @@ class DynamoClient:
             item = await self.get_message(room_id, timestamp)
             if not item:
                 return {"ok": False, "reason": "not_found"}
-            
+
             db_user_id = item.get("user_id")
             db_timestamp = item.get("timestamp") # Use the actual DB timestamp for the update
-            
+
             if str(db_user_id) != str(user_id):
                 return {"ok": False, "reason": "forbidden"}
 
@@ -238,10 +243,10 @@ class DynamoClient:
             item = await self.get_message(room_id, timestamp)
             if not item:
                 return {"ok": False, "reason": "not_found"}
-            
+
             db_user_id = item.get("user_id")
             db_timestamp = item.get("timestamp")
-            
+
             if str(db_user_id) != str(user_id):
                 return {"ok": False, "reason": "forbidden"}
 
@@ -294,7 +299,7 @@ class DynamoClient:
             item = await self.get_message(room_id, timestamp)
             if not item:
                 return {"ok": False, "reason": "not_found"}
-            
+
             db_timestamp = item.get("timestamp")
 
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
