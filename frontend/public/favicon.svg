@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for C -->
+    <linearGradient id="gradC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1DA1F2"/>
+      <stop offset="100%" stop-color="#8A2BE2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer C shape -->
+  <circle
+    cx="256"
+    cy="256"
+    r="180"
+    fill="none"
+    stroke="url(#gradC)"
+    stroke-width="60"
+    stroke-linecap="round"
+    stroke-dasharray="900 300"
+    transform="rotate(-40 256 256)"
+  />
+
+  <!-- Inner dark circle -->
+  <circle cx="256" cy="256" r="110" fill="#0B1A3A"/>
+
+  <!-- Code symbol -->
+  <g fill="white" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <!-- < -->
+    <path d="M210 230 L170 256 L210 282" fill="none"/>
+    
+    <!-- / -->
+    <path d="M250 210 L262 302" />
+    
+    <!-- > -->
+    <path d="M302 230 L342 256 L302 282" fill="none"/>
+  </g>
+</svg>
