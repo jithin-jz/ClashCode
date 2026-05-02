@@ -1,111 +1,97 @@
 # 🏰 CLASHCODE
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Architecture](https://img.shields.io/badge/architecture-microservices-orange.svg)
+![Architecture](https://img.shields.io/badge/architecture-K8s--Microservices-orange.svg)
 ![Status](https://img.shields.io/badge/status-production--ready-green.svg)
+![Cloud](https://img.shields.io/badge/cloud-AWS--EKS-yellow.svg)
 
-**CLASHCODE** is an industrial-grade, gamified coding platform designed for competitive programming, mastery-based progression, and AI-assisted tutoring.
+**CLASHCODE** is an industrial-grade, gamified coding platform designed for competitive programming, mastery-based progression, and AI-assisted tutoring. 
 
-Engineered with a "Clinical Architect" philosophy, the platform utilizes strict Service-View separation, zero-layout-shift UI systems, and secure containerized code execution.
+Engineered with a "Clinical Architect" philosophy, the platform leverages distributed microservices, zero-layout-shift UI systems, and secure containerized code execution.
 
 ---
 
 ## 🏗️ System Architecture
 
-CLASHCODE is built on a scalable, language-agnostic microservices architecture orchestrated by Docker Compose and reverse-proxied by Nginx.
+CLASHCODE is orchestrated on **Amazon EKS (Kubernetes)**, utilizing a high-performance network topology managed by **AWS Application Load Balancer (ALB)**.
 
 ```mermaid
 graph TD
-    Client[Frontend: React 19] --> Gateway[Nginx Gateway :80]
+    User[Frontend: React 19] --> ALB[AWS ALB Ingress]
     
-    Gateway --> Core[Core: Django :8000]
-    Gateway --> Chat[Chat: FastAPI :8001]
-    Gateway --> AI[AI: FastAPI :8002]
-    Gateway --> Executor[Executor: FastAPI :8003]
-    
-    subgraph Infrastructure
-        Core --> DB[(PostgreSQL)]
-        Core --> Redis[(Redis Cache)]
-        Chat --> Dynamo[(DynamoDB Local)]
-        AI --> Chroma[(ChromaDB)]
+    subgraph K8s_Cluster [Amazon EKS Cluster]
+        ALB --> Core[Core: Django 5]
+        ALB --> Chat[Chat: FastAPI]
+        ALB --> AI[AI: FastAPI]
+        ALB --> Executor[Executor: FastAPI]
+        ALB --> Analytics[Analytics: FastAPI]
     end
     
-    subgraph Async Processing
-        Core -.-> Celery[Celery Worker/Beat]
+    subgraph Data_Persistence [Managed Data Layer]
+        Core --> RDS[(PostgreSQL)]
+        Core --> Redis[(Redis Cluster)]
+        Chat --> Dynamo[(Amazon DynamoDB)]
+        AI --> Pinecone[(Vector DB)]
+        Analytics --> Prometheus[(Prometheus)]
     end
 ```
 
-### ⚙️ Core Technical Pillars
-
-1.  **Strict Service-View Split**: The Django Core acts purely as a presentation layer via `views.py` controllers, delegating all database transactions, API requests, and business logic to isolated `services.py` modules.
-2.  **Sandboxed Execution Engine**: Python code submitted by users is pre-validated via AST constraints and then evaluated inside ephemeral, network-isolated Docker containers to prevent malicious host breakouts.
-3.  **Ledger-Grade Audit Trails**: Systems like `xpoint` (XP Management) and `authentication` utilize immutable transaction logs to track every point earned and every sensitive account action.
-4.  **Data-Driven Level Management**: Challenges and progression logic are decoupled from code, stored as Markdown/YAML files in `challenges/content/`, and seamlessly loaded into PostgreSQL via custom management commands.
-5.  **Clinical Frontend Architecture**: Built on React 19 and Vite. Utilizes the automated `boneyard-js` skeleton framework to guarantee zero-layout-shift (ZLS) loading states and Framer Motion for premium micro-animations.
-
 ---
 
-## 📂 Project Structure
-- **[frontend/](frontend/)**: React 19 Client
-- **[services/](services/)**: Microservices (Core, Chat, AI, Executor, Analytics)
-- **[infra/](infra/)**: Cloud Infrastructure (Terraform, Kubernetes, Nginx)
-
-## 📂 Services Overview
+## 📂 Services Ecosystem
 
 | Service | Technology | Primary Function |
 |---|---|---|
-| **[Frontend](frontend/)** | React 19, Zustand, Tailwind | The Code Arena UI. Implements ZLS loading, animated auth flows, and Monaco editor integration. |
-| **[Core API](services/core/)** | Django 5, DRF, Celery | The backbone. Handles Authentication, Profiles, the Store, Payments (Razorpay), and Level orchestration. |
-| **[Chat Service](services/chat/)** | FastAPI, WebSockets | Highly concurrent real-time messaging, presence tracking, and DynamoDB message persistence. |
-| **[AI Tutor](services/ai/)** | FastAPI, LangChain | RAG-based AI assistant providing contextual hints and code analysis via ChromaDB vector retrieval. |
-| **[Executor](services/executor/)** | FastAPI, Docker SDK | The secure code evaluator. Supports host-level fallback and strict Docker containerization. |
+| **[Frontend](frontend/)** | React 19, Vite, Zustand | The Code Arena UI. Implements ZLS (Zero Layout Shift) loading, animated auth flows, and Monaco editor integration. |
+| **[Core API](services/core/)** | Django 5, DRF, Celery | The backbone. Handles Authentication, Profiles, Gamification (XP), Payments (Razorpay), and Level orchestration. |
+| **[Chat Service](services/chat/)** | FastAPI, WebSockets | Real-time global messaging and presence tracking. Features persistent history in DynamoDB and Redis-backed session management. |
+| **[AI Tutor](services/ai/)** | FastAPI, LangChain | RAG-based AI assistant providing contextual hints and code analysis via vector retrieval. |
+| **[Executor](services/executor/)** | FastAPI, Docker SDK | Secure code evaluator. Supports host-level fallback and strict Docker containerization for untrusted user code. |
+| **[Analytics](services/analytics/)** | FastAPI, Prometheus | Monitors cluster health and proxies real-time system metrics (CPU/Memory) to the admin dashboard. |
 
 ---
 
-## 🚀 Deployment (Production-First)
+## 🛠️ Core Technical Pillars
 
-CLASHCODE is designed to run in a highly isolated Docker environment. Only the Nginx Gateway exposes a public port. Databases and internal services communicate strictly via Docker's private bridge network.
+1.  **Elastic Infrastructure**: Fully containerized deployment on EKS with automated scaling, horizontal pod autoscaling (HPA), and managed node groups.
+2.  **Persistent Real-time Chat**: WebSocket-based communication with message persistence in DynamoDB, ensuring zero message loss even during service restarts.
+3.  **Sandboxed Execution Engine**: Python code submitted by users is pre-validated via AST constraints and then evaluated inside ephemeral, network-isolated containers.
+4.  **Clinical Frontend Architecture**: Built on React 19. Utilizes a skeleton-first approach to guarantee zero-layout-shift (ZLS) loading states and Framer Motion for premium micro-animations.
+5.  **Secrets & IAM Management**: Leverages `external-secrets.io` for AWS Secrets Manager integration and IAM Roles for Service Accounts (IRSA) for fine-grained resource access.
 
-### 1. Environment Configuration
+---
 
-Copy the example environment files and replace placeholders with your production credentials (e.g., `SECRET_KEY`, JWT keys, Razorpay keys, Firebase Admin credentials).
+## 🚀 Deployment & Operations
 
-```bash
-cp services/.env.example services/.env
-cp services/core/.env.example services/core/.env
-cp services/chat/.env.example services/chat/.env
-cp services/ai/.env.example services/ai/.env
-```
+### Production (AWS EKS)
+The infrastructure is managed via Kubernetes manifests located in `infra/k8s/`.
 
-### 2. Launch the Stack
+1.  **Secrets Management**:
+    Deploy the ExternalSecret resources to sync with AWS Secrets Manager:
+    ```bash
+    kubectl apply -f infra/k8s/base/external-secrets.yaml
+    ```
 
-Initialize the entire platform, including building all custom microservice images:
+2.  **Service Rollout**:
+    ```bash
+    kubectl apply -k infra/k8s/overlays/prod/
+    ```
+
+### Local Development (Docker Compose)
+For local testing, a standard compose file is provided in `services/`.
 
 ```bash
 docker compose -f services/docker-compose.yml up -d --build
 ```
 
-The platform is now securely accessible via your configured `NGINX_HTTP_PORT` (default: `http://localhost`).
-
-### 3. Local UI Development
-
-For frontend development against a running production backend:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-*(Note: Ensure `VITE_API_URL` correctly points to your backend gateway).*
-
 ---
 
 ## 🔒 Security Posture
 
-*   **Token Rotation**: Implements strict JWT Refresh Token Rotation and Redis-backed blacklisting.
-*   **Execution Sandboxing**: Untrusted code is executed without network access using non-root users inside disposable containers. gVisor (`runsc`) support is available for hardened kernel-level isolation.
-*   **Infrastructure Obfuscation**: Databases (Postgres, Redis, Chroma) are completely inaccessible from the host machine.
+*   **Execution Sandboxing**: Untrusted code is executed without network access using non-root users inside disposable containers. 
+*   **Infrastructure Isolation**: Databases and internal services are located in private subnets, accessible only via the ALB Ingress or VPN.
+*   **Token Security**: Implements strict JWT Refresh Token Rotation and Redis-backed blacklisting for session revocation.
+*   **Audit Logging**: Every code execution and point transaction (XP) is logged to an immutable audit trail.
 
 ---
 
