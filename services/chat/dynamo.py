@@ -27,7 +27,6 @@ class DynamoClient:
 
         if self.endpoint_url:
             self.creds["endpoint_url"] = self.endpoint_url
-            # For local dev, we might still want to use provided keys if they aren't "dummy"
             if access_key and access_key != "dummy":
                 self.creds["aws_access_key_id"] = access_key
             if secret_key and secret_key != "dummy":
@@ -36,15 +35,15 @@ class DynamoClient:
                 self.creds["aws_session_token"] = session_token
             logger.info(f"DynamoDB connecting to local endpoint: {self.endpoint_url}")
         else:
-            if access_key and secret_key:
+            # Check for dummy keys even when endpoint_url is not set (production)
+            # This ensures IAM role authentication is not blocked by dummy values.
+            if access_key and access_key != "dummy" and secret_key and secret_key != "dummy":
                 self.creds["aws_access_key_id"] = access_key
                 self.creds["aws_secret_access_key"] = secret_key
-                if session_token:
+                if session_token and session_token != "dummy":
                     self.creds["aws_session_token"] = session_token
                 logger.info("DynamoDB connecting with explicit AWS credentials")
             else:
-                # No static credentials were configured, so aioboto3 can fall back to
-                # IRSA, instance metadata, or any other default provider chain source.
                 logger.info("DynamoDB connecting via IAM/Default chain")
 
     async def create_table_if_not_exists(self):
@@ -172,6 +171,7 @@ class DynamoClient:
         user_id: str = None,
         avatar_url: str = None,
         timestamp: str = None,
+        msg_id: str = None,
         reactions: dict | None = None,
         increment_activity: bool = True,
     ):
@@ -187,6 +187,8 @@ class DynamoClient:
                     "sender": sender,
                     "content": message,
                 }
+                if msg_id:
+                    item["id"] = msg_id
                 if user_id is not None:
                     item["user_id"] = user_id
                 if avatar_url:
@@ -195,26 +197,31 @@ class DynamoClient:
                     item["reactions"] = reactions
 
                 await table.put_item(Item=item)
+
+            # Log contribution if user_id provided. Chat persistence should not fail
+            # just because the optional activity counter is unavailable.
+            if user_id is not None and increment_activity:
+                try:
+                    async with self.session.resource("dynamodb", **self.creds) as dynamo:
+                        activity_table = await dynamo.Table("UserActivity")
+                        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                        await activity_table.update_item(
+                            Key={"user_id": str(user_id), "date": today},
+                            UpdateExpression="ADD contribution_count :inc",
+                            ExpressionAttributeValues={":inc": 1},
+                        )
+                except Exception as ae:
+                    logger.warning("Could not update chat activity counter: %s", ae)
+
+            return {"ok": True, "actual_timestamp": actual_timestamp}
+
+        except ClientError as ce:
+            error_code = ce.response.get("Error", {}).get("Code", "Unknown")
+            logger.exception("DynamoDB ClientError saving message: %s", ce)
+            return {"ok": False, "reason": f"db_error_{error_code}"}
         except Exception as e:
             logger.exception("Error saving message to DynamoDB: %s", e)
-            return {"ok": False, "reason": "save_failed"}
-
-        # Log contribution if user_id provided. Chat persistence should not fail
-        # just because the optional activity counter is unavailable.
-        if user_id and increment_activity:
-            try:
-                async with self.session.resource("dynamodb", **self.creds) as dynamo:
-                    activity_table = await dynamo.Table("UserActivity")
-                    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                    await activity_table.update_item(
-                        Key={"user_id": str(user_id), "date": today},
-                        UpdateExpression="ADD contribution_count :inc",
-                        ExpressionAttributeValues={":inc": 1},
-                    )
-            except Exception as e:
-                logger.warning("Could not update chat activity counter: %s", e)
-
-        return {"ok": True, "actual_timestamp": actual_timestamp}
+            return {"ok": False, "reason": f"save_failed: {str(e)[:50]}"}
 
     async def get_messages(self, room_id: str, limit: int = 100, last_timestamp: str | None = None):
         try:
@@ -265,11 +272,9 @@ class DynamoClient:
                 if item:
                     return item
 
-                # 2. Try normalized match (handle Z vs +00:00, or microsecond precision differences)
-                # We'll query a small range or just search recent if exact fails
+                # 2. Try normalized match
                 logger.warning(f"get_message exact match failed for {timestamp!r}. Trying query fallback...")
 
-                # Simple normalization: try replacing Z with +00:00 or vice versa if applicable
                 alt_ts = None
                 raw_timestamp = str(timestamp)
                 if raw_timestamp.endswith("Z"):
@@ -284,11 +289,9 @@ class DynamoClient:
                     )
                     item = response.get("Item")
                     if item:
-                        logger.info(f"Found item with alternate timestamp: {alt_ts!r}")
                         return item
 
-                # 3. Last resort: Query messages in the room and look for a matching prefix or close time
-                # This helps if the frontend truncated the string
+                # 3. Last resort: Query messages in the room and look for a matching prefix
                 query_resp = await table.query(
                     KeyConditionExpression=Key("room_id").eq(room_id),
                     ScanIndexForward=False,
@@ -296,11 +299,9 @@ class DynamoClient:
                 )
                 existing = query_resp.get("Items", [])
 
-                # Try prefix match (e.g. 2024-05-01T12:00:00.123 match 2024-05-01T12:00:00.123456)
                 for ex in existing:
                     ex_ts = self._client_timestamp(ex) or self._format_db_timestamp(ex.get("timestamp", ""))
                     if ex_ts.startswith(raw_timestamp) or raw_timestamp.startswith(ex_ts):
-                        logger.info(f"Fuzzy match found: provided={timestamp!r}, db={ex_ts!r}")
                         return ex
 
                 logger.error(f"get_message failed even with fuzzy matching for room={room_id} ts={timestamp!r}")
@@ -356,7 +357,6 @@ class DynamoClient:
             return {"ok": False, "reason": "error"}
 
     async def toggle_reaction(self, room_id: str, timestamp: str, username: str, emoji: str):
-        """Toggle a user's emoji reaction on a message. If already reacted with same emoji, remove it."""
         try:
             item = await self.get_message(room_id, timestamp)
             if not item:
@@ -366,7 +366,6 @@ class DynamoClient:
             actual_timestamp = self._client_timestamp(item)
             reactions = item.get("reactions", {})
 
-            # Toggle: if user already reacted with this emoji, remove them; otherwise add
             users_for_emoji = reactions.get(emoji, [])
             if username in users_for_emoji:
                 users_for_emoji.remove(username)
@@ -391,9 +390,7 @@ class DynamoClient:
             return {"ok": False, "reason": "error", "reactions": {}}
 
     async def mark_as_read(self, room_id: str, timestamp: str, username: str):
-        """Add a user to the read_by list of a message."""
         try:
-            # First find the message to ensure we have the correct timestamp and it exists
             item = await self.get_message(room_id, timestamp)
             if not item:
                 return {"ok": False, "reason": "not_found"}
@@ -403,7 +400,6 @@ class DynamoClient:
 
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
-                # Check if read_by exists and is a set. If not, we might need to initialize it.
                 try:
                     await table.update_item(
                         Key={"room_id": room_id, "timestamp": db_timestamp},
@@ -411,28 +407,24 @@ class DynamoClient:
                         ExpressionAttributeValues={":u": {username}},
                     )
                 except ClientError as ce:
-                    # If attribute type mismatch (e.g. read_by is a List), fallback to SET
                     if ce.response.get("Error", {}).get("Code") == "ValidationException":
                         logger.warning(f"Attribute type mismatch for read_by, attempting fallback to SET for {db_timestamp}")
-                        pass
                     raise ce
             return {"ok": True, "actual_timestamp": actual_timestamp}
         except Exception as e:
             logger.exception("Error marking message as read in DynamoDB: %s", e)
             return {"ok": False, "reason": "error"}
+
     async def search_messages(self, room_id: str, query: str, limit: int = 20):
-        """Search messages in a room containing the query string."""
         try:
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
                 table = await dynamo.Table(self.table_name)
-                # Using scan with FilterExpression for simple substring search
-                # This is not highly efficient for large datasets but works for chat search
                 response = await table.query(
                     KeyConditionExpression=Key("room_id").eq(room_id),
                     FilterExpression="contains(content, :q)",
                     ExpressionAttributeValues={":q": query},
                     Limit=limit,
-                    ScanIndexForward=False,  # Latest matches first
+                    ScanIndexForward=False,
                 )
                 return {"items": response.get("Items", []), "ok": True}
         except Exception as e:

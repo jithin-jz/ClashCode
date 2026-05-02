@@ -278,6 +278,7 @@ class ChatService:
             user_id=user_id,
             avatar_url=avatar_url,
             timestamp=message.timestamp,
+            msg_id=message.id,
         )
         if save_result.get("ok") is False:
             logger.warning("Skipping chat broadcast because save failed in %s: %s", room, save_result.get("reason"))
