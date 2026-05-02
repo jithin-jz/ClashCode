@@ -51,33 +51,6 @@ graph TD
 
 ---
 
-### 🏁 Quick Start
-
-#### 👾 For Players
-Access the platform via your configured ingress URL and create an account to start your journey.
-
-#### 🛠️ For Contributors
-Run the full stack locally using Docker Compose:
-
-1.  **Configure Environment**:
-    ```bash
-    # Set up environment variables for each service
-    cp .env.example .env
-    ```
-
-2.  **Launch Backend Services**:
-    ```bash
-    docker compose -f services/docker-compose.yml up -d --build
-    ```
-
-3.  **Launch Frontend Client**:
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
-
----
 
 ### 🔒 Security Posture
 
