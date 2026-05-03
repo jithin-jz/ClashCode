@@ -62,8 +62,10 @@ class DynamoClient:
             if code == "UnrecognizedClientException" and (self.creds.get("aws_access_key_id") or os.environ.get("AWS_ACCESS_KEY_ID")):
                 logger.warning("Invalid credentials detected (UnrecognizedClientException). Purging env vars and falling back to default IAM chain...")
                 try:
-                    # Clear explicit credentials and environment variables to force fallback
-                    self.creds = {}
+                    # Preserve region but clear explicit credentials and environment variables to force fallback
+                    region = self.creds.get("region_name") or os.environ.get("AWS_REGION") or "ap-south-1"
+                    self.creds = {"region_name": region}
+                    
                     os.environ.pop("AWS_ACCESS_KEY_ID", None)
                     os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
                     os.environ.pop("AWS_SESSION_TOKEN", None)
@@ -73,7 +75,7 @@ class DynamoClient:
                     
                     async with self.session.client("dynamodb", **self.creds) as client:
                         await client.list_tables(Limit=1)
-                    logger.info("DynamoDB connection verified via default IAM chain (after env purge)")
+                    logger.info(f"DynamoDB connection verified via default IAM chain in {region} (after env purge)")
                     return True
                 except Exception as e2:
                     logger.error("Retry with default IAM chain also FAILED: %s", e2)
