@@ -27,10 +27,11 @@ class DynamoClient:
 
         if self.endpoint_url:
             self.creds["endpoint_url"] = self.endpoint_url
-            # For local DynamoDB, 'dummy' keys are acceptable and often necessary if not in env
-            self.creds["aws_access_key_id"] = access_key or "dummy"
-            self.creds["aws_secret_access_key"] = secret_key or "dummy"
-            if session_token:
+            if access_key and access_key != "dummy":
+                self.creds["aws_access_key_id"] = access_key
+            if secret_key and secret_key != "dummy":
+                self.creds["aws_secret_access_key"] = secret_key
+            if session_token and session_token != "dummy":
                 self.creds["aws_session_token"] = session_token
             logger.info(f"DynamoDB connecting to local endpoint: {self.endpoint_url}")
         else:
