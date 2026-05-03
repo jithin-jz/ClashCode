@@ -27,11 +27,10 @@ class DynamoClient:
 
         if self.endpoint_url:
             self.creds["endpoint_url"] = self.endpoint_url
-            if access_key and access_key != "dummy":
-                self.creds["aws_access_key_id"] = access_key
-            if secret_key and secret_key != "dummy":
-                self.creds["aws_secret_access_key"] = secret_key
-            if session_token and session_token != "dummy":
+            # For local DynamoDB, 'dummy' keys are acceptable and often necessary if not in env
+            self.creds["aws_access_key_id"] = access_key or "dummy"
+            self.creds["aws_secret_access_key"] = secret_key or "dummy"
+            if session_token:
                 self.creds["aws_session_token"] = session_token
             logger.info(f"DynamoDB connecting to local endpoint: {self.endpoint_url}")
         else:
@@ -50,12 +49,31 @@ class DynamoClient:
         """Quick check that DynamoDB credentials are valid."""
         try:
             async with self.session.client("dynamodb", **self.creds) as client:
-                await client.describe_table(TableName=self.table_name)
-            logger.info("DynamoDB connection verified for table '%s'", self.table_name)
+                # Use list_tables instead of describe_table to avoid ResourceNotFoundException
+                # if the table hasn't been created yet.
+                await client.list_tables(Limit=1)
+            logger.info("DynamoDB connection verified")
             return True
         except ClientError as e:
             code = e.response.get("Error", {}).get("Code", "Unknown")
-            logger.error("DynamoDB connection check FAILED (table=%s): %s — %s", self.table_name, code, e)
+            
+            # If explicit credentials fail with an invalid token, try falling back to IAM role/default chain
+            if code == "UnrecognizedClientException" and self.creds.get("aws_access_key_id"):
+                logger.warning("Explicit DynamoDB credentials failed with UnrecognizedClientException. Retrying with default IAM chain...")
+                try:
+                    # Filter out explicit creds to let aioboto3 use the default chain
+                    fallback_creds = {k: v for k, v in self.creds.items() 
+                                     if k not in ["aws_access_key_id", "aws_secret_access_key", "aws_session_token"]}
+                    async with self.session.client("dynamodb", **fallback_creds) as client:
+                        await client.list_tables(Limit=1)
+                    
+                    logger.info("Connection successful via default IAM chain. Updating session configuration.")
+                    self.creds = fallback_creds
+                    return True
+                except Exception as e2:
+                    logger.error("Retry with default IAM chain also FAILED: %s", e2)
+
+            logger.error("DynamoDB connection check FAILED: %s — %s", code, e)
             return False
         except Exception as e:
             logger.error("DynamoDB connection check FAILED: %s", e)
