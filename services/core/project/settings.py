@@ -208,8 +208,8 @@ if USE_CLOUDINARY:
 
 # Backend URL (for absolute media paths)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-EXECUTOR_URL = os.getenv("EXECUTOR_URL", "http://executor-service:8011/execute")
-AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-service:8002")
+EXECUTOR_URL = os.getenv("EXECUTOR_URL", "http://executor:8011/execute")
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai:8002")
 
 # Firebase
 FIREBASE_SERVICE_ACCOUNT_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
