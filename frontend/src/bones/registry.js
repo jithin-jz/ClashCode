@@ -6,6 +6,7 @@
 import { registerBones } from "boneyard-js/react";
 
 import _achievements_page from "./achievements-page.bones.json";
+import _admin_dashboard from "./admin-dashboard.bones.json";
 import _buy_xp_page from "./buy-xp-page.bones.json";
 import _home_page from "./home-page.bones.json";
 import _landing_page from "./landing-page.bones.json";
@@ -15,6 +16,7 @@ import _profile_page from "./profile-page.bones.json";
 
 registerBones({
   "achievements-page": _achievements_page,
+  "admin-dashboard": _admin_dashboard,
   "buy-xp-page": _buy_xp_page,
   "home-page": _home_page,
   "landing-page": _landing_page,

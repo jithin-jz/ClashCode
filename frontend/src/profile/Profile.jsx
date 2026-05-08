@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Skeleton } from "boneyard-js/react";
+import { ProfileSkeleton } from "../bones/PageSkeletons";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 
@@ -74,7 +75,11 @@ const Profile = () => {
   }
 
   return (
-    <Skeleton name="profile-page" loading={loading}>
+    <Skeleton
+      name="profile-page"
+      loading={loading}
+      fallback={<ProfileSkeleton />}
+    >
       <div className="relative w-full pb-20 sm:pb-0 text-white flex flex-col">
         <main className="relative z-10 flex-1 px-4 sm:px-10 lg:px-14 py-4">
           <div className="w-full mx-auto">
@@ -104,7 +109,10 @@ const Profile = () => {
               </div>
 
               {/* Middle Column - Feed/Edit */}
-              <div ref={editSectionRef} className="lg:col-span-6 space-y-6 min-w-0">
+              <div
+                ref={editSectionRef}
+                className="lg:col-span-6 space-y-6 min-w-0"
+              >
                 {isEditing && isOwnProfile ? (
                   <EditProfileForm
                     editForm={editForm}
@@ -118,7 +126,10 @@ const Profile = () => {
                   />
                 ) : (
                   <>
-                    <ContributionGraph data={contributionData} loading={loadingContributions} />
+                    <ContributionGraph
+                      data={contributionData}
+                      loading={loadingContributions}
+                    />
                     <div className="flex items-center justify-between mb-4 mt-8">
                       <h3 className="text-xl font-black italic text-white flex items-center gap-3">
                         <span className="w-1.5 h-6 bg-emerald-500 rounded-full" />
@@ -137,7 +148,10 @@ const Profile = () => {
                         </Button>
                       )}
                     </div>
-                    <PostGrid username={profileUser?.username} refreshTrigger={refreshPosts} />
+                    <PostGrid
+                      username={profileUser?.username}
+                      refreshTrigger={refreshPosts}
+                    />
                   </>
                 )}
               </div>

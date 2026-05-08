@@ -23,15 +23,44 @@ import {
 } from "../components/ui/card";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "boneyard-js/react";
+import { MarketplaceSkeleton } from "../bones/PageSkeletons";
 import { useMarketplace } from "../hooks/useMarketplace";
 import { useReferral } from "../hooks/useReferral";
 import ReferralSection from "../profile/components/ReferralSection";
 
 const CATEGORIES = [
-  { id: "THEME", label: "Themes", icon: Palette, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
-  { id: "FONT", label: "Fonts", icon: Type, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-  { id: "EFFECT", label: "Effects", icon: Sparkles, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-  { id: "VICTORY", label: "Victory", icon: PartyPopper, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+  {
+    id: "THEME",
+    label: "Themes",
+    icon: Palette,
+    color: "text-indigo-500",
+    bg: "bg-indigo-500/10",
+    border: "border-indigo-500/20",
+  },
+  {
+    id: "FONT",
+    label: "Fonts",
+    icon: Type,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
+  },
+  {
+    id: "EFFECT",
+    label: "Effects",
+    icon: Sparkles,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+  },
+  {
+    id: "VICTORY",
+    label: "Victory",
+    icon: PartyPopper,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+  },
 ];
 
 const MarketplacePage = memo(() => {
@@ -83,7 +112,11 @@ const MarketplacePage = memo(() => {
   }, []);
 
   return (
-    <Skeleton name="marketplace-page" loading={isLoading && items.length === 0}>
+    <Skeleton
+      name="marketplace-page"
+      loading={isLoading && items.length === 0}
+      fallback={<MarketplaceSkeleton />}
+    >
       <div className="relative w-full pb-20 sm:pb-0 text-white flex flex-col pt-0 mt-0">
         {/* Controls & Category Tabs */}
         <div className="sticky top-14 z-20 border-b border-[#1e1e1e] bg-[#0a0a0a]/92 backdrop-blur-xl">
@@ -183,7 +216,9 @@ const MarketplacePage = memo(() => {
                                 className={`transition-all duration-500 transform group-hover:scale-110 ${
                                   isActive
                                     ? "text-emerald-500"
-                                    : CATEGORIES.find(c => c.id === item.category)?.color || "text-neutral-600"
+                                    : CATEGORIES.find(
+                                        (c) => c.id === item.category,
+                                      )?.color || "text-neutral-600"
                                 }`}
                               >
                                 {renderIcon(item.icon_name)}
@@ -201,9 +236,9 @@ const MarketplacePage = memo(() => {
 
                               <Badge
                                 className={`absolute top-2 left-2 text-[7px] px-1.5 py-0.5 rounded-sm border font-bold uppercase tracking-[0.2em] font-mono transition-colors ${
-                                  isActive 
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                                    : `${CATEGORIES.find(c => c.id === item.category)?.bg} ${CATEGORIES.find(c => c.id === item.category)?.color} ${CATEGORIES.find(c => c.id === item.category)?.border}`
+                                  isActive
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                    : `${CATEGORIES.find((c) => c.id === item.category)?.bg} ${CATEGORIES.find((c) => c.id === item.category)?.color} ${CATEGORIES.find((c) => c.id === item.category)?.border}`
                                 }`}
                               >
                                 {item.category}

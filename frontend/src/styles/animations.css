@@ -83,3 +83,44 @@
   background-size: 200% 100%;
   animation: ds-shimmer 1.4s ease-in-out infinite;
 }
+
+.ds-skeleton-bone {
+  position: relative;
+  overflow: hidden;
+  background: #101010;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.ds-skeleton-bone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.035) 42%,
+    rgba(255, 255, 255, 0.095) 50%,
+    rgba(255, 255, 255, 0.035) 58%,
+    transparent 100%
+  );
+  animation: ds-skeleton-shimmer 1.7s ease-in-out infinite;
+}
+
+.ds-skeleton-panel {
+  background: #050505;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+@keyframes ds-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-skeleton-bone::after {
+    animation: none;
+  }
+}

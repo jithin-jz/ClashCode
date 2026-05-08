@@ -12,3 +12,5 @@ export * from "./pages/AdminSkeleton";
 export * from "./pages/BuyXpSkeleton";
 export * from "./pages/LandingSkeleton";
 export * from "./pages/GenericSkeleton";
+export * from "./pages/OAuthCallbackSkeleton";
+export * from "./pages/CertificateVerifySkeleton";

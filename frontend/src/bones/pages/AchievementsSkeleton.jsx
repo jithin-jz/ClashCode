@@ -1,5 +1,5 @@
 import React from "react";
-import { P } from "../SkeletonPrimitives";
+import { P, Panel } from "../SkeletonPrimitives";
 
 export const AchievementsSkeleton = () => (
   <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -37,12 +37,9 @@ export const AchievementsSkeleton = () => (
       </div>
 
       {/* Grid Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-4"
-          >
+          <Panel key={i} className="space-y-4 bg-white/[0.02] p-4">
             <P className="w-10 h-10 rounded-lg" />
             <div className="space-y-2">
               <P className="h-3 w-24" />
@@ -53,7 +50,7 @@ export const AchievementsSkeleton = () => (
               <P className="h-5 w-12 rounded-full opacity-20" />
               <P className="h-3 w-3 rounded-full opacity-20" />
             </div>
-          </div>
+          </Panel>
         ))}
       </div>
     </div>

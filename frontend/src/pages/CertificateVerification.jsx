@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { challengesApi } from "../services/challengesApi";
 import CertificateTemplate from "../components/CertificateTemplate";
-import { Skeleton } from "boneyard-js/react";
+import { CertificateVerifySkeleton } from "../bones/PageSkeletons";
 
 const CertificateVerification = () => {
   const { certificateId } = useParams();
@@ -27,19 +27,7 @@ const CertificateVerification = () => {
   }, [certificateId]);
 
   if (loading) {
-    return (
-      <Skeleton
-        name="certificate-verify"
-        loading
-        className="h-screen flex flex-col items-center justify-center p-4 gap-4 overflow-hidden bg-zinc-950"
-      >
-        <div className="h-12 w-full max-w-5xl rounded-xl bg-white/[0.04] animate-pulse" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full max-w-6xl flex-1 min-h-0">
-          <div className="lg:col-span-8 h-full rounded-xl bg-white/[0.04] animate-pulse" />
-          <div className="lg:col-span-4 h-full rounded-xl bg-white/[0.04] animate-pulse" />
-        </div>
-      </Skeleton>
-    );
+    return <CertificateVerifySkeleton />;
   }
 
   if (error || !certificate?.valid) {

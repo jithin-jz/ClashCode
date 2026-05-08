@@ -13,6 +13,7 @@ import AdminReports from "./AdminReports";
 import AdminCeleryMonitor from "./AdminCeleryMonitor";
 import AppBackdrop from "../components/AppBackdrop";
 import SystemOverview from "./components/SystemOverview";
+import { AdminSkeleton } from "../bones/PageSkeletons";
 
 // Hooks
 import { useAdminDashboard } from "./hooks/useAdminDashboard";
@@ -39,7 +40,11 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Skeleton name="admin-dashboard" loading={loading}>
+    <Skeleton
+      name="admin-dashboard"
+      loading={loading}
+      fallback={<AdminSkeleton />}
+    >
       <div className="relative h-screen overflow-hidden bg-black font-sans antialiased text-foreground">
         <AppBackdrop variant="admin" />
         <div className="relative z-10 flex h-full flex-col md:flex-row">

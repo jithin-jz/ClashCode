@@ -4,6 +4,7 @@ import useAuthStore from "../stores/useAuthStore";
 import { useHomeData } from "../hooks/useHomeData";
 
 import { Skeleton } from "boneyard-js/react";
+import { HomeSkeleton } from "../bones/PageSkeletons";
 // Components
 import LevelModal from "../game/LevelModal";
 import { ChallengeMap } from "../home";
@@ -71,7 +72,7 @@ const Home = () => {
   };
 
   return (
-    <Skeleton name="home-page" loading={isLoading}>
+    <Skeleton name="home-page" loading={isLoading} fallback={<HomeSkeleton />}>
       <div className="w-full relative">
         <ChallengeMap
           user={user}

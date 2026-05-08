@@ -256,6 +256,8 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": os.path.join(BASE_DIR, "logs/admin.log"),
             "formatter": "verbose",
+        } if not DEBUG else {
+            "class": "logging.NullHandler",
         },
     },
     "loggers": {

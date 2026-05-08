@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../stores/useAuthStore";
-import { Skeleton } from "boneyard-js/react";
+import { OAuthCallbackSkeleton } from "../bones/PageSkeletons";
 
 const OAuthCallback = ({ provider }) => {
   const [searchParams] = useSearchParams();
@@ -128,22 +128,7 @@ const OAuthCallback = ({ provider }) => {
   }, [isAuthenticated, navigate, isPopup, user]);
 
   if (loading || isProcessing) {
-    return (
-      <Skeleton
-        name="oauth-callback"
-        loading
-        className="min-h-screen flex items-center justify-center px-4 bg-[#000000]"
-      >
-        <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#141414]/60 backdrop-blur-3xl p-8 space-y-6 text-center">
-          <div className="h-10 w-48 rounded-md mx-auto bg-white/[0.04] animate-pulse" />
-          <div className="h-4 w-64 rounded mx-auto bg-white/[0.04] animate-pulse" />
-          <div className="space-y-4 pt-4">
-            <div className="h-12 w-full rounded-2xl bg-white/[0.04] animate-pulse" />
-            <div className="h-12 w-full rounded-2xl bg-white/[0.04] animate-pulse" />
-          </div>
-        </div>
-      </Skeleton>
-    );
+    return <OAuthCallbackSkeleton />;
   }
 
   if (error || searchParams.get("error")) {
@@ -176,22 +161,7 @@ const OAuthCallback = ({ provider }) => {
     );
   }
 
-  return (
-    <Skeleton
-      name="oauth-callback"
-      loading={false}
-      className="min-h-screen flex items-center justify-center px-4 bg-[#000000]"
-    >
-      <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#141414]/60 backdrop-blur-3xl p-8 space-y-6 text-center">
-        <div className="h-10 w-56 rounded-md mx-auto bg-white/[0.04] animate-pulse" />
-        <div className="h-4 w-64 rounded mx-auto bg-white/[0.04] animate-pulse" />
-        <div className="space-y-4 pt-4">
-          <div className="h-12 w-full rounded-2xl bg-white/[0.04] animate-pulse" />
-          <div className="h-12 w-full rounded-2xl bg-white/[0.04] animate-pulse" />
-        </div>
-      </div>
-    </Skeleton>
-  );
+  return <OAuthCallbackSkeleton />;
 };
 
 export default OAuthCallback;

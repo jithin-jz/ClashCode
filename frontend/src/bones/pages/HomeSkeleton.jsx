@@ -1,93 +1,115 @@
 import React from "react";
-import { P, Circle } from "../SkeletonPrimitives";
+import { P, Circle, Panel } from "../SkeletonPrimitives";
+
+const TRACKS = [
+  { cards: 10, width: "w-28" },
+  { cards: 10, width: "w-32" },
+  { cards: 10, width: "w-28" },
+  { cards: 10, width: "w-36" },
+  { cards: 10, width: "w-32" },
+  { cards: 10, width: "w-28" },
+];
 
 export const HomeSkeleton = () => (
-  <div className="w-full min-h-screen bg-black">
-    <div className="w-full px-3 sm:px-5 py-4 max-w-5xl mx-auto space-y-8">
-      {/* Platform Status Card */}
-      <div className="px-4">
-        <div className="bg-[#111] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div className="flex items-start gap-3">
-            <Circle className="w-8 h-8 rounded-lg" />
-            <div className="space-y-1.5">
-              <P className="h-2 w-20" />
-              <P className="h-3 w-32" />
-            </div>
-          </div>
-          <div className="flex-1 max-w-[300px] space-y-2">
-            <div className="flex justify-between">
-              <P className="h-3 w-24" />
-              <P className="h-3 w-8" />
-            </div>
-            <P className="h-1.5 w-full rounded-full" />
-          </div>
-        </div>
-      </div>
-
-      {/* Track Sections */}
-      {[...Array(2)].map((_, trackIdx) => (
-        <section key={trackIdx} className="px-4 space-y-4">
-          {/* Track Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <P className="h-4 w-32" />
-                <P className="h-4 w-12 rounded-full" />
+  <div className="w-full min-h-screen bg-black pb-20 sm:pb-0">
+    <div className="w-full px-3 sm:px-5">
+      <div className="space-y-0.5 pb-4">
+        <div className="px-4 pb-4 pt-4">
+          <Panel className="flex flex-col gap-5 border-white/60 bg-black p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <P className="h-8 w-8 shrink-0 rounded-lg" />
+              <div className="min-w-0 space-y-1.5 pt-0.5">
+                <P className="h-2.5 w-24 rounded-sm" />
+                <P className="h-3.5 w-32 rounded-sm" />
               </div>
-              <P className="h-3 w-64 opacity-50" />
             </div>
-            <div className="text-right space-y-1.5">
-              <P className="h-2 w-12 ml-auto" />
-              <P className="h-1.5 w-20 rounded-full" />
+            <div className="flex flex-1 flex-col gap-2 sm:max-w-[300px]">
+              <div className="flex items-end justify-between">
+                <P className="h-4 w-32 rounded-sm" />
+                <P className="h-3 w-8 rounded-sm" />
+              </div>
+              <P className="h-1.5 w-full rounded-full" />
             </div>
-          </div>
+          </Panel>
+        </div>
 
-          {/* Card Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {[...Array(4 + trackIdx * 2)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 min-h-[120px] space-y-4"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start gap-2.5">
-                    <Circle className="w-8 h-8 rounded-lg" />
-                    <div className="space-y-1.5">
-                      <P className="h-2 w-12 opacity-40" />
-                      <P className="h-3 w-20" />
+        {TRACKS.map((track, trackIdx) => (
+          <section key={trackIdx} className="px-4 py-4 sm:px-4">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="mb-1 flex items-center gap-2">
+                  <P className={`h-4 ${track.width} rounded-sm`} />
+                  {trackIdx % 3 === 0 && (
+                    <P className="h-5 w-12 rounded-full" />
+                  )}
+                </div>
+                <P className="h-3 w-64 max-w-[58vw] rounded-sm opacity-80" />
+              </div>
+              <div className="shrink-0 space-y-1.5 text-right">
+                <P className="ml-auto h-3 w-10 rounded-sm" />
+                <P className="h-1.5 w-20 rounded-full" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {[...Array(track.cards)].map((_, i) => (
+                <Panel
+                  key={i}
+                  className="min-h-[120px] border-white/20 bg-white/[0.01] p-3.5"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start gap-2.5">
+                      <P className="h-8 w-8 shrink-0 rounded-lg" />
+                      <div className="space-y-1.5">
+                        <P className="h-2.5 w-14 rounded-sm opacity-80" />
+                        <P className="h-3.5 w-20 rounded-sm" />
+                      </div>
+                    </div>
+                    <Circle className="h-4 w-4" />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <P className="h-4 w-14 rounded-full" />
+                      <P className="h-3 w-10 rounded-sm opacity-60" />
+                    </div>
+                    <div className="flex gap-0.5">
+                      <Circle className="h-2.5 w-2.5 opacity-70" />
+                      <Circle className="h-2.5 w-2.5 opacity-70" />
+                      <Circle className="h-2.5 w-2.5 opacity-70" />
                     </div>
                   </div>
-                  <Circle className="w-4 h-4" />
-                </div>
-                <div className="flex items-center gap-1.5 pt-1">
-                  <P className="h-4 w-14 rounded-full" />
-                  <P className="h-3 w-10 opacity-30" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+                </Panel>
+              ))}
+            </div>
+          </section>
+        ))}
 
-      {/* Certificate Section */}
-      <div className="px-4 pb-20">
-        <div className="bg-[#111] border border-white/5 rounded-xl p-6 space-y-6">
-          <div className="flex items-start gap-4">
-            <Circle className="w-10 h-10 rounded-lg" />
-            <div className="space-y-1.5">
-              <P className="h-2 w-24 opacity-40" />
-              <P className="h-4 w-48" />
-              <P className="h-3 w-64 opacity-30" />
+        <section className="px-4 pb-12 pt-4 sm:px-4">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0 space-y-2">
+              <P className="h-4 w-36 rounded-sm" />
+              <P className="h-3 w-52 rounded-sm opacity-80" />
             </div>
+            <P className="h-6 w-24 rounded-full" />
           </div>
-          <div className="space-y-2.5">
-            <div className="flex justify-between">
-              <P className="h-3 w-32 opacity-40" />
-              <P className="h-3 w-10" />
+          <Panel className="p-4">
+            <div className="flex items-start gap-4">
+              <P className="h-10 w-10 shrink-0 rounded-lg" />
+              <div className="min-w-0 space-y-2 pt-0.5">
+                <P className="h-3 w-24 rounded-sm" />
+                <P className="h-4 w-56 max-w-[60vw] rounded-sm" />
+                <P className="h-3 w-72 max-w-[70vw] rounded-sm opacity-70" />
+              </div>
             </div>
-            <P className="h-1.5 w-full rounded-full" />
-          </div>
-        </div>
+            <div className="mt-6 space-y-2.5">
+              <div className="flex justify-between">
+                <P className="h-3 w-32 rounded-sm opacity-70" />
+                <P className="h-6 w-9 rounded-md" />
+              </div>
+              <P className="h-1.5 w-full rounded-full" />
+            </div>
+          </Panel>
+        </section>
       </div>
     </div>
   </div>

@@ -1,12 +1,7 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import useAuthStore from "../stores/useAuthStore";
 import { isBoneyard } from "../utils/isBoneyard";
-
-const PageLoader = () => (
-  <div className="h-screen w-full bg-black flex items-center justify-center">
-    <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-emerald-400 animate-spin" />
-  </div>
-);
+import { PageSkeletonForPath } from "../bones/RouteSkeleton";
 
 /**
  * PublicOnlyRoute - For login/register pages
@@ -15,11 +10,12 @@ const PageLoader = () => (
  * - Regular users → /home
  */
 const PublicOnlyRoute = ({ children }) => {
+  const location = useLocation();
   const { isAuthenticated, isInitialized, user, loading } = useAuthStore();
 
   // Wait for auth check to complete before rendering
   if (!isInitialized || loading) {
-    return <PageLoader />;
+    return <PageSkeletonForPath pathname={location.pathname} />;
   }
 
   // Redirect authenticated users away from public pages (unless crawler)

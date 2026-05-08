@@ -45,8 +45,11 @@ import {
   BuyXpSkeleton,
   LandingSkeleton,
   GenericSkeleton,
+  OAuthCallbackSkeleton,
+  CertificateVerifySkeleton,
 } from "./bones/PageSkeletons";
 import ChallengeWorkspaceSkeleton from "./game/ChallengeWorkspaceSkeleton";
+import { PageSkeletonForPath } from "./bones/RouteSkeleton";
 
 import { useInitializeApp } from "./hooks/useInitializeApp";
 import MainLayout from "./common/MainLayout";
@@ -61,21 +64,7 @@ const AppContent = memo(() => {
   // Root application loader — show layout-accurate skeleton while auth initialises
   // BYPASS: If this is the Boneyard crawler, we skip the initial skeleton to render the actual routes/markers.
   if (authLoading && !isBoneyard()) {
-    if (location.pathname.startsWith("/level"))
-      return <ChallengeWorkspaceSkeleton />;
-    if (location.pathname.startsWith("/admin")) return <AdminSkeleton />;
-    if (location.pathname.startsWith("/store")) return <MarketplaceSkeleton />;
-    if (
-      location.pathname.startsWith("/shop") ||
-      location.pathname.startsWith("/buy-xp")
-    )
-      return <BuyXpSkeleton />;
-    if (location.pathname.startsWith("/profile")) return <ProfileSkeleton />;
-    if (location.pathname.startsWith("/achievements"))
-      return <AchievementsSkeleton />;
-    if (location.pathname === "/home") return <HomeSkeleton />;
-    if (location.pathname === "/login") return <LoginSkeleton />;
-    return <GenericSkeleton />;
+    return <PageSkeletonForPath pathname={location.pathname} />;
   }
 
   return (
@@ -112,7 +101,7 @@ const AppContent = memo(() => {
         <Route
           path="/auth/github/callback"
           element={
-            <Suspense fallback={<LoginSkeleton />}>
+            <Suspense fallback={<OAuthCallbackSkeleton />}>
               <OAuthCallback provider="github" />
             </Suspense>
           }
@@ -120,7 +109,7 @@ const AppContent = memo(() => {
         <Route
           path="/auth/google/callback"
           element={
-            <Suspense fallback={<LoginSkeleton />}>
+            <Suspense fallback={<OAuthCallbackSkeleton />}>
               <OAuthCallback provider="google" />
             </Suspense>
           }
@@ -130,7 +119,7 @@ const AppContent = memo(() => {
         <Route
           path="/verify/:certificateId"
           element={
-            <Suspense fallback={<GenericSkeleton />}>
+            <Suspense fallback={<CertificateVerifySkeleton />}>
               <CertificateVerification />
             </Suspense>
           }
@@ -255,7 +244,6 @@ const AppContent = memo(() => {
       </Routes>
     </>
   );
-
 });
 
 AppContent.displayName = "AppContent";

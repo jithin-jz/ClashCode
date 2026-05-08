@@ -1,19 +1,15 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import useAuthStore from "../stores/useAuthStore";
 import { isBoneyard } from "../utils/isBoneyard";
-
-const PageLoader = () => (
-  <div className="h-screen w-full bg-black flex items-center justify-center">
-    <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-emerald-400 animate-spin" />
-  </div>
-);
+import { PageSkeletonForPath } from "../bones/RouteSkeleton";
 
 /**
  * AdminRoute - For admin-only pages
  * Requires user to be authenticated AND be staff/superuser
  */
 const AdminRoute = ({ children }) => {
+  const location = useLocation();
   const { isAuthenticated, user, loading, isInitialized } = useAuthStore(
     useShallow((s) => ({
       isAuthenticated: s.isAuthenticated,
@@ -24,7 +20,7 @@ const AdminRoute = ({ children }) => {
   );
 
   if (loading || !isInitialized) {
-    return <PageLoader />;
+    return <PageSkeletonForPath pathname={location.pathname} />;
   }
 
   // Allow Boneyard crawler to pass through
