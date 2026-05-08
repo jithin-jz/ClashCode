@@ -11,11 +11,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
-import { Skeleton } from "boneyard-js/react";
 import useAuthStore from "../stores/useAuthStore";
 
 // Components
 import AchievementCard from "../components/AchievementCard";
+import { AchievementsSkeleton } from "../bones/PageSkeletons";
 
 // Hooks
 import { useAchievements } from "../hooks/useAchievements";
@@ -29,9 +29,10 @@ const AchievementsPage = () => {
 
   const trophyScore = (userAchievements?.length || 0) * 10;
 
+  if (loading) return <AchievementsSkeleton />;
+
   return (
-    <Skeleton name="achievements-page" loading={loading}>
-      <div className="min-h-screen bg-black text-white selection:bg-emerald-500/30 pb-24 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white selection:bg-emerald-500/30 pb-24 relative overflow-hidden">
         {/* Subtle Background FX */}
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.05),transparent_70%)]" />
@@ -95,7 +96,6 @@ const AchievementsPage = () => {
           </div>
         </div>
       </div>
-    </Skeleton>
   );
 };
 
