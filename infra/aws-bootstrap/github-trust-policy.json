@@ -12,7 +12,10 @@
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:jithin-jz/ClashCode:*"
+          "token.actions.githubusercontent.com:sub": [
+            "repo:jithin-jz/ClashCode:*",
+            "repo:jithin-jz/clashcode:*"
+          ]
         }
       }
     }
