@@ -1,9 +1,10 @@
 name: Deploy to AWS EKS
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  # Deployment disabled - AWS account needs reactivation
+  # push:
+  #   branches: [main]
+  workflow_dispatch: # Manual trigger only
 
 permissions:
   id-token: write # OIDC
