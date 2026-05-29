@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLASHCODE - Command Reference</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="back" href="index.html">&larr; Back to index</a>
+  <h1>CLASHCODE - Command Reference</h1>
+
+  <h2>Docker / Backend Stack</h2>
+  <pre>Start services: docker compose up -d --build
+Stop services:  docker compose down
+View logs:      docker compose logs -f
+Service status: docker compose ps</pre>
+
+  <h2>Django (Core Service)</h2>
+  <pre>Run migrations:    docker compose exec core python manage.py migrate
+Create admin user: docker compose exec core python manage.py createsuperuser
+Load challenges:   docker compose exec core python manage.py load_challenges
+Shell access:      docker compose exec core python manage.py shell</pre>
+
+  <h2>Database</h2>
+  <pre>Postgres shell: docker compose exec db psql -U clashcode
+Redis shell:    docker compose exec redis redis-cli</pre>
+
+  <h2>Frontend (React/Vite)</h2>
+  <pre>Install deps: npm install
+Start dev:    npm run dev
+Build prod:   npm run build
+Preview:      npm run preview</pre>
+
+  <h2>Git</h2>
+  <pre>Add changes: git add .
+Commit:      git commit -m "Your message"
+Push:        git push origin main
+Pull:        git pull origin main</pre>
+
+  <h2>Infrastructure (Terraform)</h2>
+  <pre>Init:    terraform init
+Plan:    terraform plan
+Apply:   terraform apply
+Destroy: terraform destroy</pre>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLASHCODE - Setup Guide</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="back" href="index.html">&larr; Back to index</a>
+  <h1>CLASHCODE - Setup Guide</h1>
+
+  <h2>Prerequisites</h2>
+  <p>You'll need Docker, Node.js, Python 3.11+, and Git.</p>
+
+  <h2>Local Development</h2>
+  <p>1. Clone the repo:</p>
+  <pre>git clone https://github.com/jithin-jz/clashcode.git</pre>
+
+  <p>2. Environment Files: copy the <code>.env.example</code> files to <code>.env</code> in these folders:</p>
+  <ul>
+    <li>services/</li>
+    <li>services/core/</li>
+    <li>services/chat/</li>
+    <li>services/ai/</li>
+    <li>frontend/</li>
+  </ul>
+
+  <p>3. Start the Backend:</p>
+  <pre>cd services
+docker compose up -d --build</pre>
+
+  <p>4. Database Setup:</p>
+  <pre>docker compose exec core python manage.py migrate
+docker compose exec core python manage.py createsuperuser
+docker compose exec core python manage.py load_challenges</pre>
+
+  <p>5. Start the Frontend:</p>
+  <pre>cd frontend
+npm install
+npm run dev</pre>
+
+  <h2>Common Commands</h2>
+  <ul>
+    <li>Stop everything: <code>docker compose down</code></li>
+    <li>Check logs: <code>docker compose logs -f</code></li>
+    <li>Database shell: <code>docker compose exec db psql -U clashcode</code></li>
+  </ul>
+
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li>If port 80 is busy, change <code>NGINX_HTTP_PORT</code> in services/.env.</li>
+    <li>Check if the 'db' container is running if you can't log in.</li>
+  </ul>
+</body>
+</html>

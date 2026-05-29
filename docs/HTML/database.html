@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLASHCODE - Database Details</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="back" href="index.html">&larr; Back to index</a>
+  <h1>CLASHCODE - Database Details</h1>
+  <p>We use a mix of databases to handle different types of data efficiently:</p>
+
+  <h2>1. PostgreSQL (Primary)</h2>
+  <ul>
+    <li><strong>Role:</strong> Main storage for structured data.</li>
+    <li><strong>Stores:</strong> Users, profiles, challenges, submissions, XP transactions, and posts.</li>
+    <li><strong>Why:</strong> Relational integrity and reliable transactions.</li>
+  </ul>
+
+  <h2>2. Redis (Cache &amp; Broker)</h2>
+  <ul>
+    <li><strong>Role:</strong> Fast, temporary data storage.</li>
+    <li><strong>Stores:</strong> User sessions, rate limits, OTP codes, and Celery task queues.</li>
+    <li><strong>Why:</strong> Extremely low latency and built-in support for Pub/Sub (used in Chat).</li>
+  </ul>
+
+  <h2>3. Amazon DynamoDB (NoSQL)</h2>
+  <ul>
+    <li><strong>Role:</strong> Scalable message storage.</li>
+    <li><strong>Stores:</strong> Chat history and user activity logs.</li>
+    <li><strong>Why:</strong> Handles massive amounts of unstructured data without slowing down.</li>
+  </ul>
+
+  <h2>4. ChromaDB / Pinecone (Vector DB)</h2>
+  <ul>
+    <li><strong>Role:</strong> AI context storage.</li>
+    <li><strong>Stores:</strong> Embeddings for challenges and hint templates.</li>
+    <li><strong>Why:</strong> Allows the AI to search for "meaning" rather than just keywords.</li>
+  </ul>
+</body>
+</html>
