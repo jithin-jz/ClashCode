@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClashCode — Documentation</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='72' font-size='55' font-weight='bold' font-family='system-ui' text-anchor='middle' fill='white'>CC</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81'},surface:{50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',700:'#334155',800:'#1e293b',900:'#0f172a'}}}}}</script>
+    <style>
+        .sidebar-link.active{background:#eef2ff;color:#4f46e5;font-weight:600}
+        code{font-size:.85em;background:#f1f5f9;padding:2px 6px;border-radius:4px}
+        pre code{background:none;padding:0}
+        pre{background:#1e293b;color:#e2e8f0;padding:1rem;border-radius:.5rem;overflow-x:auto;font-size:.82rem;line-height:1.6}
+        @media(max-width:1023px){.sidebar{transform:translateX(-100%);position:fixed;z-index:50;top:0;left:0;height:100vh;width:280px;transition:transform .3s}.sidebar.open{transform:translateX(0)}}
+    </style>
+</head>
+<body class="bg-white text-surface-800 font-sans antialiased">
+<button id="menuBtn" class="lg:hidden fixed top-4 left-4 z-[60] bg-brand-600 text-white p-2 rounded-lg shadow-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<div id="overlay" class="hidden fixed inset-0 bg-black/40 z-40 lg:hidden"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar lg:fixed lg:translate-x-0 lg:top-0 lg:left-0 lg:h-screen lg:w-72 bg-white border-r border-surface-200 overflow-y-auto p-6">
+    <div class="flex items-center gap-3 mb-8">
+        <div class="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">CC</div>
+        <div><h1 class="text-lg font-bold text-surface-900">ClashCode</h1><p class="text-xs text-surface-700">Project Documentation</p></div>
+    </div>
+    <nav class="flex flex-col gap-0.5 text-sm">
+        <a href="#overview" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Overview</a>
+        <a href="#architecture" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Architecture</a>
+        <a href="#tech-stack" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Tech Stack</a>
+        <a href="#services" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Services</a>
+        <a href="#data-models" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Data Models</a>
+        <a href="#frontend" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Frontend</a>
+        <a href="#database" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Databases</a>
+        <a href="#api" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">API Reference</a>
+        <a href="#security" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Security</a>
+        <a href="#deployment" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Deployment & CI/CD</a>
+        <a href="#setup" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Local Setup</a>
+        <a href="#commands" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Commands</a>
+        <a href="#project-structure" class="sidebar-link px-3 py-2 rounded-md hover:bg-surface-100">Project Structure</a>
+    </nav>
+    <div class="mt-8 pt-4 border-t border-surface-200 text-xs text-surface-700"><p>MIT License • June 2026</p></div>
+</aside>
+
+<!-- Main -->
+<main class="lg:ml-72 min-h-screen">
+<div class="max-w-4xl mx-auto px-6 py-16 lg:py-12 space-y-20">
+
+<!-- OVERVIEW -->
+<section id="overview">
+    <h2 class="text-3xl font-bold text-surface-900 mb-2">Overview</h2>
+    <p class="text-surface-700 mb-6 text-lg">ClashCode is a gamified coding platform where developers solve programming challenges, earn XP, level up, and connect with other coders in real-time. Built as a distributed microservices system on AWS EKS.</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🎮</div><h3 class="font-semibold text-surface-900 mb-1">Gamified Learning</h3><p class="text-sm text-surface-700">60 progressive Python levels, XP economy, star ratings (0-3), achievements, badges, certificates, and a cosmetic marketplace.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">💬</div><h3 class="font-semibold text-surface-900 mb-1">Real-Time Chat</h3><p class="text-sm text-surface-700">WebSocket messaging with presence tracking, reactions, message editing/deletion, search, and DynamoDB-backed history.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🤖</div><h3 class="font-semibold text-surface-900 mb-1">AI Mentor</h3><p class="text-sm text-surface-700">RAG-based tutor using Pinecone + LangChain for semantic similarity search, providing contextual hints and automated code reviews.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">⚡</div><h3 class="font-semibold text-surface-900 mb-1">Secure Execution</h3><p class="text-sm text-surface-700">AST-validated code runs in read-only, network-disabled Docker containers with strict CPU/memory/PID limits.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">📊</div><h3 class="font-semibold text-surface-900 mb-1">Analytics & Admin</h3><p class="text-sm text-surface-700">Full admin dashboard with user management, audit logs, store CRUD, Celery task monitoring, and system health.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🛒</div><h3 class="font-semibold text-surface-900 mb-1">Economy & Payments</h3><p class="text-sm text-surface-700">XP-based store (themes, fonts, effects, victory animations), daily check-in streaks, referrals, and Razorpay integration.</p></div>
+    </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+    <h2 class="text-3xl font-bold text-surface-900 mb-2">Architecture</h2>
+    <p class="text-surface-700 mb-6">Distributed microservices behind an Nginx reverse-proxy, orchestrated on Amazon EKS with Kustomize overlays.</p>
+    <div class="bg-surface-50 border border-surface-200 rounded-xl p-6 overflow-x-auto">
+<pre class="!bg-transparent !text-surface-800 !p-0 text-sm leading-relaxed">
+┌─────────────────────────────────────────────────────────────────────┐
+│                     User Browser (React 19 + Vite)                  │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                      ┌──────────▼──────────┐
+                      │  Nginx / AWS ALB    │
+                      └──────────┬──────────┘
+        ┌────────────┬───────────┼───────────┬────────────┐
+        ▼            ▼           ▼           ▼            ▼
+┌────────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐ ┌──────────┐
+│  Core API  │ │   Chat   │ │   AI    │ │ Executor │ │Analytics │
+│  Django    │ │ FastAPI  │ │ FastAPI │ │ FastAPI  │ │ FastAPI  │
+│  :8000     │ │  :8001   │ │  :8002  │ │  :8011   │ │          │
+└──────┬─────┘ └────┬─────┘ └────┬────┘ └────┬─────┘ └──────────┘
+       │             │            │            │
+  ┌────▼────┐  ┌────▼────┐ ┌────▼────┐  ┌────▼─────┐
+  │Postgres │  │DynamoDB │ │Pinecone │  │  Docker  │
+  │  Redis  │  │  Redis  │ │  Redis  │  │ Sandbox  │
+  └─────────┘  └─────────┘ └─────────┘  └──────────┘
+
+  ┌─────────────────────────────────────────────┐
+  │  Celery Workers (default, ai, background)   │
+  │  Celery Beat (scheduler) + Flower (:5555)   │
+  └─────────────────────────────────────────────┘
+</pre>
+    </div>
+    <h3 class="font-semibold text-surface-900 mt-6 mb-3">Request Routing (Nginx)</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
+            <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Path</th><th class="text-left px-4 py-2">Upstream</th><th class="text-left px-4 py-2">Notes</th></tr></thead>
+            <tbody class="divide-y divide-surface-200">
+                <tr><td class="px-4 py-2"><code>/api/</code></td><td class="px-4 py-2">core:8000</td><td class="px-4 py-2">Main REST API</td></tr>
+                <tr><td class="px-4 py-2"><code>/api/chat/</code></td><td class="px-4 py-2">chat:8001</td><td class="px-4 py-2">Chat REST endpoints</td></tr>
+                <tr><td class="px-4 py-2"><code>/ws/</code></td><td class="px-4 py-2">chat:8001</td><td class="px-4 py-2">WebSocket (HTTP/1.1 upgrade, 1h timeout)</td></tr>
+                <tr><td class="px-4 py-2"><code>/ai/</code></td><td class="px-4 py-2">ai:8002</td><td class="px-4 py-2">AI hint & analysis</td></tr>
+                <tr><td class="px-4 py-2"><code>/admin/</code></td><td class="px-4 py-2">core:8000</td><td class="px-4 py-2">Django admin panel</td></tr>
+                <tr><td class="px-4 py-2"><code>/</code></td><td class="px-4 py-2">host:5173</td><td class="px-4 py-2">Frontend dev server (local)</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech-stack">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Tech Stack</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-surface-200 rounded-xl overflow-hidden">
+            <thead class="bg-surface-50"><tr><th class="text-left px-4 py-3 font-semibold">Layer</th><th class="text-left px-4 py-3 font-semibold">Technologies</th></tr></thead>
+            <tbody class="divide-y divide-surface-200">
+                <tr><td class="px-4 py-3 font-medium">Frontend</td><td class="px-4 py-3">React 19, Vite 6, React Router 7, Zustand 5, TanStack Query 5, Tailwind CSS 4, Framer Motion, Monaco Editor, Firebase (FCM), Sentry, Axios</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Core API</td><td class="px-4 py-3">Django 5.0, DRF 3.16, Gunicorn, Celery 5.4, django-celery-beat, drf-spectacular (OpenAPI), PyJWT (RS256+HS256), Razorpay SDK, Cloudinary, Firebase Admin</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Chat</td><td class="px-4 py-3">FastAPI 0.115, Uvicorn, WebSockets 14, aioboto3 13, Redis 5.2, Sentry</td></tr>
+                <tr><td class="px-4 py-3 font-medium">AI</td><td class="px-4 py-3">FastAPI 0.128, LangChain Core 0.3, LangChain OpenAI 0.3, LangChain Pinecone 0.2, Pinecone SDK 6, HTTPX, NumPy, Sentry</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Executor</td><td class="px-4 py-3">FastAPI 0.115, Pydantic 2.10, AST-based security validator, Sentry</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Databases</td><td class="px-4 py-3">PostgreSQL 15, Redis 7, Amazon DynamoDB, Pinecone Vector DB</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Infrastructure</td><td class="px-4 py-3">Amazon EKS, Terraform (VPC, EKS, RDS, ElastiCache, DynamoDB, ECR modules), Kustomize, Docker, Nginx, external-secrets.io</td></tr>
+                <tr><td class="px-4 py-3 font-medium">CI/CD</td><td class="px-4 py-3">GitHub Actions (CI + Deploy), OIDC auth, Docker Buildx, Trivy image scanning, Kustomize rollouts</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Monitoring</td><td class="px-4 py-3">Sentry (error tracking), Flower (Celery UI), Prometheus ServiceMonitor, Firebase Cloud Messaging</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Services Deep Dive</h2>
+
+    <!-- Core -->
+    <div class="mb-10 border border-surface-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-surface-900 mb-1">Core API <span class="text-sm font-normal text-brand-600">Django — Port 8000</span></h3>
+        <p class="text-surface-700 mb-4 text-sm">Central service managing all business logic: authentication, users, challenges, XP economy, store, payments, posts, notifications, certificates, achievements, and administration.</p>
+        <h4 class="font-semibold text-sm mb-2">Django Apps (13)</h4>
+        <div class="grid sm:grid-cols-2 gap-2 text-sm mb-4">
+            <div class="bg-surface-50 rounded-lg p-3"><strong>authentication</strong> — JWT (RS256), OAuth (GitHub/Google), email OTP, security audit logs</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>users</strong> — Profiles, avatars, themes, followers, referral codes</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>challenges</strong> — 60 levels (markdown content), submissions, star ratings, progression</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>learning</strong> — Challenge views, leaderboard, AI task delegation</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>store</strong> — Themes, fonts, effects, victory animations (XP-based purchases)</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>payments</strong> — Razorpay order creation, webhook verification, XP crediting</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>posts</strong> — Social feed with images, captions, likes</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>notifications</strong> — Generic FK notifications, FCM push tokens</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>certificates</strong> — UUID-based certificates, verification logs, QR codes</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>achievements</strong> — Category-based badges, progress tracking, XP rewards</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>rewards</strong> — Daily check-in streaks (1-7 day cycle), XP scaling</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>xpoint</strong> — XP transaction audit log (earn/spend traceability)</div>
+            <div class="bg-surface-50 rounded-lg p-3"><strong>administration</strong> — User management, audit, analytics, reports, system health</div>
+        </div>
+        <h4 class="font-semibold text-sm mb-2">Background Processing (Celery)</h4>
+        <ul class="text-sm text-surface-700 space-y-1 list-disc list-inside">
+            <li>3 queues: <code>default</code>, <code>ai</code>, <code>background</code></li>
+            <li>Beat scheduler: cleanup stale results (daily), prewarm AI RAG (every 6h)</li>
+            <li>Flower monitoring dashboard on port 5555</li>
+            <li>Tasks: AI analysis, notification dispatch, leaderboard computation</li>
+        </ul>
+    </div>
+
+    <!-- Chat -->
+    <div class="mb-10 border border-surface-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-surface-900 mb-1">Chat Service <span class="text-sm font-normal text-brand-600">FastAPI — Port 8001</span></h3>
+        <p class="text-surface-700 mb-4 text-sm">Real-time WebSocket messaging with persistent DynamoDB storage, Redis pub/sub for cross-instance broadcasting, and rate limiting.</p>
+        <h4 class="font-semibold text-sm mb-2">Capabilities</h4>
+        <ul class="text-sm text-surface-700 space-y-1 list-disc list-inside">
+            <li>WebSocket connections with JWT authentication</li>
+            <li>Message CRUD (send, edit, delete) with ownership validation</li>
+            <li>Emoji reactions (toggle per user per message)</li>
+            <li>Message search within rooms</li>
+            <li>Read receipts tracking</li>
+            <li>User activity contribution counting (DynamoDB UserActivity table)</li>
+            <li>Auto-creates DynamoDB tables on startup</li>
+            <li>Graceful fallback: IAM role chain if explicit credentials fail</li>
+        </ul>
+        <h4 class="font-semibold text-sm mt-3 mb-2">DynamoDB Schema</h4>
+        <div class="text-sm bg-surface-50 rounded-lg p-3">
+            <p><strong>ChatMessages</strong> — PK: <code>room_id</code> (S), SK: <code>timestamp</code> (N, epoch ms)</p>
+            <p><strong>UserActivity</strong> — PK: <code>user_id</code> (S), SK: <code>date</code> (S, YYYY-MM-DD)</p>
+        </div>
+    </div>
+
+    <!-- AI -->
+    <div class="mb-10 border border-surface-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-surface-900 mb-1">AI Service <span class="text-sm font-normal text-brand-600">FastAPI — Port 8002</span></h3>
+        <p class="text-surface-700 mb-4 text-sm">RAG-based mentorship using Pinecone for vector storage and LangChain for orchestration.</p>
+        <h4 class="font-semibold text-sm mb-2">RAG Pipeline</h4>
+        <ol class="text-sm text-surface-700 space-y-1 list-decimal list-inside">
+            <li>User requests hint → challenge description + user code combined as query</li>
+            <li>Pinecone similarity search (k=2) using native embeddings</li>
+            <li>Filter out same-challenge results (by slug)</li>
+            <li>Context injected into LLM prompt for response generation</li>
+        </ol>
+        <h4 class="font-semibold text-sm mt-3 mb-2">Key Components</h4>
+        <ul class="text-sm text-surface-700 space-y-1 list-disc list-inside">
+            <li><code>core/rag.py</code> — Pinecone vector store with lazy initialization</li>
+            <li><code>core/ai_logic.py</code> — LLM interaction and response formatting</li>
+            <li><code>core/security.py</code> — Input validation and prompt injection prevention</li>
+            <li><code>llm_factory.py</code> — Provider abstraction (supports multiple LLM backends)</li>
+            <li><code>utils/sanitizer.py</code> — Output sanitization</li>
+            <li><code>utils/core_client.py</code> — Authenticated calls to Core API (HMAC signed)</li>
+        </ul>
+    </div>
+
+    <!-- Executor -->
+    <div class="mb-10 border border-surface-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-surface-900 mb-1">Executor <span class="text-sm font-normal text-brand-600">FastAPI — Port 8011 (internal only)</span></h3>
+        <p class="text-surface-700 mb-4 text-sm">Sandboxed Python code execution with multi-layer security. Not exposed externally — only Core API calls it.</p>
+        <h4 class="font-semibold text-sm mb-2">Security Layers</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p class="font-semibold text-red-800 mb-1">AST Validation (Pre-execution)</p>
+                <p class="text-red-700">Blocked modules: os, subprocess, socket, shutil, pathlib, ctypes, multiprocessing, threading, asyncio, http, urllib, requests, ftplib, telnetlib, ssl, sys, platform</p>
+                <p class="text-red-700 mt-1">Blocked functions: eval, exec, compile, open, getattr, setattr, delattr, globals, locals, vars, breakpoint</p>
+                <p class="text-red-700 mt-1">Blocked attrs: __subclasses__, __globals__, __builtins__, __mro__, __import__</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p class="font-semibold text-amber-800 mb-1">Container Constraints</p>
+                <ul class="text-amber-700 space-y-0.5">
+                    <li>• Read-only filesystem</li>
+                    <li>• Non-root user (10001:10001)</li>
+                    <li>• All Linux capabilities dropped</li>
+                    <li>• no-new-privileges flag</li>
+                    <li>• PID limit: 128</li>
+                    <li>• Memory: 256MB container / 128MB per execution</li>
+                    <li>• CPU: 1.0 core</li>
+                    <li>• Timeout: 5 seconds</li>
+                    <li>• Max code size: 64KB</li>
+                    <li>• Max output: 32KB</li>
+                    <li>• tmpfs /tmp: 64MB, noexec</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="border border-surface-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-surface-900 mb-1">Analytics <span class="text-sm font-normal text-brand-600">FastAPI</span></h3>
+        <p class="text-surface-700 text-sm">Lightweight telemetry and cluster health monitoring service for real-time diagnostics.</p>
+    </div>
+</section>
+
+<!-- DATA MODELS -->
+<section id="data-models">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Data Models</h2>
+    <p class="text-surface-700 mb-6 text-sm">Key Django models powering the platform. All use PostgreSQL with indexed queries.</p>
+
+    <div class="space-y-4">
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">UserProfile</h4>
+            <p class="text-xs text-surface-700 mb-2">OneToOne with Django User. Auto-created on registration.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                <span class="bg-surface-50 px-2 py-1 rounded">provider (github/google/email/local)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">provider_id</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">avatar, banner, bio</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">active_theme, active_font</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">active_effect, active_victory</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">xp (indexed desc)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">streak_freezes</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">referral_code (unique, 8-char)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">referred_by (FK→User)</span>
+            </div>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">Challenge</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                <span class="bg-surface-50 px-2 py-1 rounded">title, slug (unique)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">description (markdown)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">initial_code, test_code</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">order</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">xp_reward (default 50)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">time_limit (300s)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">target_time_seconds (600s)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">is_published</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">created_for_user (nullable FK)</span>
+            </div>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">UserProgress</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
+                <span class="bg-surface-50 px-2 py-1 rounded">user + challenge (unique)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">status: LOCKED/UNLOCKED/COMPLETED</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">stars (0-3)</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">ai_hints_purchased</span>
+                <span class="bg-surface-50 px-2 py-1 rounded">started_at, completed_at</span>
+            </div>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">StoreItem & Purchase</h4>
+            <div class="text-xs text-surface-700">Categories: THEME, FONT, EFFECT, VICTORY. Each has cost (XP), icon_name, image path, item_data (JSON). Purchases are unique per user+item.</div>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">Achievement & Progress</h4>
+            <div class="text-xs text-surface-700">Categories: challenge, social, streak, special. Each has slug, target_value, xp_reward, is_secret flag. UserAchievementProgress tracks current_value with percentage property.</div>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <h4 class="font-bold text-sm mb-2">Other Models</h4>
+            <div class="grid sm:grid-cols-2 gap-2 text-xs text-surface-700">
+                <div><strong>Payment</strong> — razorpay_order_id, razorpay_payment_id, amount (INR), xp_amount, status (pending/success/failed)</div>
+                <div><strong>UserCertificate</strong> — UUID certificate_id, issued_date, is_valid, completion_count, verification_url property</div>
+                <div><strong>XPTransaction</strong> — amount, balance_after, source (check_in/purchase/referral/challenge/admin)</div>
+                <div><strong>DailyCheckIn</strong> — streak_day (1-7), xp_earned, unique per user+date</div>
+                <div><strong>Notification</strong> — GenericFK target, actor→recipient, verb, is_read</div>
+                <div><strong>Post</strong> — image, caption, likes (M2M), timestamps</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FRONTEND -->
+<section id="frontend">
+    <h2 class="text-3xl font-bold text-surface-900 mb-2">Frontend</h2>
+    <p class="text-surface-700 mb-6">React 19 SPA with Vite 6, featuring code editor, real-time chat, admin panel, and rich animations.</p>
+    <div class="grid sm:grid-cols-2 gap-4 text-sm">
+        <div class="border border-surface-200 rounded-lg p-4">
+            <p class="font-semibold mb-2">State Management (Zustand)</p>
+            <ul class="text-surface-700 space-y-1">
+                <li>• <code>useAuthStore</code> — JWT tokens, login state</li>
+                <li>• <code>useUserStore</code> — Profile data, XP</li>
+                <li>• <code>useChallengesStore</code> — Game progression</li>
+                <li>• <code>useChatStore</code> — Messages, presence, typing</li>
+                <li>• <code>useMarketplaceStore</code> — Store items</li>
+                <li>• <code>useNotificationStore</code> — Alerts, FCM</li>
+                <li>• <code>useWorkspaceStore</code> — Editor state</li>
+            </ul>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <p class="font-semibold mb-2">Key Pages & Features</p>
+            <ul class="text-surface-700 space-y-1">
+                <li>• <strong>ChallengeWorkspace</strong> — Monaco editor, AI assistant pane, console, problem description</li>
+                <li>• <strong>Home</strong> — Chat drawer, leaderboard, notifications, challenge map</li>
+                <li>• <strong>Admin Dashboard</strong> — User table, store CRUD, audit logs, Celery monitor, analytics</li>
+                <li>• <strong>Profile</strong> — Contribution graph, achievements, social connections</li>
+                <li>• <strong>Marketplace</strong> — Browse/purchase cosmetics</li>
+                <li>• <strong>Certificate Verification</strong> — QR code + public verify page</li>
+            </ul>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <p class="font-semibold mb-2">UI Architecture</p>
+            <ul class="text-surface-700 space-y-1">
+                <li>• Radix UI primitives (Dialog, Slot)</li>
+                <li>• class-variance-authority for variants</li>
+                <li>• Skeleton loading (boneyard-js) with JSON configs</li>
+                <li>• 70+ animated hover icons (itshover)</li>
+                <li>• Victory animations (Framer Motion)</li>
+                <li>• Error boundary with Sentry reporting</li>
+            </ul>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <p class="font-semibold mb-2">Services & Integrations</p>
+            <ul class="text-surface-700 space-y-1">
+                <li>• Axios HTTP client with interceptors</li>
+                <li>• WebSocket service for real-time chat</li>
+                <li>• Firebase Cloud Messaging (push notifications)</li>
+                <li>• Razorpay payment flow</li>
+                <li>• html-to-image (share cards)</li>
+                <li>• react-easy-crop (avatar editing)</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- DATABASE -->
+<section id="database">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Databases</h2>
+    <div class="space-y-4">
+        <div class="border border-surface-200 rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-2"><span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">PG</span><h3 class="font-bold text-surface-900">PostgreSQL 15</h3><span class="text-xs bg-surface-100 px-2 py-0.5 rounded-full">Primary</span></div>
+            <p class="text-sm text-surface-700 mb-2">Relational data with SSL, connection pooling. Stores users, profiles, challenges, submissions, XP transactions, posts, payments, certificates, achievements, store items, notifications.</p>
+            <p class="text-xs text-surface-700">Config: <code>dj-database-url</code>, cache prefix "coc", 5min cache timeout. Test mode uses SQLite.</p>
+        </div>
+        <div class="border border-surface-200 rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-2"><span class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center text-sm font-bold">RD</span><h3 class="font-bold text-surface-900">Redis 7</h3><span class="text-xs bg-surface-100 px-2 py-0.5 rounded-full">Cache + Broker</span></div>
+            <p class="text-sm text-surface-700 mb-2">Sessions, rate limiting, OTP codes, leaderboard cache, Celery task broker/results, chat pub/sub broadcasting.</p>
+            <p class="text-xs text-surface-700">AOF persistence, password-protected, DB1 for Django cache.</p>
+        </div>
+        <div class="border border-surface-200 rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-2"><span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-bold">DD</span><h3 class="font-bold text-surface-900">Amazon DynamoDB</h3><span class="text-xs bg-surface-100 px-2 py-0.5 rounded-full">NoSQL</span></div>
+            <p class="text-sm text-surface-700 mb-2">Two tables: <strong>ChatMessages</strong> (room_id + timestamp) and <strong>UserActivity</strong> (user_id + date). Handles chat persistence with automatic table creation.</p>
+            <p class="text-xs text-surface-700">Local dev: amazon/dynamodb-local Docker image. Prod: AWS managed with IRSA auth.</p>
+        </div>
+        <div class="border border-surface-200 rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-2"><span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">PC</span><h3 class="font-bold text-surface-900">Pinecone</h3><span class="text-xs bg-surface-100 px-2 py-0.5 rounded-full">Vector DB</span></div>
+            <p class="text-sm text-surface-700">Stores embeddings for challenge descriptions and hint templates via LangChain Pinecone integration. Native embeddings model. Enables semantic similarity search (k=2) for the RAG pipeline.</p>
+        </div>
+    </div>
+</section>
+
+<!-- API -->
+<section id="api">
+    <h2 class="text-3xl font-bold text-surface-900 mb-2">API Reference</h2>
+    <p class="text-surface-700 mb-6 text-sm">All endpoints use JSON. Auth required: <code>Authorization: Bearer &lt;token&gt;</code>. OpenAPI docs at <code>/api/docs/</code> (dev only).</p>
+    <div class="space-y-6">
+        <div>
+            <h3 class="font-bold text-surface-900 mb-3">Core API <span class="text-surface-700 font-normal text-sm">:8000</span></h3>
+            <div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
+                <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Endpoint</th><th class="text-left px-4 py-2">Description</th></tr></thead>
+                <tbody class="divide-y divide-surface-200">
+                    <tr><td class="px-4 py-2"><code>/api/auth/</code></td><td class="px-4 py-2">Login, signup, OTP, OAuth (GitHub/Google), token refresh, password reset</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/challenges/</code></td><td class="px-4 py-2">List levels, submit solutions, get progress, leaderboard</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/profiles/</code></td><td class="px-4 py-2">View/update profiles, follow/unfollow, referrals</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/store/</code></td><td class="px-4 py-2">Browse items, purchase with XP, view owned items</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/posts/</code></td><td class="px-4 py-2">Create/list posts, like, comment</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/notifications/</code></td><td class="px-4 py-2">List notifications, mark read, FCM token registration</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/achievements/</code></td><td class="px-4 py-2">List achievements, view progress, unlock status</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/certificates/</code></td><td class="px-4 py-2">Issue certificate, verify by UUID</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/payments/</code></td><td class="px-4 py-2">Create Razorpay order, verify payment, credit XP</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/rewards/</code></td><td class="px-4 py-2">Daily check-in, streak status</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/xpoint/</code></td><td class="px-4 py-2">XP transaction history</td></tr>
+                    <tr><td class="px-4 py-2"><code>/api/admin/</code></td><td class="px-4 py-2">User management, store CRUD, audit logs, analytics, broadcasts, reports</td></tr>
+                </tbody>
+            </table></div>
+        </div>
+        <div>
+            <h3 class="font-bold text-surface-900 mb-3">Chat Service <span class="text-surface-700 font-normal text-sm">:8001</span></h3>
+            <div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
+                <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Endpoint</th><th class="text-left px-4 py-2">Description</th></tr></thead>
+                <tbody class="divide-y divide-surface-200">
+                    <tr><td class="px-4 py-2"><code>/ws/chat/</code></td><td class="px-4 py-2">WebSocket — send/receive messages, typing indicators, reactions</td></tr>
+                    <tr><td class="px-4 py-2"><code>/chat/history/</code></td><td class="px-4 py-2">Paginated message history (DynamoDB cursor-based)</td></tr>
+                    <tr><td class="px-4 py-2"><code>/chat/presence/</code></td><td class="px-4 py-2">Online users list</td></tr>
+                    <tr><td class="px-4 py-2"><code>/chat/search/</code></td><td class="px-4 py-2">Search messages by content</td></tr>
+                </tbody>
+            </table></div>
+        </div>
+        <div>
+            <h3 class="font-bold text-surface-900 mb-3">AI Service <span class="text-surface-700 font-normal text-sm">:8002</span></h3>
+            <div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
+                <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Endpoint</th><th class="text-left px-4 py-2">Description</th></tr></thead>
+                <tbody class="divide-y divide-surface-200">
+                    <tr><td class="px-4 py-2"><code>/ai/hint/</code></td><td class="px-4 py-2">RAG-powered contextual hint for current challenge</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/analyze/</code></td><td class="px-4 py-2">Code review with quality feedback</td></tr>
+                </tbody>
+            </table></div>
+        </div>
+        <div>
+            <h3 class="font-bold text-surface-900 mb-3">Executor <span class="text-surface-700 font-normal text-sm">:8011 (internal)</span></h3>
+            <div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
+                <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Endpoint</th><th class="text-left px-4 py-2">Description</th></tr></thead>
+                <tbody class="divide-y divide-surface-200">
+                    <tr><td class="px-4 py-2"><code>/execute</code></td><td class="px-4 py-2">Accepts code + test_code, returns stdout/stderr/status/execution_time</td></tr>
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+    <div class="mt-6 bg-surface-50 rounded-lg p-4 text-sm">
+        <h4 class="font-semibold mb-2">Rate Limiting (DRF Throttles)</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-surface-700">
+            <span>anon: configurable</span><span>user: configurable</span><span>otp: limited</span>
+            <span>auth: limited</span><span>store: limited</span><span>notifications: limited</span>
+            <span>sensitive: strict</span><span>burst: high rate</span><span>code_execution: strict</span>
+        </div>
+    </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Security</h2>
+    <div class="space-y-4">
+        <div class="border-l-4 border-brand-500 bg-brand-50 rounded-r-lg p-4">
+            <h3 class="font-bold text-surface-900 mb-2">Authentication & Authorization</h3>
+            <ul class="text-sm text-surface-700 space-y-1">
+                <li>• JWT tokens: RS256 primary with HS256 fallback, 1hr access / 7-day refresh</li>
+                <li>• Refresh tokens stored in HttpOnly secure cookies</li>
+                <li>• OAuth 2.0: GitHub + Google with frontend callback URIs</li>
+                <li>• Email OTP verification for sensitive operations</li>
+                <li>• Rate-limited login/OTP endpoints</li>
+                <li>• SecurityAuditLog tracks all auth events (user, IP, user-agent, action)</li>
+                <li>• Passwords hashed with bcrypt</li>
+            </ul>
+        </div>
+        <div class="border-l-4 border-green-500 bg-green-50 rounded-r-lg p-4">
+            <h3 class="font-bold text-surface-900 mb-2">Code Execution Isolation</h3>
+            <ul class="text-sm text-surface-700 space-y-1">
+                <li>• Layer 1: AST-based static analysis blocks 18+ dangerous modules and 12+ dangerous functions</li>
+                <li>• Layer 2: Blocks dunder attribute access (__subclasses__, __globals__, __builtins__, __mro__)</li>
+                <li>• Layer 3: Docker container — read-only fs, no network, non-root, all capabilities dropped</li>
+                <li>• Layer 4: Resource limits — 5s timeout, 128MB RAM, 1 CPU, 128 PIDs, 64KB input, 32KB output</li>
+                <li>• Containers destroyed immediately after execution</li>
+            </ul>
+        </div>
+        <div class="border-l-4 border-amber-500 bg-amber-50 rounded-r-lg p-4">
+            <h3 class="font-bold text-surface-900 mb-2">Network & Infrastructure</h3>
+            <ul class="text-sm text-surface-700 space-y-1">
+                <li>• Nginx: server_tokens off, X-Content-Type-Options nosniff, X-Frame-Options DENY, strict Referrer-Policy, Permissions-Policy blocks camera/mic/geo</li>
+                <li>• Databases in private subnets (no internet access)</li>
+                <li>• IRSA (IAM Roles for Service Accounts) — least-privilege per pod</li>
+                <li>• Secrets via external-secrets.io synced from AWS Secrets Manager</li>
+                <li>• Service-to-service calls signed with HMAC (INTERNAL_SIGNING_SECRET)</li>
+                <li>• Django: HSTS, SSL redirect, CSRF protection, secure cookies</li>
+                <li>• Trivy vulnerability scanning on every Docker image push</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- DEPLOYMENT -->
+<section id="deployment">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Deployment & CI/CD</h2>
+    <div class="space-y-6">
+        <div>
+            <h3 class="font-semibold text-surface-900 mb-3">CI Pipeline <span class="text-sm font-normal text-surface-700">(ci.yml — runs on PR + reused by deploy)</span></h3>
+            <div class="grid sm:grid-cols-2 gap-3 text-sm">
+                <div class="bg-surface-50 rounded-lg p-3">
+                    <p class="font-semibold mb-1">Backend (matrix: core, ai, chat, executor)</p>
+                    <ul class="text-surface-700 space-y-0.5 text-xs">
+                        <li>• Python 3.11 + pip cache</li>
+                        <li>• Ruff linting (warn-only)</li>
+                        <li>• pytest with coverage</li>
+                    </ul>
+                </div>
+                <div class="bg-surface-50 rounded-lg p-3">
+                    <p class="font-semibold mb-1">Frontend</p>
+                    <ul class="text-surface-700 space-y-0.5 text-xs">
+                        <li>• Node 20 + npm cache</li>
+                        <li>• ESLint</li>
+                        <li>• Production build verification</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h3 class="font-semibold text-surface-900 mb-3">Deploy Pipeline <span class="text-sm font-normal text-surface-700">(aws-deploy.yml — manual trigger)</span></h3>
+            <ol class="text-sm text-surface-700 list-decimal list-inside space-y-2">
+                <li><strong>CI gate</strong> — Reuses ci.yml workflow (must pass)</li>
+                <li><strong>Build & Push</strong> (matrix: core, chat, ai, analytics, executor)
+                    <ul class="list-disc list-inside ml-4 text-xs mt-1">
+                        <li>OIDC authentication to AWS</li>
+                        <li>Docker Buildx with GitHub Actions cache</li>
+                        <li>Push to ECR with SHA + "prod" tags</li>
+                        <li>Trivy security scan (HIGH/CRITICAL)</li>
+                    </ul>
+                </li>
+                <li><strong>Rollout</strong> — Kustomize overlay pins SHA tags → kubectl apply → rollout status wait (5m per service)</li>
+            </ol>
+        </div>
+        <div>
+            <h3 class="font-semibold text-surface-900 mb-3">Infrastructure (Terraform)</h3>
+            <div class="text-sm text-surface-700">
+                <p class="mb-2">Modules: <code>vpc</code>, <code>eks</code>, <code>ecr</code>, <code>elasticache</code>, <code>dynamodb</code>. Environments: dev, prod.</p>
+                <p>Region: <code>ap-south-1</code>. Cluster: <code>clashcode-eks</code>.</p>
+            </div>
+        </div>
+        <div>
+            <h3 class="font-semibold text-surface-900 mb-3">Kubernetes (Kustomize)</h3>
+            <div class="text-sm text-surface-700">
+                <p>Base manifests: deployment, service, executor, workers, autoscaling, cluster-issuer, servicemonitor. Overlays: dev, prod. External secrets for credential sync. TLS runbook included.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SETUP -->
+<section id="setup">
+    <h2 class="text-3xl font-bold text-surface-900 mb-2">Local Setup</h2>
+    <p class="text-surface-700 mb-6 text-sm">Get the project running locally for development.</p>
+    <div class="space-y-4">
+        <div class="flex flex-wrap gap-2 text-sm mb-4">
+            <span class="bg-surface-100 px-3 py-1 rounded-full font-medium">Docker</span>
+            <span class="bg-surface-100 px-3 py-1 rounded-full font-medium">Node.js 18+</span>
+            <span class="bg-surface-100 px-3 py-1 rounded-full font-medium">Python 3.11+</span>
+            <span class="bg-surface-100 px-3 py-1 rounded-full font-medium">Git</span>
+        </div>
+        <div class="bg-surface-50 rounded-lg p-4">
+            <p class="text-sm font-semibold mb-2">1. Clone & configure</p>
+            <pre><code>git clone https://github.com/jithin-jz/clashcode.git
+cd clashcode
+# Copy .env.example → .env in: services/, services/core/, services/chat/, services/ai/, frontend/</code></pre>
+        </div>
+        <div class="bg-surface-50 rounded-lg p-4">
+            <p class="text-sm font-semibold mb-2">2. Start backend (all services + databases)</p>
+            <pre><code>cd services
+docker compose up -d --build</code></pre>
+            <p class="text-xs text-surface-700 mt-2">This starts: nginx, postgres, redis, dynamodb-local, core, chat, ai, executor, celery worker, celery beat, flower</p>
+        </div>
+        <div class="bg-surface-50 rounded-lg p-4">
+            <p class="text-sm font-semibold mb-2">3. Initialize database & content</p>
+            <pre><code>docker compose exec core python manage.py migrate
+docker compose exec core python manage.py createsuperuser
+docker compose exec core python manage.py load_levels
+docker compose exec core python manage.py seed_store
+docker compose exec core python manage.py seed_achievements</code></pre>
+        </div>
+        <div class="bg-surface-50 rounded-lg p-4">
+            <p class="text-sm font-semibold mb-2">4. Start frontend</p>
+            <pre><code>cd frontend
+npm install
+npm run dev   # → http://localhost:5173</code></pre>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+            <p class="font-semibold text-amber-800 mb-1">Troubleshooting</p>
+            <ul class="text-amber-700 space-y-1">
+                <li>• Port 80 busy → change <code>NGINX_HTTP_PORT</code> in <code>services/.env</code></li>
+                <li>• Can't login → check <code>db</code> container: <code>docker compose ps</code></li>
+                <li>• Chat not persisting → verify DynamoDB container is running</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- COMMANDS -->
+<section id="commands">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Command Reference</h2>
+    <div class="space-y-5 text-sm">
+        <div><h3 class="font-semibold text-surface-900 mb-2">Docker</h3><pre><code>docker compose up -d --build     # Start all services
+docker compose down               # Stop all
+docker compose logs -f [service]  # Stream logs
+docker compose ps                 # Status check
+docker compose restart core       # Restart single service</code></pre></div>
+        <div><h3 class="font-semibold text-surface-900 mb-2">Django Management</h3><pre><code>docker compose exec core python manage.py migrate
+docker compose exec core python manage.py createsuperuser
+docker compose exec core python manage.py load_levels        # Load 60 challenge levels
+docker compose exec core python manage.py seed_store         # Seed store items
+docker compose exec core python manage.py seed_achievements  # Seed achievements
+docker compose exec core python manage.py shell              # Django shell
+docker compose exec core python manage.py collectstatic</code></pre></div>
+        <div><h3 class="font-semibold text-surface-900 mb-2">Database</h3><pre><code>docker compose exec db psql -U clashcode     # PostgreSQL shell
+docker compose exec redis redis-cli -a $PASS  # Redis CLI</code></pre></div>
+        <div><h3 class="font-semibold text-surface-900 mb-2">Frontend</h3><pre><code>npm install      # Install deps
+npm run dev      # Dev server (HMR)
+npm run build    # Production build
+npm run preview  # Preview prod build
+npm run lint     # ESLint
+npm run analyze  # Bundle visualization</code></pre></div>
+        <div><h3 class="font-semibold text-surface-900 mb-2">Celery</h3><pre><code># Worker is started automatically by docker compose
+# Flower UI: http://localhost:5555
+docker compose logs -f worker  # Worker logs
+docker compose logs -f beat    # Scheduler logs</code></pre></div>
+        <div><h3 class="font-semibold text-surface-900 mb-2">Infrastructure</h3><pre><code>terraform init && terraform plan    # Preview
+terraform apply                     # Deploy infra
+terraform destroy                   # Tear down</code></pre></div>
+    </div>
+</section>
+
+<!-- PROJECT STRUCTURE -->
+<section id="project-structure">
+    <h2 class="text-3xl font-bold text-surface-900 mb-6">Project Structure</h2>
+    <pre><code>clashcode/
+├── frontend/                       # React 19 SPA (Vite 6)
+│   └── src/
+│       ├── admin/                  # Admin dashboard (12 components)
+│       ├── auth/                   # Login page
+│       ├── bones/                  # Skeleton loading (boneyard-js)
+│       ├── components/             # UI primitives (Radix-based)
+│       ├── game/                   # ChallengeWorkspace, AI pane, console
+│       ├── home/                   # Chat, navigation, sections, drawers
+│       ├── hooks/                  # 10+ custom hooks
+│       ├── icons/                  # 70+ animated icons
+│       ├── marketplace/            # Store page
+│       ├── pages/                  # Route pages (8)
+│       ├── posts/                  # Social feed
+│       ├── profile/                # User profile (10 components)
+│       ├── routes/                 # Auth guards (Public, Protected, Admin)
+│       ├── services/               # API clients, Firebase, WebSocket
+│       ├── stores/                 # 7 Zustand stores
+│       └── styles/                 # CSS tokens, animations, utilities
+│
+├── services/
+│   ├── core/                       # Django (13 apps, 60 challenge levels)
+│   │   ├── authentication/         # JWT, OAuth, OTP, audit logs
+│   │   ├── users/                  # Profiles, followers, referrals
+│   │   ├── challenges/             # Levels, progression, submissions
+│   │   ├── learning/               # Views, tasks (AI, execution, leaderboard)
+│   │   ├── store/                  # Items, purchases
+│   │   ├── payments/               # Razorpay integration
+│   │   ├── posts/                  # Social feed
+│   │   ├── notifications/          # Generic notifications, FCM
+│   │   ├── certificates/           # Issuance, verification
+│   │   ├── achievements/           # Badges, progress tracking
+│   │   ├── rewards/                # Daily check-in streaks
+│   │   ├── xpoint/                 # XP transaction audit
+│   │   └── administration/         # Admin views, services, audit
+│   ├── chat/                       # FastAPI WebSocket + DynamoDB
+│   ├── ai/                         # FastAPI RAG + Pinecone + LangChain
+│   ├── executor/                   # FastAPI sandboxed execution
+│   ├── analytics/                  # FastAPI telemetry
+│   ├── docker-compose.yml          # Production compose (11 services)
+│   └── docker-compose.dev.yml      # Dev overrides
+│
+├── infra/
+│   ├── terraform/                  # IaC (modules: vpc, eks, ecr, elasticache, dynamodb)
+│   │   └── environments/           # dev, prod
+│   ├── k8s/                        # Kubernetes manifests (Kustomize)
+│   │   ├── base/                   # Deployments, services, autoscaling, monitoring
+│   │   ├── overlays/               # dev, prod overrides
+│   │   └── external-secrets/       # AWS Secrets Manager sync
+│   ├── aws-bootstrap/              # IAM roles, RBAC, trust policies
+│   └── nginx/                      # Reverse proxy config
+│
+├── .github/workflows/
+│   ├── ci.yml                      # Lint + test (backend matrix + frontend)
+│   └── aws-deploy.yml              # Build → ECR → EKS rollout
+│
+└── README.md</code></pre>
+</section>
+
+</div>
+<footer class="border-t border-surface-200 py-8 text-center text-sm text-surface-700">
+    <p>ClashCode Documentation • Built with Tailwind CSS • © 2026 MIT License</p>
+</footer>
+</main>
+
+<script>
+const btn=document.getElementById('menuBtn'),sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+btn.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('hidden')});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.add('hidden')});
+const links=document.querySelectorAll('.sidebar-link'),sections=document.querySelectorAll('section[id]');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('active'));const a=document.querySelector(`.sidebar-link[href="#${e.target.id}"]`);if(a)a.classList.add('active')}})},{rootMargin:'-20% 0px -80% 0px'});
+sections.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
