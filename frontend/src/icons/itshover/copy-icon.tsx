@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const CopyIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -73,3 +73,4 @@ const CopyIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 CopyIcon.displayName = "CopyIcon";
 
 export default CopyIcon;
+

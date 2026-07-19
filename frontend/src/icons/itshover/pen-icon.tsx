@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const PenIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -95,3 +95,4 @@ const PenIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 PenIcon.displayName = "PenIcon";
 export default PenIcon;
+

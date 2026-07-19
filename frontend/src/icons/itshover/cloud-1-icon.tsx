@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const Cloud1Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -56,3 +56,4 @@ const Cloud1Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 Cloud1Icon.displayName = "Cloud1Icon";
 export default Cloud1Icon;
+

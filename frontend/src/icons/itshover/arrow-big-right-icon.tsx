@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const ArrowBigRightIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -60,3 +60,4 @@ const ArrowBigRightIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 ArrowBigRightIcon.displayName = "ArrowBigRightIcon";
 
 export default ArrowBigRightIcon;
+

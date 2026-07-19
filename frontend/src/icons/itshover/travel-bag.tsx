@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const TravelBag = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -90,3 +90,4 @@ const TravelBag = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 TravelBag.displayName = "TravelBag";
 export default TravelBag;
+

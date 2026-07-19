@@ -1,7 +1,7 @@
 "use client";
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const ExternalLinkIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -98,3 +98,4 @@ const ExternalLinkIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 ExternalLinkIcon.displayName = "ExternalLinkIcon";
 export default ExternalLinkIcon;
+

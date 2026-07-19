@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const MehIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -83,3 +83,4 @@ const MehIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 MehIcon.displayName = "MehIcon";
 export default MehIcon;
+

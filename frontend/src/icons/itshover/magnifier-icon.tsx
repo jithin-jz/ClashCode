@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const MagnifierIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -76,3 +76,4 @@ const MagnifierIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 MagnifierIcon.displayName = "MagnifierIcon";
 export default MagnifierIcon;
+

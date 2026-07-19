@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const HandHeartIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -64,3 +64,4 @@ const HandHeartIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 HandHeartIcon.displayName = "HandHeartIcon";
 export default HandHeartIcon;
+

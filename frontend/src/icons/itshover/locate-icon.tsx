@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const LocateIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -88,3 +88,4 @@ const LocateIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 LocateIcon.displayName = "LocateIcon";
 export default LocateIcon;
+

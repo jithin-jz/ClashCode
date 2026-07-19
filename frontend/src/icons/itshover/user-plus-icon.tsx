@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const UserPlusIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -110,3 +110,4 @@ const UserPlusIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 UserPlusIcon.displayName = "UserPlusIcon";
 export default UserPlusIcon;
+

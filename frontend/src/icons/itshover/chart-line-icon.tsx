@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const ChartLineIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -111,3 +111,4 @@ const ChartLineIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 ChartLineIcon.displayName = "ChartLineIcon";
 
 export default ChartLineIcon;
+

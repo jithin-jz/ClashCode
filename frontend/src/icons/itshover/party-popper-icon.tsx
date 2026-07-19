@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const PartyPopperIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -82,3 +82,4 @@ const PartyPopperIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 PartyPopperIcon.displayName = "PartyPopperIcon";
 export default PartyPopperIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const BulbSvg = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -123,3 +123,4 @@ const BulbSvg = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 BulbSvg.displayName = "BulbSvg";
 
 export default BulbSvg;
+

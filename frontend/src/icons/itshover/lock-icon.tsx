@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const LockIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -77,3 +77,4 @@ const LockIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 LockIcon.displayName = "LockIcon";
 
 export default LockIcon;
+

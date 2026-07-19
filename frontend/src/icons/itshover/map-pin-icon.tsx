@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback, useRef } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const MapPinIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -64,3 +64,4 @@ const MapPinIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 MapPinIcon.displayName = "MapPinIcon";
 export default MapPinIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const Stack3Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -76,3 +76,4 @@ const Stack3Icon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 Stack3Icon.displayName = "Stack3Icon";
 export default Stack3Icon;
+

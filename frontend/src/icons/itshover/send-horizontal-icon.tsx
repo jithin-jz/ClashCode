@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const SendHorizontalIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -75,3 +75,4 @@ const SendHorizontalIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 SendHorizontalIcon.displayName = "SendHorizontalIcon";
 export default SendHorizontalIcon;
+

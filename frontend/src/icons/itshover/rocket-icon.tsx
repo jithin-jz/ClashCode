@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const RocketIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -131,3 +131,4 @@ const RocketIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 RocketIcon.displayName = "RocketIcon";
 
 export default RocketIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const MailFilledIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -68,3 +68,4 @@ const MailFilledIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 MailFilledIcon.displayName = "MailFilledIcon";
 export default MailFilledIcon;
+

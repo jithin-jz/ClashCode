@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const EyeIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -92,3 +92,4 @@ const EyeIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 EyeIcon.displayName = "EyeIcon";
 export default EyeIcon;
+

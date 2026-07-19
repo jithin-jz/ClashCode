@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const MessageCircleIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -78,3 +78,4 @@ const MessageCircleIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 MessageCircleIcon.displayName = "MessageCircleIcon";
 
 export default MessageCircleIcon;
+

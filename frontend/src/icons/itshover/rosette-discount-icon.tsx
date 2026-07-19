@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const RosetteDiscountIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -127,3 +127,4 @@ const RosetteDiscountIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 RosetteDiscountIcon.displayName = "RosetteDiscountIcon";
 export default RosetteDiscountIcon;
+

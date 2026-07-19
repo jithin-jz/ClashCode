@@ -1,7 +1,7 @@
 "use client";
 import { forwardRef, useImperativeHandle, useEffect } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const BatteryChargingIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -124,3 +124,4 @@ const BatteryChargingIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 BatteryChargingIcon.displayName = "BatteryChargingIcon";
 
 export default BatteryChargingIcon;
+

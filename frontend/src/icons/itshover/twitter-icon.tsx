@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const TwitterIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -91,3 +91,4 @@ const TwitterIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 TwitterIcon.displayName = "TwitterIcon";
 export default TwitterIcon;
+

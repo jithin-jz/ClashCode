@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const DialpadIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   ({ size = 24, color = "currentColor", className = "" }, ref) => {
@@ -78,3 +78,4 @@ const DialpadIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 DialpadIcon.displayName = "DialpadIcon";
 export default DialpadIcon;
+

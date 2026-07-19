@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const FilledCheckedIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -120,3 +120,4 @@ const FilledCheckedIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 FilledCheckedIcon.displayName = "FilledCheckedIcon";
 export default FilledCheckedIcon;
+

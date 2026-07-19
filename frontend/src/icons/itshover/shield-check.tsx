@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const ShieldCheck = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -72,3 +72,4 @@ const ShieldCheck = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 ShieldCheck.displayName = "ShieldCheck";
 export default ShieldCheck;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -91,3 +91,4 @@ const LogoutIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 LogoutIcon.displayName = "LogoutIcon";
 export default LogoutIcon;
+

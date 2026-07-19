@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const LayoutDashboardIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -102,3 +102,4 @@ const LayoutDashboardIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 LayoutDashboardIcon.displayName = "LayoutDashboardIcon";
 
 export default LayoutDashboardIcon;
+

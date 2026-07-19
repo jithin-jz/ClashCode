@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const RefreshIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -66,3 +66,4 @@ const RefreshIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 RefreshIcon.displayName = "RefreshIcon";
 
 export default RefreshIcon;
+

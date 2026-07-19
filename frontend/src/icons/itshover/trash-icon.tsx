@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 export interface TrashIconProps extends AnimatedIconProps {
   shakeOnClick?: boolean;
@@ -143,3 +143,4 @@ const TrashIcon = forwardRef<AnimatedIconHandle, TrashIconProps>(
 
 TrashIcon.displayName = "TrashIcon";
 export default TrashIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const WorldIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -89,3 +89,4 @@ const WorldIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 WorldIcon.displayName = "WorldIcon";
 export default WorldIcon;
+

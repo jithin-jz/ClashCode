@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const CodeXmlIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -75,3 +75,4 @@ const CodeXmlIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 CodeXmlIcon.displayName = "CodeXmlIcon";
 
 export default CodeXmlIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const KeyframesIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -79,3 +79,4 @@ const KeyframesIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 KeyframesIcon.displayName = "KeyframesIcon";
 export default KeyframesIcon;
+

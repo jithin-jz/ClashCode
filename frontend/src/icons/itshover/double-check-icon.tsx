@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const DoubleCheckIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -85,3 +85,4 @@ const DoubleCheckIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 DoubleCheckIcon.displayName = "DoubleCheckIcon";
 export default DoubleCheckIcon;
+

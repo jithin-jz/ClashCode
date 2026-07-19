@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const HomeIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -71,3 +71,4 @@ const HomeIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 HomeIcon.displayName = "HomeIcon";
 export default HomeIcon;
+

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate } from "framer-motion";
 
 const CameraIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
   (
@@ -69,3 +69,4 @@ const CameraIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 CameraIcon.displayName = "CameraIcon";
 
 export default CameraIcon;
+
