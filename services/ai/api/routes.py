@@ -1,14 +1,14 @@
 import asyncio
 import logging
-from typing import Optional
 
 from config import settings
-from core.ai_logic import analyze_code_logic, generate_hint_logic, stream_hint_logic
-from core.rag import get_vector_db
-from core.security import authorize_internal_request
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from langchain_core.documents import Document
+
+from core.ai_logic import analyze_code_logic, generate_hint_logic, stream_hint_logic
+from core.rag import get_vector_db
+from core.security import authorize_internal_request
 from models.schemas import AnalyzeRequest, HintRequest
 from utils.core_client import fetch_challenge_context, fetch_internal_challenges
 
@@ -24,9 +24,9 @@ def health():
 @router.post("/index")
 async def index_challenges(
     http_request: Request,
-    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
-    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
-    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+    x_internal_api_key: str | None = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: str | None = Header(None, alias="X-Internal-Signature"),
 ):
     if not authorize_internal_request(
         path=http_request.url.path,
@@ -72,9 +72,9 @@ async def index_challenges(
 async def generate_hint(
     request: HintRequest,
     http_request: Request,
-    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
-    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
-    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+    x_internal_api_key: str | None = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: str | None = Header(None, alias="X-Internal-Signature"),
 ):
     if not authorize_internal_request(
         path=http_request.url.path,
@@ -98,17 +98,17 @@ async def generate_hint(
             challenge_context=context_data,
         )
         return {"hint": safe_hint, "hint_level": request.hint_level, "max_hints": 3}
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error generating hint")
+    except Exception as err:
+        raise HTTPException(status_code=500, detail="Error generating hint") from err
 
 
 @router.post("/hints/stream")
 async def generate_hint_stream(
     request: HintRequest,
     http_request: Request,
-    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
-    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
-    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+    x_internal_api_key: str | None = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: str | None = Header(None, alias="X-Internal-Signature"),
 ):
     if not authorize_internal_request(
         path=http_request.url.path,
@@ -140,9 +140,9 @@ async def generate_hint_stream(
 async def analyze_code(
     request: AnalyzeRequest,
     http_request: Request,
-    x_internal_api_key: Optional[str] = Header(None, alias="X-Internal-API-Key"),
-    x_internal_timestamp: Optional[str] = Header(None, alias="X-Internal-Timestamp"),
-    x_internal_signature: Optional[str] = Header(None, alias="X-Internal-Signature"),
+    x_internal_api_key: str | None = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: str | None = Header(None, alias="X-Internal-Signature"),
 ):
     if not authorize_internal_request(
         path=http_request.url.path,
@@ -164,5 +164,5 @@ async def analyze_code(
             challenge_context=context_data,
         )
         return {"review": safe_review}
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error generating analysis")
+    except Exception as err:
+        raise HTTPException(status_code=500, detail="Error generating analysis") from err

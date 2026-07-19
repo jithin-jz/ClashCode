@@ -3,6 +3,7 @@ import logging
 from certificates.services import CertificateService
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 from learning.tasks import update_leaderboard_cache
 
 from .models import UserProgress

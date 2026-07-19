@@ -36,7 +36,7 @@ class UserService:
                 try:
                     username_validator(requested_username)
                 except ValidationError:
-                    raise ValueError("Username can only contain letters, numbers, and @/./+/-/_ characters.")
+                    raise ValueError("Username can only contain letters, numbers, and @/./+/-/_ characters.") from None
 
                 if User.objects.filter(username__iexact=requested_username).exclude(pk=user.pk).exists():
                     raise ValueError("Username is already taken.")
@@ -75,7 +75,7 @@ class UserService:
         try:
             target_user = User.objects.get(username=target_username)
         except User.DoesNotExist:
-            raise ValueError("User not found")
+            raise ValueError("User not found") from None
 
         if target_user == follower:
             raise ValueError("Cannot follow yourself")
@@ -118,7 +118,7 @@ class UserService:
             try:
                 referrer_profile = UserProfile.objects.select_related("user").get(referral_code=code)
             except UserProfile.DoesNotExist:
-                raise ValueError("Invalid referral code")
+                raise ValueError("Invalid referral code") from None
 
             profile.referred_by = referrer_profile.user
             profile.save(update_fields=["referred_by", "updated_at"])

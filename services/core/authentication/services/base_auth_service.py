@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.core.cache import cache
 
@@ -64,7 +64,7 @@ class BaseAuthService:
         if not jti or not exp:
             return
 
-        now = datetime.now(timezone.utc).timestamp()
+        now = datetime.now(UTC).timestamp()
         timeout = int(exp - now)
 
         if timeout > 0:

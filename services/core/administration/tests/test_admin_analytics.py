@@ -1,4 +1,3 @@
-from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -9,6 +8,7 @@ from rest_framework.test import APIClient
 from store.models import StoreItem
 
 from administration.models import AdminAuditLog
+from challenges.models import Challenge, UserProgress
 
 
 class AdminAnalyticsTest(TestCase):

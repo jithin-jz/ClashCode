@@ -1,7 +1,6 @@
 import logging
 import random
 
-from challenges.models import UserProgress
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Count
@@ -14,11 +13,12 @@ from drf_spectacular.utils import (
     extend_schema,
     inline_serializer,
 )
-from project.media import build_media_url
-from rest_framework import parsers, serializers, status
+from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from challenges.models import UserProgress
 
 from .serializers import (
     FollowToggleResponseSerializer,
@@ -298,9 +298,7 @@ class ContributionHistoryView(APIView):
         )
 
         formatted_data = [
-            {"date": row["date"].isoformat(), "count": row["count"]}
-            for row in contributions
-            if row["date"] is not None
+            {"date": row["date"].isoformat(), "count": row["count"]} for row in contributions if row["date"] is not None
         ]
 
         return Response(formatted_data, status=status.HTTP_200_OK)

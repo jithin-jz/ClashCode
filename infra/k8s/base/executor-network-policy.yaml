@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: executor-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: executor
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Only allow traffic from core service (and worker pods)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: core
+        - podSelector:
+            matchLabels:
+              app: worker
+      ports:
+        - protocol: TCP
+          port: 8011
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Deny all other egress (no internet access for executor)

@@ -47,7 +47,7 @@ def _build_internal_headers(path: str) -> dict[str, str]:
         timestamp = str(int(time.time()))
         signature = hmac.new(
             signing_secret.encode("utf-8"),
-            f"{timestamp}:{path}".encode("utf-8"),
+            f"{timestamp}:{path}".encode(),
             sha256,
         ).hexdigest()
         headers["X-Internal-Timestamp"] = timestamp

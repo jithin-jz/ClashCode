@@ -1,6 +1,6 @@
 import hmac
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -86,7 +86,7 @@ class OTPService(BaseAuthService):
             OTPService.log_security_event(action="OTP_VERIFY_LOCKED", email=email, request=request)
             return None, {"error": "Too many invalid attempts. Try again later."}
 
-        expiry_time = datetime.now(timezone.utc) - timedelta(minutes=10)
+        expiry_time = datetime.now(UTC) - timedelta(minutes=10)
         otp_hash = hash_otp(email, otp)
         otp_candidates = list(
             EmailOTP.objects.filter(email__iexact=email, created_at__gte=expiry_time).order_by("-created_at")[:5]

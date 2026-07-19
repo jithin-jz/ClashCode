@@ -51,7 +51,7 @@ def authorize_internal_request(request) -> bool:
         return False
 
     message = f"{timestamp}:{request.path}"
-    expected = hmac.new(
+    expected = hmac.HMAC(
         signing_secret.encode("utf-8"),
         message.encode("utf-8"),
         sha256,

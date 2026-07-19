@@ -1,8 +1,8 @@
-from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from certificates.services import CertificateService
+from challenges.models import Challenge, UserProgress
 
 
 class CertificateServiceTest(TestCase):

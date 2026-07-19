@@ -1,9 +1,10 @@
 import logging
 
-from authentication.throttles import StoreRateThrottle
 from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+
+from authentication.throttles import StoreRateThrottle
 
 from .serializers import (
     CreateOrderSerializer,

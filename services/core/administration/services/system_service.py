@@ -1,10 +1,10 @@
-from challenges.models import Challenge
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from notifications.models import Notification
 from store.models import StoreItem
 
 from administration.models import AdminAuditLog, AdminReport
+from challenges.models import Challenge
 
 
 class SystemService:

@@ -63,8 +63,8 @@ jobs:
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:${{ github.sha }}
           format: table
-          exit-code: "0"
-          severity: HIGH,CRITICAL
+          exit-code: "1"
+          severity: CRITICAL
           ignore-unfixed: true
 
   rollout:
@@ -101,10 +101,17 @@ jobs:
             kustomize edit set image $svc=$ECR_REGISTRY/clashcode-$svc:$TAG
           done
           kustomize build . | kubectl apply -f -
-          kubectl -n clashcode rollout status deploy/core      --timeout=5m
-          kubectl -n clashcode rollout status deploy/chat      --timeout=5m
-          kubectl -n clashcode rollout status deploy/ai        --timeout=5m
-          kubectl -n clashcode rollout status deploy/analytics --timeout=5m
-          kubectl -n clashcode rollout status deploy/executor  --timeout=5m
-          kubectl -n clashcode rollout status deploy/worker    --timeout=5m
-          kubectl -n clashcode rollout status deploy/beat      --timeout=3m
+
+      - name: Wait for rollout
+        run: |
+          set -euo pipefail
+          for deploy in core chat ai analytics executor worker beat; do
+            timeout=5m
+            [[ "$deploy" == "beat" ]] && timeout=3m
+            if ! kubectl -n clashcode rollout status deploy/$deploy --timeout=$timeout; then
+              echo "❌ Rollout failed for $deploy — rolling back"
+              kubectl -n clashcode rollout undo deploy/$deploy
+              exit 1
+            fi
+          done
+          echo "✅ All deployments rolled out successfully"

@@ -1,20 +1,20 @@
 import asyncio
+import contextlib
 import json
 import logging
-from typing import Dict, List
 
 from fastapi import WebSocket
-from utils.redis_client import channel_key, redis_client
 
 from core.serializers import json_dumps
+from utils.redis_client import channel_key, redis_client
 
 logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
     def __init__(self):
-        self.active: Dict[str, List[WebSocket]] = {}
-        self.tasks: Dict[str, asyncio.Task] = {}
+        self.active: dict[str, list[WebSocket]] = {}
+        self.tasks: dict[str, asyncio.Task] = {}
 
     async def connect(self, ws: WebSocket, room: str):
         await ws.accept()
@@ -31,10 +31,8 @@ class ConnectionManager:
                 self.active.pop(room, None)
                 if room in self.tasks:
                     self.tasks[room].cancel()
-                    try:
+                    with contextlib.suppress(asyncio.CancelledError):
                         await self.tasks[room]
-                    except asyncio.CancelledError:
-                        pass
                     self.tasks.pop(room, None)
 
     async def redis_subscriber(self, room: str):
@@ -67,8 +65,8 @@ class ConnectionManager:
 
 class NotificationManager:
     def __init__(self):
-        self.active: Dict[int, List[WebSocket]] = {}
-        self.tasks: Dict[int, asyncio.Task] = {}
+        self.active: dict[int, list[WebSocket]] = {}
+        self.tasks: dict[int, asyncio.Task] = {}
 
     async def connect(self, ws: WebSocket, user_id: int):
         await ws.accept()
@@ -85,10 +83,8 @@ class NotificationManager:
                 self.active.pop(user_id, None)
                 if user_id in self.tasks:
                     self.tasks[user_id].cancel()
-                    try:
+                    with contextlib.suppress(asyncio.CancelledError):
                         await self.tasks[user_id]
-                    except asyncio.CancelledError:
-                        pass
                     self.tasks.pop(user_id, None)
                     logger.info(f"Stopped notification subscriber for user {user_id}")
 

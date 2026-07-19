@@ -19,9 +19,7 @@ class OrderResponseSerializer(serializers.Serializer):
 class VerifyPaymentSerializer(serializers.Serializer):
     """Serializer for the request to verify a payment."""
 
-    razorpay_order_id = serializers.CharField(
-        help_text="The order ID returned by Razorpay when the order was created."
-    )
+    razorpay_order_id = serializers.CharField(help_text="The order ID returned by Razorpay when the order was created.")
     razorpay_payment_id = serializers.CharField(
         help_text="The payment ID returned by Razorpay after a successful payment."
     )

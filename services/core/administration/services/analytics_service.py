@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q, Sum
@@ -11,6 +10,7 @@ from users.models import UserProfile
 
 from administration.models import AdminAuditLog, AdminNote, AdminReport
 from administration.utils import _analytics_cache_key
+from challenges.models import Challenge, UserProgress
 
 ANALYTICS_CACHE_TTL = 60 * 2  # 2 minutes
 
@@ -148,9 +148,7 @@ class AnalyticsService:
 
         # 3. Auth Provider Distribution
         auth_dist_qs = UserProfile.objects.values("provider").annotate(count=Count("user_id"))
-        auth_distribution = [
-            {"provider": item["provider"] or "email", "count": item["count"]} for item in auth_dist_qs
-        ]
+        auth_distribution = [{"provider": item["provider"] or "email", "count": item["count"]} for item in auth_dist_qs]
 
         # 4. Top Users by XP
         top_profiles = (

@@ -5,8 +5,6 @@ Uses Redis for rate limiting to ensure limits work correctly
 across multiple container instances (horizontal scaling).
 """
 
-from typing import Optional
-
 import redis.asyncio as redis
 
 
@@ -54,7 +52,7 @@ class RateLimiter:
             return max_requests
         return max(0, max_requests - int(current))
 
-    async def get_reset_time(self, key: str) -> Optional[int]:
+    async def get_reset_time(self, key: str) -> int | None:
         """Get seconds until the rate limit resets."""
         ttl = await self.redis.ttl(key)
         return ttl if ttl > 0 else None

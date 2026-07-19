@@ -34,7 +34,7 @@ class ReportService:
         try:
             target = User.objects.get(username=target_username.strip())
         except User.DoesNotExist:
-            raise AdminResourceNotFound("Target user not found.")
+            raise AdminResourceNotFound("Target user not found.") from None
 
         if not title.strip() or not summary.strip():
             raise AdminValidationError("Title and summary are required.")

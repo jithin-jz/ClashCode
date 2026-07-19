@@ -1,15 +1,16 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 
 import sentry_sdk
-from api.routes import router as http_router
-from api.websockets import router as ws_router
 from dotenv import load_dotenv
 from dynamo import dynamo_client
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+from api.routes import router as http_router
+from api.websockets import router as ws_router
 
 # Load Environment
 load_dotenv()
@@ -30,13 +31,43 @@ if SENTRY_DSN:
     )
     logger.info("Sentry initialized for Chat service")
 
+
+# CORS configuration
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",")]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown lifecycle."""
+    # Startup
+    creds_ok = await dynamo_client.verify_connection()
+    if not creds_ok:
+        logger.critical(
+            "⚠️  DynamoDB credentials are INVALID. Chat persistence is DISABLED. "
+            "Check AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in 'backend-secrets' "
+            "or configure IRSA for the chat pod."
+        )
+    else:
+        try:
+            await dynamo_client.create_table_if_not_exists()
+            logger.info("DynamoDB table ready")
+        except Exception as e:
+            logger.error(f"Failed to initialize DynamoDB on startup: {e}")
+
+    yield  # App is running
+
+    # Shutdown (cleanup if needed)
+    logger.info("Chat service shutting down")
+
+
 # Initialize App
-app = FastAPI(title="Chat Service")
+app = FastAPI(title="Chat Service", lifespan=lifespan)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust in production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,47 +79,9 @@ def health():
     return {"status": "ok", "service": "chat"}
 
 
-@app.on_event("startup")
-async def on_startup():
-    # 1. Verify credentials are valid first
-    creds_ok = await dynamo_client.verify_connection()
-    if not creds_ok:
-        logger.critical(
-            "⚠️  DynamoDB credentials are INVALID. Chat persistence is DISABLED. "
-            "Check AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in 'backend-secrets' "
-            "or configure IRSA for the chat pod."
-        )
-        return  # Skip table creation — it will also fail
-
-    # 2. Ensure tables exist
-    try:
-        await dynamo_client.create_table_if_not_exists()
-        logger.info("DynamoDB table ready")
-    except Exception as e:
-        logger.error(f"Failed to initialize DynamoDB on startup: {e}")
-        # We don't re-raise here so the app can still start and serve health checks
-        # even if DB is temporarily unreachable or has permission issues.
-
-
 # Include Routers
 # Default routes (for local Nginx stripping /api)
 app.include_router(http_router)
 # Production routes (for AWS ALB which does NOT strip /api)
 app.include_router(http_router, prefix="/api")
 app.include_router(ws_router)
-
-
-# Global Exception Handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        content={"error": "Internal server error"},
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8001)

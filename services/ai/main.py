@@ -1,7 +1,6 @@
 import logging
 
 import sentry_sdk
-from api.routes import router as ai_router
 from config import settings
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -9,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from logger_config import setup_logging
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+from api.routes import router as ai_router
 
 # Load Environment
 load_dotenv()

@@ -1,5 +1,3 @@
-from typing import List, Optional, Union
-
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,10 +9,10 @@ class Settings(BaseSettings):
     # API Keys & Auth
     # API Keys & Auth
     INTERNAL_API_KEY: str
-    INTERNAL_SIGNING_SECRET: Optional[str] = None
+    INTERNAL_SIGNING_SECRET: str | None = None
     INTERNAL_REQUIRE_SIGNATURE: bool = True
-    GROQ_API_KEY: Optional[str] = None
-    HUGGINGFACE_API_KEY: Optional[str] = None
+    GROQ_API_KEY: str | None = None
+    HUGGINGFACE_API_KEY: str | None = None
 
     # LLM Settings
     LLM_PROVIDER: str = "groq"
@@ -27,10 +25,10 @@ class Settings(BaseSettings):
     PINECONE_INDEX_NAME: str
 
     # Security
-    CORS_ORIGINS: Union[str, List[str]]
+    CORS_ORIGINS: str | list[str]
 
     # Observability
-    SENTRY_DSN: Optional[str] = Field(default=None, alias="SENTRY_DSN")
+    SENTRY_DSN: str | None = Field(default=None, alias="SENTRY_DSN")
     DEBUG: bool = Field(default=False)
     ENVIRONMENT: str = Field(default="production")
 

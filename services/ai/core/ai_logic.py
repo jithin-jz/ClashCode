@@ -9,9 +9,9 @@ from prompts import (
     HINT_GENERATION_SYSTEM_PROMPT,
     HINT_GENERATION_USER_TEMPLATE,
 )
-from utils.sanitizer import sanitize_guidance_output
 
 from core.rag import get_rag_context
+from utils.sanitizer import sanitize_guidance_output
 
 logger = logging.getLogger(__name__)
 

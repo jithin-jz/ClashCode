@@ -1,6 +1,5 @@
 import ast
 import logging
-from typing import List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +63,8 @@ class CodeSecurityValidator(ast.NodeVisitor):
                 self.errors.append(f"Call to function '{node.func.id}' is blocked.")
 
         # Block dynamic imports via __import__
-        elif isinstance(node.func, ast.Attribute):
-            if node.func.attr == "__import__":
-                self.errors.append("Dynamic imports via __import__ are blocked.")
+        elif isinstance(node.func, ast.Attribute) and node.func.attr == "__import__":
+            self.errors.append("Dynamic imports via __import__ are blocked.")
 
         self.generic_visit(node)
 
@@ -77,7 +75,7 @@ class CodeSecurityValidator(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def validate_code_safety(code: str) -> Tuple[bool, List[str]]:
+def validate_code_safety(code: str) -> tuple[bool, list[str]]:
     """
     Performs Abstract Syntax Tree analysis to detect dangerous patterns.
     Returns (is_safe, error_messages)

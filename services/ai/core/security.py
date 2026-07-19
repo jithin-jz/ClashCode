@@ -2,7 +2,6 @@ import hmac
 import logging
 import time
 from hashlib import sha256
-from typing import Optional
 
 from config import settings
 
@@ -16,7 +15,7 @@ def build_internal_headers(path: str) -> dict[str, str]:
         timestamp = str(int(time.time()))
         signature = hmac.new(
             signing_secret.encode("utf-8"),
-            f"{timestamp}:{path}".encode("utf-8"),
+            f"{timestamp}:{path}".encode(),
             sha256,
         ).hexdigest()
         headers["X-Internal-Timestamp"] = timestamp
@@ -26,9 +25,9 @@ def build_internal_headers(path: str) -> dict[str, str]:
 
 def authorize_internal_request(
     path: str,
-    api_key: Optional[str],
-    timestamp: Optional[str],
-    signature: Optional[str],
+    api_key: str | None,
+    timestamp: str | None,
+    signature: str | None,
 ) -> bool:
     if api_key != settings.INTERNAL_API_KEY:
         return False
@@ -49,7 +48,7 @@ def authorize_internal_request(
 
     expected = hmac.new(
         signing_secret.encode("utf-8"),
-        f"{timestamp}:{path}".encode("utf-8"),
+        f"{timestamp}:{path}".encode(),
         sha256,
     ).hexdigest()
     return hmac.compare_digest(expected, signature)

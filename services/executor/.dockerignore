@@ -1,6 +1,15 @@
 __pycache__
+**/__pycache__
 *.pyc
+*.pyo
 .env
 .env.*
 .pytest_cache
 .git
+.gitignore
+tests/
+pytest.ini
+requirements.lock
+*.md
+.ruff_cache
+.mypy_cache

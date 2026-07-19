@@ -72,7 +72,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         except User.DoesNotExist:
             if token_source == "cookie":
                 return None
-            raise exceptions.AuthenticationFailed("User not found")
+            raise exceptions.AuthenticationFailed("User not found") from None
 
         # 6. Ensure the user account is still permitted to access the system
         if not user.is_active:

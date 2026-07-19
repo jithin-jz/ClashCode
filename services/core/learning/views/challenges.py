@@ -2,8 +2,15 @@ import logging
 import os
 
 import requests
-from authentication.throttles import CodeExecutionRateThrottle
 from celery.result import AsyncResult
+from django.core.cache import cache
+from django.http import StreamingHttpResponse
+from drf_spectacular.utils import OpenApiTypes, extend_schema
+from rest_framework import decorators, status, viewsets
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+
+from authentication.throttles import CodeExecutionRateThrottle
 from challenges.models import Challenge, UserProgress
 from challenges.serializers import (
     AIAnalysisRequestSerializer,
@@ -17,13 +24,7 @@ from challenges.serializers import (
     ChallengeSubmissionRequestSerializer,
 )
 from challenges.services import ChallengeService
-from django.core.cache import cache
-from django.http import StreamingHttpResponse
-from drf_spectacular.utils import OpenApiTypes, extend_schema
 from project.internal_auth import authorize_internal_request
-from rest_framework import decorators, status, viewsets
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
-from rest_framework.response import Response
 
 from ..tasks import (
     _build_internal_headers,
@@ -336,7 +337,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
                             yield chunk
             except Exception as e:
                 logger.error(f"AI hint streaming proxy failed: {e}")
-                yield f"data: Error in AI proxy: {str(e)}\n\n".encode("utf-8")
+                yield f"data: Error in AI proxy: {str(e)}\n\n".encode()
 
         return StreamingHttpResponse(stream_generator(), content_type="text/event-stream")
 
@@ -398,9 +399,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             response_data["result"] = task_result.get("payload", {})
         else:
             response_data["error"] = (
-                task_result.get("error", "AI generation failed.")
-                if isinstance(task_result, dict)
-                else str(task_result)
+                task_result.get("error", "AI generation failed.") if isinstance(task_result, dict) else str(task_result)
             )
 
         return Response(response_data, status=status.HTTP_200_OK)

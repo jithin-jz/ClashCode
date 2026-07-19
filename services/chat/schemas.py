@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field
@@ -18,7 +18,7 @@ class ChatMessage(BaseEvent):
     message: str = Field(min_length=1, max_length=1000)
     user_id: int
     username: str
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
 
 
 class PresenceEvent(BaseEvent):
@@ -26,13 +26,13 @@ class PresenceEvent(BaseEvent):
     event: Literal["join", "leave"]
     user_id: int
     username: str
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     count: int = 0
 
 
 class IncomingMessage(BaseModel):
     action: Literal["send", "edit", "delete", "typing", "react", "pin", "unpin", "read"] = "send"
-    target_timestamp: Optional[str] = None
-    message: Optional[str] = Field(None, max_length=1000)
-    emoji: Optional[str] = None  # For reactions
-    room: Optional[str] = None  # Sent by frontend, but room is taken from URL path
+    target_timestamp: str | None = None
+    message: str | None = Field(None, max_length=1000)
+    emoji: str | None = None  # For reactions
+    room: str | None = None  # Sent by frontend, but room is taken from URL path

@@ -27,7 +27,7 @@ class Command(BaseCommand):
         """
         Parses a markdown file with YAML-like frontmatter.
         """
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         # Extract frontmatter

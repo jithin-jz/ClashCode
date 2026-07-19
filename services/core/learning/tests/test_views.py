@@ -1,10 +1,11 @@
 import os
 
-from challenges.models import Challenge
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from challenges.models import Challenge
 
 
 class LearningViewTests(APITestCase):

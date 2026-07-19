@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
-from project.media import build_file_url
 from rest_framework import serializers
+
+from project.media import build_file_url
 
 from .models import UserProfile
 

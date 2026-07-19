@@ -1,8 +1,8 @@
-from challenges.models import Challenge, UserProgress
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
 
+from challenges.models import Challenge, UserProgress
 from learning.tasks import update_leaderboard_cache
 
 

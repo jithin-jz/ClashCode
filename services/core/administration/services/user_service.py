@@ -1,4 +1,3 @@
-from challenges.models import UserProgress
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import (
@@ -22,6 +21,7 @@ from administration.exceptions import (
 )
 from administration.models import AdminAuditLog, AdminNote, AdminReport
 from administration.permissions import can_manage_user
+from challenges.models import UserProgress
 
 
 class UserService:
@@ -33,7 +33,7 @@ class UserService:
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise AdminResourceNotFound("User not found")
+            raise AdminResourceNotFound("User not found") from None
 
         allowed, message = can_manage_user(admin_user, user)
         if not allowed:
@@ -67,7 +67,7 @@ class UserService:
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise AdminResourceNotFound("User not found")
+            raise AdminResourceNotFound("User not found") from None
 
         allowed, message = can_manage_user(admin_user, user)
         if not allowed:
@@ -173,7 +173,7 @@ class UserService:
         try:
             target = User.objects.select_related("profile").get(username=username)
         except User.DoesNotExist:
-            raise AdminResourceNotFound("User not found")
+            raise AdminResourceNotFound("User not found") from None
 
         if not admin_user.is_superuser and (target.is_staff or target.is_superuser):
             raise AdminPermissionDenied("Only superusers can inspect staff or superuser accounts.")
@@ -182,9 +182,9 @@ class UserService:
         completed_qs = progress_qs.filter(status=UserProgress.Status.COMPLETED)
 
         purchases = Purchase.objects.filter(user=target).select_related("item").order_by("-purchased_at")[:8]
-        recent_logs = AdminAuditLog.objects.filter(
-            Q(target_user=target) | Q(target_username=target.username)
-        ).order_by("-timestamp")[:8]
+        recent_logs = AdminAuditLog.objects.filter(Q(target_user=target) | Q(target_username=target.username)).order_by(
+            "-timestamp"
+        )[:8]
 
         notes = AdminNote.objects.filter(target_user=target).order_by("-created_at")[:8]
         reports = AdminReport.objects.filter(target_user=target).order_by("-created_at")[:8]
@@ -254,7 +254,7 @@ class UserService:
         try:
             target = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise AdminResourceNotFound("User not found")
+            raise AdminResourceNotFound("User not found") from None
 
         if new_role not in {"user", "staff", "superuser"}:
             raise AdminValidationError("Invalid role.")
@@ -377,7 +377,7 @@ class UserService:
         try:
             target = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise AdminResourceNotFound("User not found")
+            raise AdminResourceNotFound("User not found") from None
 
         if not body.strip():
             raise AdminValidationError("Note body is required.")

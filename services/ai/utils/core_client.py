@@ -2,8 +2,9 @@ import logging
 
 import httpx
 from config import settings
-from core.security import build_internal_headers
 from fastapi import HTTPException
+
+from core.security import build_internal_headers
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ async def fetch_challenge_context(challenge_slug: str):
             return response.json()
     except httpx.RequestError as e:
         logger.error(f"Error connecting to Core Service: {e}")
-        raise HTTPException(status_code=503, detail="Core service unavailable")
+        raise HTTPException(status_code=503, detail="Core service unavailable") from e
 
 
 async def fetch_internal_challenges():

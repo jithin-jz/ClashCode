@@ -1,8 +1,9 @@
 import logging
 
-from core.auth import get_token, verify_jwt
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
+
+from core.auth import get_token, verify_jwt
 from services.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
@@ -52,8 +53,9 @@ async def search_room_messages(
         return JSONResponse(content={"error": "Invalid token"}, status_code=status.HTTP_401_UNAUTHORIZED)
 
     try:
-        from core.serializers import serialize_dynamo_message
         from dynamo import dynamo_client
+
+        from core.serializers import serialize_dynamo_message
 
         result = await dynamo_client.search_messages(room, q, limit)
         if not result.get("ok"):

@@ -7,11 +7,12 @@ to automatically award achievements when conditions are met.
 
 import logging
 
-from challenges.models import UserProgress
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rewards.models import DailyCheckIn
 from users.models import UserFollow
+
+from challenges.models import UserProgress
 
 from .services import AchievementService
 

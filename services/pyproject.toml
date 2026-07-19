@@ -1,13 +1,42 @@
 [tool.black]
-line-length = 140
-target-version = ['py312']
+line-length = 120
+target-version = ['py311', 'py312']
 
 [tool.ruff]
-line-length = 140
-target-version = "py312"
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+    "**/migrations/**",
+    "**/__pycache__/**",
+    "**/staticfiles/**",
+    "**/media/**",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
-ignore = [
-    "E402", # Module level import not at top of file
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "C4",   # comprehensions
+    "SIM",  # simplify
 ]
+ignore = [
+    "E501",   # line length handled by formatter
+    "B008",   # function call in default arg (FastAPI Depends)
+    "SIM108", # ternary operator - sometimes less readable
+    "SIM102", # nested if - sometimes more readable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["B011", "F401", "B017", "E402"]
+"**/settings.py" = ["F401", "E402"]
+"**/conftest.py" = ["F401"]
+"**/scripts/**" = ["E402"]
+"**/authentication.py" = ["E402"]
+"**/notifications/utils.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "api", "models", "services", "utils", "challenges", "learning", "authentication", "project"]

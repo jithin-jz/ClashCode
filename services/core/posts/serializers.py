@@ -1,6 +1,7 @@
-from project.media import build_file_url
 from rest_framework import serializers
 from users.serializers import UserSummarySerializer
+
+from project.media import build_file_url
 
 from .models import Post
 

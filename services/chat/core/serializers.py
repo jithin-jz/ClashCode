@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -20,7 +20,7 @@ def serialize_timestamp(value: Any) -> Any:
         return value
 
     divisor = Decimal(1000) if abs(value) > Decimal("100000000000") else Decimal(1)
-    return datetime.fromtimestamp(float(value / divisor), tz=timezone.utc).isoformat()
+    return datetime.fromtimestamp(float(value / divisor), tz=UTC).isoformat()
 
 
 def decimal_to_json(obj: Any) -> Any:

@@ -2,10 +2,11 @@ import logging
 import os
 
 import sentry_sdk
-from api.routes import router as executor_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+from api.routes import router as executor_router
 
 # Load Environment
 load_dotenv()

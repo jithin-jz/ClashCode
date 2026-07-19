@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from core.docker_runner import DockerRunner
 from core.runner import run_python_code
@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 
 class ExecutionService:
     @staticmethod
-    async def execute(request: ExecuteRequest) -> Dict[str, Any]:
+    async def execute(request: ExecuteRequest) -> dict[str, Any]:
         """
         Orchestrates code execution by validating security and selecting the appropriate runner.
+        Supports single execution and batch test cases.
         """
         # 1. Security Validation (AST)
         is_safe, errors = validate_code_safety(request.code)
@@ -29,7 +30,24 @@ class ExecutionService:
                 }
             }
 
-        # 2. Select Runner
+        # 2. Batch test case execution
+        if request.test_cases and len(request.test_cases) > 0:
+            test_cases_data = [{"input": tc.input, "expected_output": tc.expected_output} for tc in request.test_cases]
+            results = await DockerRunner.run_batch(request.code, test_cases_data)
+            total = len(results)
+            passed = sum(1 for r in results if r.get("passed") is True)
+            failed = sum(1 for r in results if r.get("passed") is False)
+
+            return {
+                "summary": {
+                    "total": total,
+                    "passed": passed,
+                    "failed": failed,
+                },
+                "results": results,
+            }
+
+        # 3. Single execution - select runner
         if request.runner == "docker":
             return await DockerRunner.run_code(request.code, request.stdin)
 

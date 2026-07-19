@@ -1,9 +1,11 @@
+import contextlib
 import logging
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from schemas import IncomingMessage
 
 from core.auth import JWT_ACCESS_COOKIE_NAME, get_token, verify_jwt
 from core.managers import notification_manager
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
-from schemas import IncomingMessage
 from services.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
@@ -51,20 +53,18 @@ async def chat_ws(ws: WebSocket, room: str):
                         await ws.send_json({"type": "error", "message": result["error"]})
                     elif result.get("ok") is False:
                         reason = result.get("reason", "unknown")
-                        logger.warning(
-                            f"Action '{incoming.action}' failed for user {payload.get('user_id')}: {reason}"
+                        logger.warning(f"Action '{incoming.action}' failed for user {payload.get('user_id')}: {reason}")
+                        await ws.send_json(
+                            {
+                                "type": "error",
+                                "message": f"Action failed: {reason}",
+                                "action": incoming.action,
+                            }
                         )
-                        await ws.send_json({
-                            "type": "error",
-                            "message": f"Action failed: {reason}",
-                            "action": incoming.action,
-                        })
             except Exception as proc_err:
                 logger.exception(f"Error processing '{incoming.action}' from user {payload.get('user_id')}: {proc_err}")
-                try:
+                with contextlib.suppress(Exception):
                     await ws.send_json({"type": "error", "message": "Server error processing action"})
-                except Exception:
-                    pass
 
     except WebSocketDisconnect:
         await ChatService.handle_disconnect(ws, room, payload)

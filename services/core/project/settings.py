@@ -251,14 +251,18 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "admin_file": {
-            "level": "WARNING",
-            "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/admin.log"),
-            "formatter": "verbose",
-        } if not DEBUG else {
-            "class": "logging.NullHandler",
-        },
+        "admin_file": (
+            {
+                "level": "WARNING",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs/admin.log"),
+                "formatter": "verbose",
+            }
+            if not DEBUG
+            else {
+                "class": "logging.NullHandler",
+            }
+        ),
     },
     "loggers": {
         "django": {
@@ -366,9 +370,7 @@ REST_FRAMEWORK = {
         "otp": os.getenv("THROTTLE_OTP_RATE", "5/minute"),  # Strict limit for OTP requests (SMS cost)
         "auth": os.getenv("THROTTLE_AUTH_RATE", "10/minute"),  # Login/register attempts (brute force protection)
         "store": os.getenv("THROTTLE_STORE_RATE", "30/minute"),  # Store/purchase operations
-        "notifications": os.getenv(
-            "THROTTLE_NOTIFICATIONS_RATE", "180/minute"
-        ),  # Notification polling/read operations
+        "notifications": os.getenv("THROTTLE_NOTIFICATIONS_RATE", "180/minute"),  # Notification polling/read operations
         "sensitive": os.getenv("THROTTLE_SENSITIVE_RATE", "5/minute"),  # Password reset, email change
         "burst": os.getenv("THROTTLE_BURST_RATE", "10/second"),  # Short burst protection
         "code_execution": os.getenv(
@@ -449,11 +451,10 @@ else:
 EMAIL_HOST = _EMAIL_HOST or "smtp.gmail.com"
 EMAIL_PORT = int(os.getenv("EMAIL_PORT") or "587")
 EMAIL_USE_TLS = _parse_bool(os.getenv("EMAIL_USE_TLS"), default=True)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") or "jzdieheart@gmail.com"
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") or "nrko gatv zahv megs"
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or "CLASHCODE <jzdieheart@gmail.com>"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "CLASHCODE <noreply@clashcode.com>")
 OTP_EMAIL_ASYNC = (os.getenv("OTP_EMAIL_ASYNC") or "true").lower() == "true"
-
 
 
 # Razorpay

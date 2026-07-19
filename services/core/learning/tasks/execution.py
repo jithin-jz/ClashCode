@@ -1,10 +1,11 @@
 import logging
 
 from celery import shared_task
+from django.contrib.auth import get_user_model
+
 from challenges.execution import PistonExecutionService
 from challenges.models import Challenge
 from challenges.services import ChallengeService
-from django.contrib.auth import get_user_model
 from project.circuit_breaker import RedisCircuitBreaker
 
 from .base import _publish_task_result

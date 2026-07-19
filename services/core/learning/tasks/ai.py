@@ -4,6 +4,7 @@ import os
 import requests
 from celery import shared_task
 from django.core.cache import cache
+
 from project.circuit_breaker import RedisCircuitBreaker
 
 from .base import (

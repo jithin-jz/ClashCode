@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 from main import app
 from schemas import IncomingMessage
+
 from services.chat_service import ChatService
 
 client = TestClient(app)
@@ -24,12 +25,14 @@ client = TestClient(app)
 async def test_websocket_auth_failure(mock_limiter, mock_verify):
     mock_verify.return_value = None
 
-    with pytest.raises(WebSocketDisconnect) as exc:
-        with client.websocket_connect(
+    with (
+        pytest.raises(WebSocketDisconnect) as exc,
+        client.websocket_connect(
             "/ws/chat/global",
             headers={"authorization": "Bearer invalid"},
-        ) as _:
-            pass
+        ) as _,
+    ):
+        pass
     assert exc.value.code == 1008
 
 
@@ -98,9 +101,7 @@ async def test_websocket_delete_forbidden_stays_local(
     mock_limiter.check_message_rate = AsyncMock(return_value=True)
     mock_limiter.check_burst_rate = AsyncMock(return_value=True)
     mock_dynamo.get_messages = AsyncMock(return_value={"items": [], "last_evaluated_key": None})
-    mock_dynamo.delete_message = AsyncMock(
-        return_value={"ok": False, "error": "You can only delete your own messages"}
-    )
+    mock_dynamo.delete_message = AsyncMock(return_value={"ok": False, "error": "You can only delete your own messages"})
     mock_svc_redis.publish = AsyncMock()
     mock_mgr_redis.publish = AsyncMock()
 

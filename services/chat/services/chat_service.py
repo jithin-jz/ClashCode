@@ -1,14 +1,15 @@
 import json
 import logging
 import re
-from typing import Any, Dict
+from typing import Any
 
-from core.managers import manager
-from core.serializers import json_dumps, serialize_dynamo_message
 from dynamo import dynamo_client
 from fastapi import WebSocket, status
 from schemas import ChatMessage as ChatMessageSchema
 from schemas import IncomingMessage, PresenceEvent
+
+from core.managers import manager
+from core.serializers import json_dumps, serialize_dynamo_message
 from utils.redis_client import channel_key, rate_limiter, redis_client
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ChatService:
     @staticmethod
-    async def handle_connect(ws: WebSocket, room: str, user_payload: Dict[str, Any]) -> bool:
+    async def handle_connect(ws: WebSocket, room: str, user_payload: dict[str, Any]) -> bool:
         """Handles new WebSocket connection, sends history and joins presence."""
         user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
@@ -66,7 +67,7 @@ class ChatService:
         return True
 
     @staticmethod
-    async def handle_disconnect(ws: WebSocket, room: str, user_payload: Dict[str, Any]):
+    async def handle_disconnect(ws: WebSocket, room: str, user_payload: dict[str, Any]):
         """Handles WebSocket disconnection and leaves presence."""
         user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
@@ -84,7 +85,7 @@ class ChatService:
         await redis_client.publish(channel_key(room), leave.model_dump_json())
 
     @staticmethod
-    async def process_message(room: str, user_payload: Dict[str, Any], incoming: IncomingMessage):
+    async def process_message(room: str, user_payload: dict[str, Any], incoming: IncomingMessage):
         """Processes incoming chat messages based on action type."""
         user_id = int(user_payload["user_id"])
         username = user_payload.get("username", f"user-{user_id}")
@@ -178,9 +179,7 @@ class ChatService:
         if not incoming.emoji:
             return {"ok": False, "reason": "missing_emoji"}
 
-        result = await dynamo_client.toggle_reaction(
-            room, incoming.target_timestamp, username, incoming.emoji
-        )
+        result = await dynamo_client.toggle_reaction(room, incoming.target_timestamp, username, incoming.emoji)
         if result.get("ok"):
             actual_ts = result.get("actual_timestamp", incoming.target_timestamp)
             await redis_client.publish(
@@ -305,13 +304,14 @@ class ChatService:
         return {"ok": True}
 
     @staticmethod
-    async def get_history(room: str, limit: int = 50, last_timestamp: str | None = None) -> Dict[str, Any]:
+    async def get_history(room: str, limit: int = 50, last_timestamp: str | None = None) -> dict[str, Any]:
         """Retrieves paginated message history for a room using a cursor (last_timestamp)."""
         result = await dynamo_client.get_messages(room, limit=limit, last_timestamp=last_timestamp)
         messages = result.get("items", [])
         last_key = result.get("last_evaluated_key")
 
         from core.serializers import decimal_to_json
+
         return {
             "messages": [serialize_dynamo_message(room, msg) for msg in reversed(messages)],
             "last_timestamp": decimal_to_json(last_key.get("timestamp")) if last_key else None,

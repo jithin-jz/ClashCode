@@ -1,10 +1,11 @@
 import logging
 
-from authentication.throttles import NotificationRateThrottle
 from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import mixins, pagination, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from authentication.throttles import NotificationRateThrottle
 
 from .models import FCMToken, Notification
 from .serializers import (

@@ -39,7 +39,7 @@ class StoreService:
             except ValueError:
                 user.profile.refresh_from_db()
                 shortage = max(0, item.cost - user.profile.xp)
-                raise ValueError(f"Insufficient XP. Need {shortage} more.")
+                raise ValueError(f"Insufficient XP. Need {shortage} more.") from None
 
             Purchase.objects.create(user=user, item=item)
 

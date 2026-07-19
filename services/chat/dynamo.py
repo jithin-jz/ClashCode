@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -57,22 +57,26 @@ class DynamoClient:
             return True
         except ClientError as e:
             code = e.response.get("Error", {}).get("Code", "Unknown")
-            
+
             # If explicit credentials fail with an invalid token, try falling back to IAM role/default chain
-            if code == "UnrecognizedClientException" and (self.creds.get("aws_access_key_id") or os.environ.get("AWS_ACCESS_KEY_ID")):
-                logger.warning("Invalid credentials detected (UnrecognizedClientException). Purging env vars and falling back to default IAM chain...")
+            if code == "UnrecognizedClientException" and (
+                self.creds.get("aws_access_key_id") or os.environ.get("AWS_ACCESS_KEY_ID")
+            ):
+                logger.warning(
+                    "Invalid credentials detected (UnrecognizedClientException). Purging env vars and falling back to default IAM chain..."
+                )
                 try:
                     # Preserve region but clear explicit credentials and environment variables to force fallback
                     region = self.creds.get("region_name") or os.environ.get("AWS_REGION") or "ap-south-1"
                     self.creds = {"region_name": region}
-                    
+
                     os.environ.pop("AWS_ACCESS_KEY_ID", None)
                     os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
                     os.environ.pop("AWS_SESSION_TOKEN", None)
-                    
+
                     # Re-initialize the session to ensure it picks up new credential chain state
                     self.session = aioboto3.Session()
-                    
+
                     async with self.session.client("dynamodb", **self.creds) as client:
                         await client.list_tables(Limit=1)
                     logger.info(f"DynamoDB connection verified via default IAM chain in {region} (after env purge)")
@@ -175,7 +179,7 @@ class DynamoClient:
 
         dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return Decimal(int(dt.timestamp() * 1000))
 
     async def _db_timestamp(self, timestamp: Any) -> str | Decimal:
@@ -194,7 +198,7 @@ class DynamoClient:
     def _timestamp_from_epoch(value: Decimal) -> str:
         divisor = Decimal(1000) if abs(value) > Decimal("100000000000") else Decimal(1)
         seconds = float(value / divisor)
-        return datetime.fromtimestamp(seconds, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(seconds, tz=UTC).isoformat()
 
     def _client_timestamp(self, item: dict[str, Any]) -> str | None:
         timestamp = item.get("created_at") or item.get("iso_timestamp")
@@ -220,7 +224,7 @@ class DynamoClient:
         reactions: dict | None = None,
         increment_activity: bool = True,
     ):
-        actual_timestamp = timestamp or datetime.now(timezone.utc).isoformat()
+        actual_timestamp = timestamp or datetime.now(UTC).isoformat()
         try:
             db_timestamp = await self._db_timestamp(actual_timestamp)
             async with self.session.resource("dynamodb", **self.creds) as dynamo:
@@ -249,7 +253,7 @@ class DynamoClient:
                 try:
                     async with self.session.resource("dynamodb", **self.creds) as dynamo:
                         activity_table = await dynamo.Table("UserActivity")
-                        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                        today = datetime.now(UTC).strftime("%Y-%m-%d")
                         await activity_table.update_item(
                             Key={"user_id": str(user_id), "date": today},
                             UpdateExpression="ADD contribution_count :inc",
@@ -453,7 +457,9 @@ class DynamoClient:
                     )
                 except ClientError as ce:
                     if ce.response.get("Error", {}).get("Code") == "ValidationException":
-                        logger.warning(f"Attribute type mismatch for read_by, attempting fallback to SET for {db_timestamp}")
+                        logger.warning(
+                            f"Attribute type mismatch for read_by, attempting fallback to SET for {db_timestamp}"
+                        )
                     raise ce
             return {"ok": True, "actual_timestamp": actual_timestamp}
         except Exception as e:
