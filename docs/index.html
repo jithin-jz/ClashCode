@@ -120,9 +120,9 @@
                 <tr><td class="px-4 py-3 font-medium">Core API</td><td class="px-4 py-3">Django 5.0, DRF 3.16, Gunicorn, Celery 5.4, django-celery-beat, drf-spectacular (OpenAPI), PyJWT (RS256+HS256), Razorpay SDK, Cloudinary, Firebase Admin</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Chat</td><td class="px-4 py-3">FastAPI 0.115, Uvicorn, WebSockets 14, aioboto3 13, Redis 5.2, Sentry</td></tr>
                 <tr><td class="px-4 py-3 font-medium">AI</td><td class="px-4 py-3">FastAPI 0.128, LangChain Core 0.3, LangChain OpenAI 0.3, LangChain Pinecone 0.2, Pinecone SDK 6, HTTPX, NumPy, Sentry</td></tr>
-                <tr><td class="px-4 py-3 font-medium">Executor</td><td class="px-4 py-3">FastAPI 0.115, Pydantic 2.10, AST-based security validator, Sentry</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Executor</td><td class="px-4 py-3">FastAPI 0.115, Pydantic 2.10, AST-based security validator, Docker SDK, Sentry</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Databases</td><td class="px-4 py-3">PostgreSQL 15, Redis 7, Amazon DynamoDB, Pinecone Vector DB</td></tr>
-                <tr><td class="px-4 py-3 font-medium">Infrastructure</td><td class="px-4 py-3">Amazon EKS, Terraform (VPC, EKS, RDS, ElastiCache, DynamoDB, ECR modules), Kustomize, Docker, Nginx, external-secrets.io</td></tr>
+                <tr><td class="px-4 py-3 font-medium">Infrastructure</td><td class="px-4 py-3">Amazon EKS, Terraform (VPC, EKS, RDS, ElastiCache, DynamoDB, ECR modules), Kustomize, Docker, Nginx, external-secrets.io, NetworkPolicy</td></tr>
                 <tr><td class="px-4 py-3 font-medium">CI/CD</td><td class="px-4 py-3">GitHub Actions (CI + Deploy), OIDC auth, Docker Buildx, Trivy image scanning, Kustomize rollouts</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Monitoring</td><td class="px-4 py-3">Sentry (error tracking), Flower (Celery UI), Prometheus ServiceMonitor, Firebase Cloud Messaging</td></tr>
             </tbody>
@@ -166,10 +166,10 @@
     <!-- Chat -->
     <div class="mb-10 border border-surface-200 rounded-xl p-6">
         <h3 class="text-xl font-bold text-surface-900 mb-1">Chat Service <span class="text-sm font-normal text-brand-600">FastAPI — Port 8001</span></h3>
-        <p class="text-surface-700 mb-4 text-sm">Real-time WebSocket messaging with persistent DynamoDB storage, Redis pub/sub for cross-instance broadcasting, and rate limiting.</p>
+        <p class="text-surface-700 mb-4 text-sm">Real-time WebSocket messaging with persistent DynamoDB storage, Redis pub/sub for cross-instance broadcasting, and rate limiting. Improved connection management and serialization.</p>
         <h4 class="font-semibold text-sm mb-2">Capabilities</h4>
         <ul class="text-sm text-surface-700 space-y-1 list-disc list-inside">
-            <li>WebSocket connections with JWT authentication</li>
+            <li>WebSocket connections with JWT authentication (improved connection lifecycle)</li>
             <li>Message CRUD (send, edit, delete) with ownership validation</li>
             <li>Emoji reactions (toggle per user per message)</li>
             <li>Message search within rooms</li>
@@ -177,7 +177,30 @@
             <li>User activity contribution counting (DynamoDB UserActivity table)</li>
             <li>Auto-creates DynamoDB tables on startup</li>
             <li>Graceful fallback: IAM role chain if explicit credentials fail</li>
+            <li>Enhanced connection managers for reliable pub/sub broadcasting</li>
+            <li>Improved serialization for message objects</li>
         </ul>
+        <h4 class="font-semibold text-sm mt-3 mb-2">Architecture Components</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+            <div class="bg-surface-50 rounded-lg p-3">
+                <p class="font-semibold mb-1">Core Files</p>
+                <ul class="text-xs text-surface-700 space-y-1">
+                    <li>• <code>websockets.py</code> — WS connection handlers</li>
+                    <li>• <code>core/managers.py</code> — Connection management</li>
+                    <li>• <code>core/serializers.py</code> — Message serialization</li>
+                    <li>• <code>dynamo.py</code> — DynamoDB operations</li>
+                </ul>
+            </div>
+            <div class="bg-surface-50 rounded-lg p-3">
+                <p class="font-semibold mb-1">Supporting Files</p>
+                <ul class="text-xs text-surface-700 space-y-1">
+                    <li>• <code>schemas.py</code> — Pydantic models</li>
+                    <li>• <code>rate_limiter.py</code> — Rate limiting</li>
+                    <li>• <code>services/chat_service.py</code> — Business logic</li>
+                    <li>• <code>.dockerignore</code> — Build optimization</li>
+                </ul>
+            </div>
+        </div>
         <h4 class="font-semibold text-sm mt-3 mb-2">DynamoDB Schema</h4>
         <div class="text-sm bg-surface-50 rounded-lg p-3">
             <p><strong>ChatMessages</strong> — PK: <code>room_id</code> (S), SK: <code>timestamp</code> (N, epoch ms)</p>
@@ -210,7 +233,28 @@
     <!-- Executor -->
     <div class="mb-10 border border-surface-200 rounded-xl p-6">
         <h3 class="text-xl font-bold text-surface-900 mb-1">Executor <span class="text-sm font-normal text-brand-600">FastAPI — Port 8011 (internal only)</span></h3>
-        <p class="text-surface-700 mb-4 text-sm">Sandboxed Python code execution with multi-layer security. Not exposed externally — only Core API calls it.</p>
+        <p class="text-surface-700 mb-4 text-sm">Sandboxed Python code execution with multi-layer security and enhanced Docker container management. Not exposed externally — only Core API calls it.</p>
+        <h4 class="font-semibold text-sm mb-2">Architecture</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm mb-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="font-semibold text-blue-800 mb-1">Core Components</p>
+                <ul class="text-blue-700 space-y-0.5 text-xs">
+                    <li>• <code>docker_runner.py</code> — Enhanced Docker container orchestration</li>
+                    <li>• <code>runner.py</code> — Execution pipeline & result handling</li>
+                    <li>• <code>security.py</code> — Permission & validation checks</li>
+                    <li>• <code>core/auth.py</code> — Internal authentication</li>
+                    <li>• <code>schemas.py</code> — Request/response models</li>
+                </ul>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p class="font-semibold text-green-800 mb-1">Testing & Development</p>
+                <ul class="text-green-700 space-y-0.5 text-xs">
+                    <li>• <code>tests/test_executor.py</code> — Integration tests</li>
+                    <li>• <code>pytest.ini</code> — Pytest configuration</li>
+                    <li>• <code>.dockerignore</code> — Build optimization</li>
+                </ul>
+            </div>
+        </div>
         <h4 class="font-semibold text-sm mb-2">Security Layers</h4>
         <div class="grid sm:grid-cols-2 gap-3 text-sm">
             <div class="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -349,6 +393,16 @@
                 <li>• 70+ animated hover icons (itshover)</li>
                 <li>• Victory animations (Framer Motion)</li>
                 <li>• Error boundary with Sentry reporting</li>
+            </ul>
+        </div>
+        <div class="border border-surface-200 rounded-lg p-4">
+            <p class="font-semibold mb-2">Testing & Development</p>
+            <ul class="text-surface-700 space-y-1">
+                <li>• Vitest for unit tests</li>
+                <li>• Testing Library for component testing</li>
+                <li>• Jest configuration for test setup</li>
+                <li>• Tests located in <code>src/tests/</code> directory</li>
+                <li>• Example: <code>useAuthStore.test.js</code> for store testing</li>
             </ul>
         </div>
         <div class="border border-surface-200 rounded-lg p-4">
@@ -540,6 +594,13 @@
             </ol>
         </div>
         <div>
+            <h3 class="font-semibold text-surface-900 mb-3">Dependency Management</h3>
+            <div class="text-sm text-surface-700">
+                <p class="mb-2">Each service maintains frozen dependencies via <code>requirements.lock</code> files (generated from <code>requirements.txt</code>). Ensures reproducible builds across CI/CD pipelines.</p>
+                <p>Services with lock files: core, chat, ai, executor, analytics</p>
+            </div>
+        </div>
+        <div>
             <h3 class="font-semibold text-surface-900 mb-3">Infrastructure (Terraform)</h3>
             <div class="text-sm text-surface-700">
                 <p class="mb-2">Modules: <code>vpc</code>, <code>eks</code>, <code>ecr</code>, <code>elasticache</code>, <code>dynamodb</code>. Environments: dev, prod.</p>
@@ -549,7 +610,7 @@
         <div>
             <h3 class="font-semibold text-surface-900 mb-3">Kubernetes (Kustomize)</h3>
             <div class="text-sm text-surface-700">
-                <p>Base manifests: deployment, service, executor, workers, autoscaling, cluster-issuer, servicemonitor. Overlays: dev, prod. External secrets for credential sync. TLS runbook included.</p>
+                <p>Base manifests: deployment, service, executor, workers, autoscaling, cluster-issuer, servicemonitor, executor-network-policy. Overlays: dev, prod. External secrets for credential sync. TLS runbook included.</p>
             </div>
         </div>
     </div>
@@ -677,7 +738,19 @@ terraform destroy                   # Tear down</code></pre></div>
 │   │   └── administration/         # Admin views, services, audit
 │   ├── chat/                       # FastAPI WebSocket + DynamoDB
 │   ├── ai/                         # FastAPI RAG + Pinecone + LangChain
-│   ├── executor/                   # FastAPI sandboxed execution
+│   ├── executor/                   # FastAPI sandboxed execution (refactored)
+│   │   ├── core/
+│   │   │   ├── docker_runner.py    # Enhanced Docker orchestration
+│   │   │   ├── runner.py           # Execution pipeline
+│   │   │   ├── security.py         # Permission validation
+│   │   │   └── auth.py             # Internal auth
+│   │   ├── api/routes.py
+│   │   ├── services/execution_service.py
+│   │   ├── models/schemas.py
+│   │   ├── tests/test_executor.py  # Integration tests
+│   │   ├── pytest.ini
+│   │   ├── .dockerignore
+│   │   └── requirements.lock
 │   ├── analytics/                  # FastAPI telemetry
 │   ├── docker-compose.yml          # Production compose (11 services)
 │   └── docker-compose.dev.yml      # Dev overrides
@@ -686,7 +759,7 @@ terraform destroy                   # Tear down</code></pre></div>
 │   ├── terraform/                  # IaC (modules: vpc, eks, ecr, elasticache, dynamodb)
 │   │   └── environments/           # dev, prod
 │   ├── k8s/                        # Kubernetes manifests (Kustomize)
-│   │   ├── base/                   # Deployments, services, autoscaling, monitoring
+│   │   ├── base/                   # Deployments, services, autoscaling, monitoring, network-policy
 │   │   ├── overlays/               # dev, prod overrides
 │   │   └── external-secrets/       # AWS Secrets Manager sync
 │   ├── aws-bootstrap/              # IAM roles, RBAC, trust policies
