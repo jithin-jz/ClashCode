@@ -54,7 +54,7 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🎮</div><h3 class="font-semibold text-surface-900 mb-1">Gamified Learning</h3><p class="text-sm text-surface-700">60 progressive Python levels, XP economy, star ratings (0-3), achievements, badges, certificates, and a cosmetic marketplace.</p></div>
         <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">💬</div><h3 class="font-semibold text-surface-900 mb-1">Real-Time Chat</h3><p class="text-sm text-surface-700">WebSocket messaging with presence tracking, reactions, message editing/deletion, search, and DynamoDB-backed history.</p></div>
-        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🤖</div><h3 class="font-semibold text-surface-900 mb-1">AI Mentor</h3><p class="text-sm text-surface-700">RAG-based tutor using Pinecone + LangChain for semantic similarity search, providing contextual hints and automated code reviews.</p></div>
+        <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🤖</div><h3 class="font-semibold text-surface-900 mb-1">Agentic AI Mentor</h3><p class="text-sm text-surface-700">A LangGraph agent that runs learner code in the sandbox and searches a Pinecone knowledge base (agentic RAG) to give adaptive, leak-safe hints grounded in real test failures — plus automated code reviews.</p></div>
         <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">⚡</div><h3 class="font-semibold text-surface-900 mb-1">Secure Execution</h3><p class="text-sm text-surface-700">AST-validated code runs in read-only, network-disabled Docker containers with strict CPU/memory/PID limits.</p></div>
         <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">📊</div><h3 class="font-semibold text-surface-900 mb-1">Analytics & Admin</h3><p class="text-sm text-surface-700">Full admin dashboard with user management, audit logs, store CRUD, Celery task monitoring, and system health.</p></div>
         <div class="border border-surface-200 rounded-xl p-5"><div class="text-2xl mb-2">🛒</div><h3 class="font-semibold text-surface-900 mb-1">Economy & Payments</h3><p class="text-sm text-surface-700">XP-based store (themes, fonts, effects, victory animations), daily check-in streaks, referrals, and Razorpay integration.</p></div>
@@ -119,7 +119,7 @@
                 <tr><td class="px-4 py-3 font-medium">Frontend</td><td class="px-4 py-3">React 19, Vite 6, React Router 7, Zustand 5, TanStack Query 5, Tailwind CSS 4, Framer Motion, Monaco Editor, Firebase (FCM), Sentry, Axios</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Core API</td><td class="px-4 py-3">Django 5.0, DRF 3.16, Gunicorn, Celery 5.4, django-celery-beat, drf-spectacular (OpenAPI), PyJWT (RS256+HS256), Razorpay SDK, Cloudinary, Firebase Admin</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Chat</td><td class="px-4 py-3">FastAPI 0.115, Uvicorn, WebSockets 14, aioboto3 13, Redis 5.2, Sentry</td></tr>
-                <tr><td class="px-4 py-3 font-medium">AI</td><td class="px-4 py-3">FastAPI 0.128, LangChain Core 0.3, LangChain OpenAI 0.3, LangChain Pinecone 0.2, Pinecone SDK 6, HTTPX, NumPy, Sentry</td></tr>
+                <tr><td class="px-4 py-3 font-medium">AI</td><td class="px-4 py-3">FastAPI 0.128, LangGraph (agentic reason-act loop), LangChain Core 0.3, LangChain OpenAI 0.3, LangChain Pinecone 0.2, Pinecone SDK 6, Groq (Llama 3.3 70B), HTTPX, NumPy, Sentry</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Executor</td><td class="px-4 py-3">FastAPI 0.115, Pydantic 2.10, AST-based security validator, Docker SDK, Sentry</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Databases</td><td class="px-4 py-3">PostgreSQL 15, Redis 7, Amazon DynamoDB, Pinecone Vector DB</td></tr>
                 <tr><td class="px-4 py-3 font-medium">Infrastructure</td><td class="px-4 py-3">Amazon EKS, Terraform (VPC, EKS, RDS, ElastiCache, DynamoDB, ECR modules), Kustomize, Docker, Nginx, external-secrets.io, NetworkPolicy</td></tr>
@@ -211,22 +211,34 @@
     <!-- AI -->
     <div class="mb-10 border border-surface-200 rounded-xl p-6">
         <h3 class="text-xl font-bold text-surface-900 mb-1">AI Service <span class="text-sm font-normal text-brand-600">FastAPI — Port 8002</span></h3>
-        <p class="text-surface-700 mb-4 text-sm">RAG-based mentorship using Pinecone for vector storage and LangChain for orchestration.</p>
-        <h4 class="font-semibold text-sm mb-2">RAG Pipeline</h4>
+        <p class="text-surface-700 mb-4 text-sm">Agentic tutoring engine. A LangGraph agent orchestrates tool-calling over the executor sandbox and a Pinecone knowledge base (agentic RAG), backed by Groq (Llama 3.3 70B) via LangChain.</p>
+        <h4 class="font-semibold text-sm mb-2">Agentic Tutor (LangGraph)</h4>
+        <p class="text-surface-700 text-sm mb-2">A reason-act state graph (<code>agent → tools → agent</code>, bounded loop) that decides which tools to call before answering:</p>
         <ol class="text-sm text-surface-700 space-y-1 list-decimal list-inside">
-            <li>User requests hint → challenge description + user code combined as query</li>
+            <li><code>run_challenge_tests</code> — executes the learner's code against the hidden tests in the sandboxed executor, so hints are grounded in the real failure, not a guess</li>
+            <li><code>search_similar_challenges</code> — agentic RAG: Pinecone semantic search, invoked only when conceptual context helps</li>
+            <li>Agent synthesizes one adaptive, level-calibrated hint; a sanitizer + system prompt prevent full-solution leakage</li>
+            <li>The tool trace (e.g. <code>run_challenge_tests</code>) is returned so the UI can surface a "Ran your code" indicator</li>
+        </ol>
+        <h4 class="font-semibold text-sm mt-3 mb-2">Classic RAG Pipeline (fallback / analysis)</h4>
+        <ol class="text-sm text-surface-700 space-y-1 list-decimal list-inside">
+            <li>Challenge description + user code combined as query</li>
             <li>Pinecone similarity search (k=2) using native embeddings</li>
             <li>Filter out same-challenge results (by slug)</li>
-            <li>Context injected into LLM prompt for response generation</li>
+            <li>Context injected into the LLM prompt for hint/review generation</li>
         </ol>
+        <p class="text-surface-700 text-xs mt-2">Mode is toggled by the Core worker via the <code>AI_HINT_MODE</code> env flag (<code>agent</code> → <code>/hints/agent</code>, otherwise the classic <code>/hints</code> chain).</p>
         <h4 class="font-semibold text-sm mt-3 mb-2">Key Components</h4>
         <ul class="text-sm text-surface-700 space-y-1 list-disc list-inside">
+            <li><code>core/agent.py</code> — LangGraph reason-act agent (state graph, bounded loop, tool trace)</li>
+            <li><code>core/agent_tools.py</code> — per-request tools: sandboxed test runner + RAG search</li>
+            <li><code>utils/executor_client.py</code> — HMAC-signed client to the executor sandbox</li>
             <li><code>core/rag.py</code> — Pinecone vector store with lazy initialization</li>
-            <li><code>core/ai_logic.py</code> — LLM interaction and response formatting</li>
-            <li><code>core/security.py</code> — Input validation and prompt injection prevention</li>
-            <li><code>llm_factory.py</code> — Provider abstraction (supports multiple LLM backends)</li>
-            <li><code>utils/sanitizer.py</code> — Output sanitization</li>
-            <li><code>utils/core_client.py</code> — Authenticated calls to Core API (HMAC signed)</li>
+            <li><code>core/ai_logic.py</code> — classic LLM chains and response formatting</li>
+            <li><code>core/security.py</code> — internal request auth (HMAC) & validation</li>
+            <li><code>llm_factory.py</code> — provider abstraction (Groq / OpenAI-compatible)</li>
+            <li><code>utils/sanitizer.py</code> — output sanitization (no-leak guardrail)</li>
+            <li><code>utils/core_client.py</code> — authenticated calls to Core API (HMAC signed)</li>
         </ul>
     </div>
 
@@ -487,8 +499,11 @@
             <div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg overflow-hidden">
                 <thead class="bg-surface-50"><tr><th class="text-left px-4 py-2">Endpoint</th><th class="text-left px-4 py-2">Description</th></tr></thead>
                 <tbody class="divide-y divide-surface-200">
-                    <tr><td class="px-4 py-2"><code>/ai/hint/</code></td><td class="px-4 py-2">RAG-powered contextual hint for current challenge</td></tr>
-                    <tr><td class="px-4 py-2"><code>/ai/analyze/</code></td><td class="px-4 py-2">Code review with quality feedback</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/hints/agent</code></td><td class="px-4 py-2">Agentic hint — LangGraph agent runs code in the sandbox + agentic RAG; returns hint and tool trace</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/hints</code></td><td class="px-4 py-2">Classic RAG-powered contextual hint (single-shot chain)</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/hints/stream</code></td><td class="px-4 py-2">Streaming hint (SSE, classic chain)</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/analyze</code></td><td class="px-4 py-2">Code review with quality feedback</td></tr>
+                    <tr><td class="px-4 py-2"><code>/ai/index</code></td><td class="px-4 py-2">Internal — (re)index challenges into the vector store</td></tr>
                 </tbody>
             </table></div>
         </div>
