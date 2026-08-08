@@ -29,13 +29,16 @@ def generate_ai_hint_task(
     user_xp: int,
 ):
     ai_url = os.getenv("AI_SERVICE_URL", "http://ai-service:8002")
+    # AI_HINT_MODE=agent routes to the LangGraph agentic tutor (runs learner code
+    # in the sandbox before hinting); anything else uses the classic single-shot chain.
+    hint_path = "/hints/agent" if os.getenv("AI_HINT_MODE", "").lower() == "agent" else "/hints"
     payload = {
         "user_code": user_code or "",
         "challenge_slug": challenge_slug,
         "hint_level": hint_level,
         "user_xp": user_xp,
     }
-    headers = _build_internal_headers("/hints")
+    headers = _build_internal_headers(hint_path)
     cache_key = f"ai_hint:{user_id}:{challenge_id}:level:{hint_level}"
 
     if not ai_cb.is_available():
@@ -50,10 +53,10 @@ def generate_ai_hint_task(
 
     try:
         resp = requests.post(
-            f"{ai_url}/hints",
+            f"{ai_url}{hint_path}",
             json=payload,
             headers=headers,
-            timeout=30,
+            timeout=60 if hint_path == "/hints/agent" else 30,
         )
         if resp.status_code != 200:
             return {

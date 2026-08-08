@@ -5,6 +5,7 @@ uvicorn==0.40.0
 langchain-core==0.3.78
 langchain-openai==0.3.35
 langchain-pinecone==0.2.11
+langgraph>=0.2.50,<0.4
 pinecone==6.0.2
 
 python-dotenv==1.2.1

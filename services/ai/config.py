@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # Service URLs
     CORE_SERVICE_URL: str
+    EXECUTOR_SERVICE_URL: str = "http://executor-service:8011"
 
     # API Keys & Auth
     # API Keys & Auth

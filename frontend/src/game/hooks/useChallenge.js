@@ -25,6 +25,7 @@ export const useChallenge = (id) => {
 
   // AI Assistant State
   const [hint, setHint] = useState("");
+  const [hintTrace, setHintTrace] = useState([]);
   const [streamingHint, setStreamingHint] = useState("");
   const [hintLevel, setHintLevel] = useState(1);
   const [review, setReview] = useState("");
@@ -52,6 +53,7 @@ export const useChallenge = (id) => {
 
       // Reset workspace state for new challenge
       setHint("");
+      setHintTrace([]);
       setHintLevel(1);
       setReview("");
       setOutput([]);
@@ -235,6 +237,7 @@ export const useChallenge = (id) => {
       }),
     onSuccess: (data) => {
       setHint(data.hint);
+      setHintTrace(Array.isArray(data.tool_trace) ? data.tool_trace : []);
       setHintLevel((prev) => Math.min(prev + 1, 3));
     },
     onError: (err) => {
@@ -374,6 +377,7 @@ export const useChallenge = (id) => {
     const targetLevel = typeof level === "number" ? level : hintLevel;
     setIsHintStreaming(true);
     setStreamingHint("");
+    setHintTrace([]);
     
     try {
       // Use the Core service as a proxy to handle internal auth and security
@@ -439,6 +443,7 @@ export const useChallenge = (id) => {
     completionData,
     setCompletionData,
     hint,
+    hintTrace,
     streamingHint,
     hintLevel,
     review,

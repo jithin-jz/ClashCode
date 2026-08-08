@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Gem, Lock } from "lucide-react";
+import { Sparkles, Gem, Lock, Terminal } from "lucide-react";
 const Spinner = ({ className = "" }) => (
   <div
     className={`rounded-full border border-white/20 animate-spin border-t-white/60 ${className}`}
@@ -41,6 +41,7 @@ const AIAssistantPane = ({
   userXp,
   isCodePassed = false,
   streamingHint = "", // New prop for real-time text
+  hintTrace = [], // Tools the AI agent used (e.g. ran your code)
 }) => {
   const [hintHistory, setHintHistory] = React.useState([]);
   const scrollRef = React.useRef(null);
@@ -83,6 +84,8 @@ const AIAssistantPane = ({
   const nextCost = 10 * (ai_hints_purchased + 1);
   const isMaxReached = ai_hints_purchased >= 3;
   const isLocked = ai_hints_purchased < hintLevel && !isMaxReached;
+  const agentRanTests =
+    Array.isArray(hintTrace) && hintTrace.includes("run_challenge_tests");
   const formattedReview = React.useMemo(
     () => formatReviewMarkdown(review),
     [review],
@@ -96,6 +99,15 @@ const AIAssistantPane = ({
           <h2 className="text-[10px] font-semibold text-neutral-600 uppercase tracking-widest font-sans">
             Assistant
           </h2>
+          {agentRanTests && (
+            <span
+              title="The AI ran your code against the tests before answering"
+              className="flex items-center gap-1 rounded-full border border-[#00af9b]/30 bg-[#00af9b]/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#00af9b]"
+            >
+              <Terminal size={10} />
+              Ran your code
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {userXp !== undefined && (

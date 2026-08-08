@@ -11,6 +11,7 @@ from core.rag import get_vector_db
 from core.security import authorize_internal_request
 from models.schemas import AnalyzeRequest, HintRequest
 from utils.core_client import fetch_challenge_context, fetch_internal_challenges
+from utils.sanitizer import sanitize_guidance_output
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -134,6 +135,57 @@ async def generate_hint_stream(
             yield f"data: Error generating stream: {str(e)}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.post("/hints/agent")
+async def generate_hint_agent(
+    request: HintRequest,
+    http_request: Request,
+    x_internal_api_key: str | None = Header(None, alias="X-Internal-API-Key"),
+    x_internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
+    x_internal_signature: str | None = Header(None, alias="X-Internal-Signature"),
+):
+    """Agentic tutor: runs the learner's code in the sandbox and searches the
+    knowledge base before returning an adaptive, leakage-safe hint."""
+    if not authorize_internal_request(
+        path=http_request.url.path,
+        api_key=x_internal_api_key,
+        timestamp=x_internal_timestamp,
+        signature=x_internal_signature,
+    ):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="LLM API Key not configured")
+
+    # Imported lazily so the rest of the AI service still boots if the optional
+    # agent dependency (langgraph) is not installed in this environment.
+    try:
+        from core.agent import run_agent_hint
+    except ImportError as err:
+        logger.error(f"Agent dependencies unavailable: {err}")
+        raise HTTPException(status_code=503, detail="Agent mode not available") from err
+
+    context_data = await fetch_challenge_context(request.challenge_slug)
+
+    try:
+        result = await run_agent_hint(
+            challenge_slug=request.challenge_slug,
+            user_code=request.user_code,
+            hint_level=request.hint_level,
+            user_xp=request.user_xp,
+            challenge_context=context_data,
+        )
+        safe_hint = sanitize_guidance_output(result["hint"], mode="hint")
+        return {
+            "hint": safe_hint,
+            "hint_level": request.hint_level,
+            "max_hints": 3,
+            "tool_trace": result["tool_trace"],
+        }
+    except Exception as err:
+        logger.error(f"Agent hint generation failed: {err}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error generating hint") from err
 
 
 @router.post("/analyze")

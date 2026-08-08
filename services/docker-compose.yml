@@ -147,6 +147,7 @@ services:
     env_file: ./ai/.env
     environment:
       CORE_SERVICE_URL: http://core:8000
+      EXECUTOR_SERVICE_URL: http://executor:8011
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       INTERNAL_REQUIRE_SIGNATURE: ${INTERNAL_REQUIRE_SIGNATURE:-true}
       INTERNAL_SIGNING_SECRET: ${INTERNAL_SIGNING_SECRET:?Set INTERNAL_SIGNING_SECRET}
@@ -181,6 +182,7 @@ services:
       retries: 5
       start_period: 30s
     environment:
+      AI_HINT_MODE: ${AI_HINT_MODE:-agent}
       DB_HOST: ${DB_HOST:?Set DB_HOST}
       DB_NAME: ${DB_NAME:-postgres}
       DB_USER: ${DB_USER:-postgres}
