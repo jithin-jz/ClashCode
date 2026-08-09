@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Skeleton } from "boneyard-js/react";
+import { toast } from "sonner";
 import { ProfileSkeleton } from "../bones/PageSkeletons";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -17,6 +18,7 @@ import UserListDialog from "./components/UserListDialog";
 import UserNotFound from "./components/UserNotFound";
 import DeleteAccountDialog from "./components/DeleteAccountDialog";
 import SuggestionsSidebar from "./components/SuggestionsSidebar";
+import GitHubSyncSection from "./components/GitHubSyncSection";
 
 // Hooks
 import { useProfile } from "../hooks/useProfile";
@@ -24,6 +26,23 @@ import { useProfile } from "../hooks/useProfile";
 const Profile = () => {
   const navigate = useNavigate();
   const { username } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle GitHub OAuth callback result
+  useEffect(() => {
+    const githubStatus = searchParams.get("github");
+    if (githubStatus === "connected") {
+      toast.success("GitHub connected! Your solutions will auto-sync.");
+      searchParams.delete("github");
+      setSearchParams(searchParams, { replace: true });
+    } else if (githubStatus === "error") {
+      const reason = searchParams.get("reason") || "Unknown error";
+      toast.error(`GitHub connection failed: ${reason.replace(/_/g, " ")}`);
+      searchParams.delete("github");
+      searchParams.delete("reason");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const {
     currentUser,
@@ -106,6 +125,9 @@ const Profile = () => {
                     />
                   </div>
                 </Card>
+
+                {/* GitHub Auto-Sync — own profile only */}
+                {isOwnProfile && <GitHubSyncSection />}
               </div>
 
               {/* Middle Column - Feed/Edit */}

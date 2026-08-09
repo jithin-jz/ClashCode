@@ -94,6 +94,7 @@ INSTALLED_APPS = [
     "posts",
     "notifications",
     "achievements",
+    "github",
 ]
 
 if USE_CLOUDINARY:
@@ -439,6 +440,11 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = f"{FRONTEND_URL}/auth/google/callback"
 
+# GitHub Sync (separate OAuth App — repo push scope)
+GITHUB_SYNC_CLIENT_ID = os.getenv("GITHUB_SYNC_CLIENT_ID", GITHUB_CLIENT_ID)
+GITHUB_SYNC_CLIENT_SECRET = os.getenv("GITHUB_SYNC_CLIENT_SECRET", GITHUB_CLIENT_SECRET)
+GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
+
 # Email Configuration
 # Use SMTP by default in production, fallback to console in dev if no host is configured
 _EMAIL_HOST = os.getenv("EMAIL_HOST")
@@ -493,6 +499,9 @@ CELERY_TASK_ROUTES = {
     "learning.tasks.update_leaderboard_cache": {"queue": "background"},
     "learning.tasks.prewarm_ai_rag_task": {"queue": "background"},
     "project.tasks.cleanup_old_task_results": {"queue": "background"},
+    "github.tasks.push_solution_to_github": {"queue": "background"},
+    "github.tasks.retry_failed_pushes": {"queue": "background"},
+    "github.tasks.update_progress_tracker": {"queue": "background"},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -503,6 +512,10 @@ CELERY_BEAT_SCHEDULE = {
     "prewarm-ai-rag-every-6-hours": {
         "task": "learning.tasks.prewarm_ai_rag_task",
         "schedule": 60 * 60 * 6,  # Every 6 hours
+    },
+    "retry-failed-github-pushes-hourly": {
+        "task": "github.tasks.retry_failed_pushes",
+        "schedule": 60 * 60,  # Every hour
     },
 }
 
