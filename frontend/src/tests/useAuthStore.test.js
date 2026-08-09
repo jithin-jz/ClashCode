@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
-import useAuthStore from "../../stores/useAuthStore";
+import useAuthStore from "../stores/useAuthStore";
 
 // Mock dependencies
 vi.mock("../../services/api", () => ({
