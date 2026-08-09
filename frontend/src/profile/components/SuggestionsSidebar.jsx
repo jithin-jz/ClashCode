@@ -1,40 +1,35 @@
 import React from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 
 const SuggestionsSidebar = ({ users, onUserClick }) => {
   if (!users || users.length === 0) return null;
 
   return (
-    <Card className="bg-[#0a0a0a]/60 border-[#404040]/20 backdrop-blur-sm">
-      <CardHeader className="p-3 border-b border-white/5">
-        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500/80">
-          Suggested For You
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3 space-y-3">
+    <div className="rounded-xl border border-neutral-800 bg-neutral-950 overflow-hidden">
+      <div className="px-4 py-3 border-b border-neutral-900">
+        <p className="text-[11px] font-medium text-neutral-500">Suggested</p>
+      </div>
+      {/* Horizontal scroll on mobile, vertical list on desktop */}
+      <div className="p-3 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
         {users.slice(0, 5).map((u) => (
-          <div
+          <button
             key={u.username}
-            className="flex items-center justify-between gap-3 group cursor-pointer"
+            className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-neutral-900 transition-colors text-left shrink-0 lg:shrink lg:w-full"
             onClick={() => onUserClick(u.username)}
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <Avatar className="h-9 w-9 border border-white/5">
-                <AvatarImage src={u.avatar_url || u.profile?.avatar_url} alt={u.username} className="object-cover" />
-                <AvatarFallback className="bg-zinc-800 text-[10px] font-bold text-white">
-                  {u.username?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-white truncate">{u.username}</div>
-                <div className="text-[10px] text-neutral-500 truncate">Suggested for you</div>
-              </div>
-            </div>
-          </div>
+            <Avatar className="h-7 w-7 border border-neutral-800 shrink-0">
+              <AvatarImage src={u.avatar_url || u.profile?.avatar_url} alt={u.username} className="object-cover" />
+              <AvatarFallback className="bg-neutral-900 text-[9px] font-medium text-neutral-400">
+                {u.username?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-[12px] font-medium text-neutral-300 truncate">
+              {u.username}
+            </span>
+          </button>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

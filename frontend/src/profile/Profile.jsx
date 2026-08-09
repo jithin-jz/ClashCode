@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Plus } from "lucide-react";
 import { Skeleton } from "boneyard-js/react";
 import { toast } from "sonner";
 import { ProfileSkeleton } from "../bones/PageSkeletons";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 
 // Components
 import CreatePostDialog from "../posts/CreatePostDialog";
@@ -28,7 +25,6 @@ const Profile = () => {
   const { username } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Handle GitHub OAuth callback result
   useEffect(() => {
     const githubStatus = searchParams.get("github");
     if (githubStatus === "connected") {
@@ -79,7 +75,6 @@ const Profile = () => {
   const [refreshPosts, setRefreshPosts] = useState(0);
   const editSectionRef = useRef(null);
 
-  // Auto-scroll to edit form when opened
   useEffect(() => {
     if (isEditing && editSectionRef.current) {
       editSectionRef.current.scrollIntoView({
@@ -99,13 +94,14 @@ const Profile = () => {
       loading={loading}
       fallback={<ProfileSkeleton />}
     >
-      <div className="relative w-full pb-20 sm:pb-0 text-white flex flex-col">
-        <main className="relative z-10 flex-1 px-4 sm:px-10 lg:px-14 py-4">
-          <div className="w-full mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Column - Profile Section */}
-              <div className="lg:col-span-4 space-y-6 min-w-0">
-                <Card className="bg-[#0a0a0a]/80 border-[#404040]/20 overflow-visible shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md">
+      <div className="w-full min-h-[calc(100vh-3.5rem)] text-white">
+        <div className="w-full px-3 sm:px-6 lg:px-10 xl:px-16 py-4 sm:py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            {/* ─── Left: Profile Card ─────────────────────────────── */}
+            <div className="lg:col-span-3 min-w-0">
+              <div className="lg:sticky lg:top-20 space-y-4">
+                <div className="rounded-xl border border-neutral-800 bg-neutral-950 overflow-visible">
                   <ProfileHeader
                     profileUser={profileUser}
                     isOwnProfile={isOwnProfile}
@@ -124,72 +120,71 @@ const Profile = () => {
                       fetchUserList={fetchUserList}
                     />
                   </div>
-                </Card>
-
-                {/* GitHub Auto-Sync — own profile only */}
-                {isOwnProfile && <GitHubSyncSection />}
+                </div>
               </div>
+            </div>
 
-              {/* Middle Column - Feed/Edit */}
-              <div
-                ref={editSectionRef}
-                className="lg:col-span-6 space-y-6 min-w-0"
-              >
-                {isEditing && isOwnProfile ? (
-                  <EditProfileForm
-                    editForm={editForm}
-                    setEditForm={setEditForm}
-                    setIsEditing={setIsEditing}
-                    uploadingBanner={uploadingBanner}
-                    handleImageUpload={handleImageUpload}
-                    setDeleteDialogOpen={setDeleteDialogOpen}
-                    handleSaveProfile={() => handleSaveProfile(editForm)}
-                    savingProfile={savingProfile}
+            {/* ─── Middle: Content ────────────────────────────────── */}
+            <div
+              ref={editSectionRef}
+              className="lg:col-span-6 min-w-0 space-y-5"
+            >
+              {isEditing && isOwnProfile ? (
+                <EditProfileForm
+                  editForm={editForm}
+                  setEditForm={setEditForm}
+                  setIsEditing={setIsEditing}
+                  uploadingBanner={uploadingBanner}
+                  handleImageUpload={handleImageUpload}
+                  setDeleteDialogOpen={setDeleteDialogOpen}
+                  handleSaveProfile={() => handleSaveProfile(editForm)}
+                  savingProfile={savingProfile}
+                />
+              ) : (
+                <>
+                  <ContributionGraph
+                    data={contributionData}
+                    loading={loadingContributions}
                   />
-                ) : (
-                  <>
-                    <ContributionGraph
-                      data={contributionData}
-                      loading={loadingContributions}
-                    />
-                    <div className="flex items-center justify-between mb-4 mt-8">
-                      <h3 className="text-xl font-black italic text-white flex items-center gap-3">
-                        <span className="w-1.5 h-6 bg-emerald-500 rounded-full" />
-                        BATTLE FEED
-                        <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-lg text-neutral-500 font-mono not-italic tracking-normal">
-                          {profileUser?.username}
-                        </span>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[13px] font-medium text-neutral-400">
+                        Posts
                       </h3>
                       {isOwnProfile && (
-                        <Button
-                          size="sm"
+                        <button
                           onClick={() => setCreatePostOpen(true)}
-                          className="bg-white text-black hover:bg-zinc-200 h-9 gap-2 rounded-xl font-bold text-xs shadow-lg"
+                          className="text-[12px] text-neutral-600 hover:text-white transition-colors"
                         >
-                          <Plus size={16} /> NEW POST
-                        </Button>
+                          New post →
+                        </button>
                       )}
                     </div>
                     <PostGrid
                       username={profileUser?.username}
                       refreshTrigger={refreshPosts}
                     />
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-              {/* Right Column - Suggestions */}
-              <div className="lg:col-span-2 space-y-6 hidden lg:block">
+            {/* ─── Right: Suggestions + GitHub ────────────────────── */}
+            <div className="lg:col-span-3 min-w-0">
+              <div className="lg:sticky lg:top-20 space-y-4">
                 {isOwnProfile && (
                   <SuggestionsSidebar
                     users={suggestedUsers}
                     onUserClick={(u) => navigate(`/profile/${u}`)}
                   />
                 )}
+                {isOwnProfile && <GitHubSyncSection />}
               </div>
             </div>
+
           </div>
-        </main>
+        </div>
 
         {/* Dialogs */}
         <UserListDialog

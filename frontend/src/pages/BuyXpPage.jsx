@@ -4,27 +4,19 @@ import { loadRazorpay } from "../utils/loadRazorpay";
 import useAuthStore from "../stores/useAuthStore";
 import useUserStore from "../stores/useUserStore";
 import { toast } from "sonner";
-import { Check, Gem, Crown, Flame } from "lucide-react";
-import { AnimatePresence, motion as Motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
+import { Check, Gem } from "lucide-react";
+import { motion as Motion } from "framer-motion";
 import { Skeleton } from "boneyard-js/react";
 
 const XP_PACKAGES = [
-  { amount: 49, xp: 50, label: "Mini", icon: Gem },
-  { amount: 99, xp: 100, label: "Starter", icon: Gem },
-  { amount: 199, xp: 200, label: "Growth", icon: Gem },
-  { amount: 249, xp: 250, label: "Booster", icon: Gem },
-  { amount: 499, xp: 500, label: "Pro", icon: Gem, popular: true },
-  { amount: 749, xp: 800, label: "Elite", icon: Gem },
-  { amount: 999, xp: 1000, label: "Ultimate", icon: Gem, bestValue: true },
-  { amount: 1999, xp: 2500, label: "Champion", icon: Gem },
+  { amount: 49, xp: 50, label: "Mini" },
+  { amount: 99, xp: 100, label: "Starter" },
+  { amount: 199, xp: 200, label: "Growth" },
+  { amount: 249, xp: 250, label: "Booster" },
+  { amount: 499, xp: 500, label: "Pro", popular: true },
+  { amount: 749, xp: 800, label: "Elite" },
+  { amount: 999, xp: 1000, label: "Ultimate", bestValue: true },
+  { amount: 1999, xp: 2500, label: "Champion" },
 ];
 
 const BuyXpPage = () => {
@@ -61,8 +53,7 @@ const BuyXpPage = () => {
             });
             toast.success(`+${pkg.xp} added!`);
             if (fetchCurrentUser) await fetchCurrentUser();
-          } catch (verifyError) {
-            console.error(verifyError);
+          } catch {
             toast.error("Payment verification failed");
           }
         },
@@ -79,7 +70,6 @@ const BuyXpPage = () => {
       });
       rzp1.open();
     } catch (error) {
-      console.error(error);
       const backendError =
         error?.response?.data?.error ||
         (typeof error?.response?.data === "string"
@@ -98,127 +88,106 @@ const BuyXpPage = () => {
   return (
     <Skeleton name="buy-xp-page">
       <Motion.div
-        key="content"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="relative w-full pb-20 sm:pb-0 text-white flex flex-col pt-0 mt-0"
+        className="min-h-screen bg-black text-white"
       >
-        {/* Main Content */}
-        <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 min-w-0">
-          <div className="w-full">
-            {/* Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {XP_PACKAGES.map((pkg) => {
-                const Icon = pkg.icon;
-                const isPurchasing = purchasing === pkg.amount;
+        <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
+          {/* Header */}
+          <div className="pt-8 pb-8">
+            <h1 className="text-[22px] sm:text-[28px] font-semibold text-white tracking-tight">
+              Get Points
+            </h1>
+            <p className="text-[13px] sm:text-sm text-neutral-500 mt-1">
+              Purchase points to unlock themes, fonts, and effects in the store.
+            </p>
+          </div>
 
-                return (
-                  <Card
-                    key={pkg.amount}
+          {/* Divider */}
+          <div className="border-t border-neutral-900 mb-8" />
+
+          {/* Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {XP_PACKAGES.map((pkg) => {
+              const isPurchasing = purchasing === pkg.amount;
+              const bonusPercent = pkg.xp > pkg.amount
+                ? Math.round((pkg.xp / pkg.amount - 1) * 100)
+                : 0;
+
+              return (
+                <Motion.div
+                  key={pkg.amount}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: XP_PACKAGES.indexOf(pkg) * 0.04 }}
+                >
+                  <button
+                    onClick={() => handleBuy(pkg)}
+                    disabled={isPurchasing}
                     className={`
-                          rounded-xl overflow-hidden backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 group flex flex-col relative
-                          ${
-                            pkg.popular
-                              ? "bg-gradient-to-br from-[#ffa116]/10 to-[#ffa116]/[0.02] border border-[#ffa116]/30 border-t-[#ffa116]/50 shadow-[0_8px_32px_rgba(255,161,22,0.12)] -translate-y-1"
-                              : pkg.bestValue
-                                ? "bg-gradient-to-br from-[#00af9b]/10 to-[#00af9b]/[0.02] border border-[#00af9b]/30 border-t-[#00af9b]/50 shadow-[0_8px_32px_rgba(0,175,155,0.08)]"
-                                : "bg-[#141414]/70 border border-[#404040]/20 hover:border-[#404040]/50 hover:bg-[#1a1a1a]/80 hover:-translate-y-1 hover:shadow-[0_12px_40px_-15px_rgba(126,163,217,0.2)]"
-                          }
-                        `}
+                      w-full text-left rounded-lg border p-5 min-h-[180px]
+                      flex flex-col justify-between transition-all duration-200 group relative
+                      ${pkg.popular
+                        ? "bg-neutral-950 border-amber-500/30 hover:border-amber-500/50"
+                        : pkg.bestValue
+                          ? "bg-neutral-950 border-emerald-500/30 hover:border-emerald-500/50"
+                          : "bg-neutral-950 border-neutral-700 hover:border-neutral-500"
+                      }
+                      ${isPurchasing ? "opacity-60 pointer-events-none" : "hover:bg-neutral-900 active:scale-[0.98]"}
+                    `}
                   >
                     {/* Badge */}
                     {(pkg.popular || pkg.bestValue) && (
-                      <div className="absolute top-3 right-3">
-                        <Badge
-                          className={`text-[9px] px-1.5 py-0 ${
-                            pkg.popular
-                              ? "bg-[#ffa116]/10 text-[#ffa116] border-[#ffa116]/20"
-                              : "bg-[#00af9b]/10 text-[#00af9b] border-[#00af9b]/20"
-                          }`}
-                        >
-                          {pkg.popular ? "Popular" : "Best Value"}
-                        </Badge>
-                      </div>
+                      <span className={`absolute top-3 right-3 text-[9px] font-medium px-2 py-0.5 rounded ${
+                        pkg.popular
+                          ? "bg-amber-500/10 text-amber-400"
+                          : "bg-emerald-500/10 text-emerald-400"
+                      }`}>
+                        {pkg.popular ? "Popular" : "Best Value"}
+                      </span>
                     )}
 
-                    <CardHeader className="p-5 pb-3">
-                      {/* Icon */}
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${
-                          pkg.popular
-                            ? "bg-[#ffa116]/10"
-                            : pkg.bestValue
-                              ? "bg-[#00af9b]/10"
-                              : "bg-white/10"
-                        }`}
-                      >
-                        <Icon
-                          size={20}
-                          className={
-                            pkg.popular
-                              ? "text-[#ffa116]"
-                              : pkg.bestValue
-                                ? "text-[#00af9b]"
-                                : "text-red-500 fill-red-500/20"
-                          }
-                        />
-                      </div>
-
-                      <CardTitle className="text-base font-medium text-white">
+                    {/* Top */}
+                    <div>
+                      <p className="text-[11px] font-medium text-neutral-500 mb-1">
                         {pkg.label}
-                      </CardTitle>
+                      </p>
+                      <p className="text-[28px] font-semibold text-white leading-none tabular-nums">
+                        {pkg.xp.toLocaleString()}
+                      </p>
+                      <p className="text-[11px] text-neutral-600 mt-1">points</p>
+                    </div>
 
-                      {/* XP Amount */}
-                      <div className="flex items-baseline gap-1 mt-2">
-                        <span className="text-3xl font-bold text-white">
-                          {pkg.xp.toLocaleString()}
-                        </span>
-                        <span className="text-sm text-zinc-500 font-medium"></span>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="p-5 pt-2 mt-auto">
-                      {/* Bonus indicator */}
-                      {pkg.xp > pkg.amount && (
-                        <div className="flex items-center gap-1.5 mb-4">
-                          <Check size={14} className="text-[#00af9b]" />
-                          <span className="text-xs font-medium text-[#00af9b] tracking-tight">
-                            +{Math.round((pkg.xp / pkg.amount - 1) * 100)}%
-                            bonus
+                    {/* Bottom */}
+                    <div className="mt-4 space-y-2">
+                      {bonusPercent > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <Check size={12} className="text-emerald-400" />
+                          <span className="text-[11px] text-emerald-400 font-medium">
+                            +{bonusPercent}% bonus
                           </span>
                         </div>
                       )}
 
-                      <Button
-                        onClick={() => handleBuy(pkg)}
-                        disabled={isPurchasing}
-                        className={`
-                              w-full h-10 text-sm font-bold tracking-wide transition-all border
-                              ${
-                                pkg.popular
-                                  ? "bg-[#ffa116]/90 border-[#ffa116]/50 text-black hover:bg-[#e69114] hover:border-[#e69114] shadow-[0_4px_12px_rgba(255,161,22,0.2)] hover:shadow-[0_4px_16px_rgba(255,161,22,0.3)]"
-                                  : pkg.bestValue
-                                    ? "bg-[#00af9b]/90 border-[#00af9b]/50 text-black hover:bg-[#009483] hover:border-[#009483] shadow-[0_4px_12px_rgba(0,175,155,0.2)] hover:shadow-[0_4px_16px_rgba(0,175,155,0.3)]"
-                                    : "bg-white text-black border-transparent hover:bg-neutral-200"
-                              }
-                            `}
-                      >
-                        {isPurchasing ? (
-                          <span className="text-xs font-semibold">
-                            Processing...
-                          </span>
-                        ) : (
-                          <span>₹{pkg.amount}</span>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                      <div className={`
+                        w-full h-9 rounded-md flex items-center justify-center text-[13px] font-medium transition-colors
+                        ${pkg.popular
+                          ? "bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20"
+                          : pkg.bestValue
+                            ? "bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20"
+                            : "bg-white/5 text-white group-hover:bg-white/10"
+                        }
+                      `}>
+                        {isPurchasing ? "Processing..." : `₹${pkg.amount}`}
+                      </div>
+                    </div>
+                  </button>
+                </Motion.div>
+              );
+            })}
           </div>
-        </main>
+        </div>
       </Motion.div>
     </Skeleton>
   );

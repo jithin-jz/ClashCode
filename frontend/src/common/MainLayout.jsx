@@ -64,7 +64,7 @@ const MainLayout = memo(({ children }) => {
   );
   const showFooter = useMemo(() => {
     const footerPaths = [
-      "/", "/home", "/profile", "/marketplace", "/store", "/buy-xp", "/shop", "/game"
+      "/", "/home", "/profile", "/marketplace", "/store", "/buy-xp", "/shop", "/game", "/achievements"
     ];
     return footerPaths.includes(location.pathname) || location.pathname.startsWith("/profile/");
   }, [location.pathname]);
@@ -138,13 +138,9 @@ const MainLayout = memo(({ children }) => {
           onClaim={handleClaimReward}
         />
 
-        <main className="flex-1 pt-14">{children}</main>
+        <main className="flex-1 pt-14 pb-16 sm:pb-0">{children}</main>
 
-        {showFooter && (
-          <div className={user ? "pb-16 sm:pb-0" : ""}>
-            <SiteFooter />
-          </div>
-        )}
+        {showFooter && <SiteFooter />}
       </div>
     </div>
   );
