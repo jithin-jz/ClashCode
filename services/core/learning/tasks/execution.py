@@ -102,6 +102,15 @@ def submit_code_task(self, user_id, challenge_id, user_code):
             _publish_task_result(user_id, self.request.id, "submit", result)
             return result
 
+        # Cache user code for GitHub sync signal to pick up
+        from django.core.cache import cache
+
+        cache.set(
+            f"github_sync:last_code:{user_id}:{challenge_id}",
+            user_code,
+            timeout=300,  # 5 min TTL — plenty for the signal to fire
+        )
+
         # Success! Process submission
         submission_result = ChallengeService.process_submission(user, challenge, passed)
         result = {"ok": True, "payload": submission_result}

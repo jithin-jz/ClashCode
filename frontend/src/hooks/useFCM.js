@@ -9,6 +9,11 @@ import { playNotificationSound } from "../utils/playNotificationSound";
  * Handles permission requests, token registration, and foreground message listening.
  */
 export const useFCM = (userId) => {
+  // ─── DISABLED: Firebase FCM temporarily disabled ───────────────────
+  // Re-enable by removing this early return block.
+  return;
+  // ──────────────────────────────────────────────────────────────────
+
   const showWelcomeNotification = useCallback(async () => {
     if (!("Notification" in window) || Notification.permission !== "granted")
       return;

@@ -33,6 +33,7 @@ const CertificateVerification = lazy(
 const ChallengeWorkspace = lazy(() => import("./game/ChallengeWorkspace"));
 const MarketplacePage = lazy(() => import("./marketplace/MarketplacePage"));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
+const GitHubSyncCallback = lazy(() => import("./settings/GitHubSyncCallback"));
 
 // Skeletons — layout-accurate, boneyard-wrapped
 import {
@@ -122,6 +123,18 @@ const AppContent = memo(() => {
             <Suspense fallback={<CertificateVerifySkeleton />}>
               <CertificateVerification />
             </Suspense>
+          }
+        />
+
+        {/* GitHub Sync OAuth Callback */}
+        <Route
+          path="/settings/github/callback"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<GenericSkeleton />}>
+                <GitHubSyncCallback />
+              </Suspense>
+            </ProtectedRoute>
           }
         />
 
