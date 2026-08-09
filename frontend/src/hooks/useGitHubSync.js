@@ -22,7 +22,7 @@ export function useGitHubSync() {
       setConnected(data.connected);
       setConnection(data.connection);
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch GitHub connection status.");
     } finally {
       setIsLoading(false);
@@ -45,7 +45,7 @@ export function useGitHubSync() {
       const { data } = await githubSyncService.getConnectUrl();
       // Redirect user to GitHub
       window.location.href = data.url;
-    } catch (err) {
+    } catch {
       setError("Failed to initiate GitHub connection.");
     }
   }, []);
@@ -75,7 +75,7 @@ export function useGitHubSync() {
       setConnected(false);
       setConnection(null);
       setHistory([]);
-    } catch (err) {
+    } catch {
       setError("Failed to disconnect GitHub.");
     }
   }, []);
@@ -88,7 +88,7 @@ export function useGitHubSync() {
         is_enabled: !connection.is_enabled,
       });
       setConnection(data.connection);
-    } catch (err) {
+    } catch {
       setError("Failed to update sync setting.");
     }
   }, [connection]);
@@ -112,7 +112,7 @@ export function useGitHubSync() {
       await githubSyncService.retryPush(logId);
       // Refresh history after retry
       await fetchHistory();
-    } catch (err) {
+    } catch {
       setError("Failed to retry push.");
     }
   }, [fetchHistory]);
