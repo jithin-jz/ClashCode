@@ -63,6 +63,7 @@
   },
   "overrides": {
     "vite": "^6.0.0",
-    "rollup": "npm:@rollup/wasm-node@^4.0.0"
+    "rollup": "npm:@rollup/wasm-node@^4.0.0",
+    "websocket-driver": "0.7.5"
   }
 }
