@@ -19,7 +19,7 @@ class RewardService:
     @classmethod
     def get_check_in_status(cls, user):
         """Returns the current check-in status and cycle state for a user."""
-        today = timezone.now().date()
+        today = timezone.localdate()
         cycle_day, cycle_start_date, _ = StreakService.get_cycle_state(user)
 
         today_checkin = DailyCheckIn.objects.filter(user=user, check_in_date=today).first()
@@ -39,7 +39,7 @@ class RewardService:
     @classmethod
     def process_check_in(cls, user):
         """Processes a daily check-in for a user."""
-        today = timezone.now().date()
+        today = timezone.localdate()
 
         # 1. Check if already checked in
         existing = DailyCheckIn.objects.filter(user=user, check_in_date=today).first()

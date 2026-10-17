@@ -6,12 +6,11 @@ import { SLog } from "./logger";
 
 import { buildWebSocketUrl } from "../utils/websocketUrl";
 
-const getSocketUrl = (token) => {
+const getSocketUrl = () => {
   return buildWebSocketUrl({
     apiUrl: import.meta.env.VITE_API_URL,
     defaultPath: "/ws/tasks/",
     label: "TaskHub",
-    token,
   });
 };
 
@@ -28,9 +27,7 @@ class SocketService {
     if (this.socket || this.isConnected) return;
 
     try {
-      // Get fresh token from store
-      const token = localStorage.getItem("clashcode_access_token");
-      this.url = getSocketUrl(token);
+      this.url = getSocketUrl();
       console.info("[WS] Attempting connection...");
 
       this.socket = new WebSocket(this.url);

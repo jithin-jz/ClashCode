@@ -3,7 +3,10 @@ from datetime import UTC, datetime
 
 from django.core.cache import cache
 
+from project.client_ip import get_client_ip
+
 from ..models import SecurityAuditLog
+from ..revocation import revoke_jti
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +20,7 @@ class BaseAuthService:
         ip = None
         ua = ""
         if request:
-            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-            if x_forwarded_for:
-                ip = x_forwarded_for.split(",")[0].strip()
-            else:
-                ip = request.META.get("REMOTE_ADDR")
+            ip = get_client_ip(request)
             ua = request.META.get("HTTP_USER_AGENT", "")[:512]
 
         SecurityAuditLog.objects.create(
@@ -69,6 +68,7 @@ class BaseAuthService:
 
         if timeout > 0:
             BaseAuthService._cache_set(f"auth:blacklist:{jti}", "1", timeout=timeout)
+            revoke_jti(jti, timeout)
 
     @staticmethod
     def is_token_blacklisted(jti: str) -> bool:

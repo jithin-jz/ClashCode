@@ -67,7 +67,6 @@ class OAuthService(BaseAuthService):
             return None, token_data
 
         access_token = token_data.get("access_token")
-        refresh_token = token_data.get("refresh_token", "")
 
         user_info = OAuthService._get_provider_user_info(provider, access_token)
         if "error" in user_info:
@@ -86,7 +85,8 @@ class OAuthService(BaseAuthService):
             user = OAuthService._match_or_create_user(
                 provider=provider,
                 user_info=user_info,
-                tokens={"access": access_token, "refresh": refresh_token},
+                # Provider tokens are only needed for this login, so they are not persisted.
+                tokens={"access": None, "refresh": None},
             )
 
         if not user.is_active:
@@ -123,7 +123,10 @@ class OAuthService(BaseAuthService):
             user = get_github_user(access_token)
             if "id" not in user:
                 return {"error": "Failed to fetch GitHub user"}
-            email = user.get("email") or get_github_user_email(access_token)
+            # Always use the emails endpoint so we only ever trust a verified address.
+            email = get_github_user_email(access_token)
+            if not email:
+                return {"error": "Your GitHub account has no verified email address."}
             return {
                 "id": str(user["id"]),
                 "email": email,
@@ -135,6 +138,8 @@ class OAuthService(BaseAuthService):
             user = get_google_user(access_token)
             if "id" not in user:
                 return {"error": "Failed to fetch Google user"}
+            if not user.get("email") or user.get("verified_email") is not True:
+                return {"error": "Your Google account email is not verified."}
             return {
                 "id": str(user["id"]),
                 "email": user.get("email", ""),

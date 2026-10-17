@@ -59,11 +59,10 @@ def generate_ai_hint_task(
             timeout=60 if hint_path == "/hints/agent" else 30,
         )
         if resp.status_code != 200:
-            return {
-                "ok": False,
-                "error": "AI Service Error",
-                "status_code": resp.status_code,
-            }
+            logger.error("AI hint request returned %s", resp.status_code)
+            result = {"ok": False, "error": "AI Service Error", "status_code": 502}
+            _publish_task_result(user_id, generate_ai_hint_task.request.id, "hint", result)
+            return result
 
         body = resp.json()
         hint_text = body.get("hint")
@@ -112,11 +111,10 @@ def generate_ai_analysis_task(self, user_id: int, challenge_id: int, challenge_s
             timeout=60,
         )
         if resp.status_code != 200:
-            return {
-                "ok": False,
-                "error": "AI Service Error",
-                "status_code": resp.status_code,
-            }
+            logger.error("AI analysis request returned %s", resp.status_code)
+            result = {"ok": False, "error": "AI Service Error", "status_code": 502}
+            _publish_task_result(user_id, self.request.id, "analysis", result)
+            return result
 
         body = resp.json()
         cache.set(cache_key, body, timeout=AI_ANALYSIS_CACHE_TIMEOUT)

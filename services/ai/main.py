@@ -1,4 +1,5 @@
 import logging
+import os
 
 import sentry_sdk
 from config import settings
@@ -23,8 +24,8 @@ if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         integrations=[FastApiIntegration()],
-        traces_sample_rate=1.0 if settings.DEBUG else 0.2,
-        send_default_pii=True,
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "1.0" if settings.DEBUG else "0.1")),
+        send_default_pii=os.getenv("SENTRY_SEND_PII", "false").lower() == "true",
         environment=settings.ENVIRONMENT,
     )
 

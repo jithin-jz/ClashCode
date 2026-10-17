@@ -1,0 +1,20 @@
+# Runs the executor under gVisor (runsc), a user-space kernel, so a sandbox
+# escape lands in gVisor instead of the node kernel.
+#
+# Prerequisite: the node group must have the runsc containerd shim installed
+# (see infra/terraform/modules/eks and https://gvisor.dev/docs/user_guide/containerd/quick_start/).
+# Enable by adding `components: [../../components/gvisor]` to an overlay.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - runtimeclass.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: executor
+    patch: |-
+      - op: add
+        path: /spec/template/spec/runtimeClassName
+        value: gvisor

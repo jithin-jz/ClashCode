@@ -1,4 +1,7 @@
+import hmac
+import json
 import logging
+from hashlib import sha256
 
 from django.conf import settings
 from django.db import transaction
@@ -72,6 +75,32 @@ class PaymentService:
             "xp_amount": xp_to_credit,
         }
 
+    @staticmethod
+    def _mark_paid(payment, payment_id):
+        """
+        Marks a locked Payment as successful and credits its XP exactly once.
+        Must be called inside transaction.atomic() with the row locked.
+        Returns True when this call performed the credit.
+        """
+        if payment.status == "success":
+            return False
+
+        payment.razorpay_payment_id = payment_id
+        payment.status = "success"
+        payment.save(update_fields=["razorpay_payment_id", "status"])
+
+        if payment.user is None:
+            # Account was deleted after paying; keep the record, nothing to credit.
+            logger.warning(f"Payment {payment.razorpay_order_id} captured for a deleted account")
+            return True
+
+        XPService.add_xp(
+            user=payment.user,
+            amount=payment.xp_amount,
+            source=XPService.SOURCE_PURCHASE,
+        )
+        return True
+
     @classmethod
     def verify_payment(cls, user, order_id, payment_id, signature):
         """Verifies the Razorpay payment signature and credits XP."""
@@ -92,17 +121,60 @@ class PaymentService:
             if payment.user_id != user.id:
                 raise PermissionError("Order does not belong to authenticated user")
 
-            if payment.status == "success":
+            if not cls._mark_paid(payment, payment_id):
+                user.profile.refresh_from_db()
                 return {"status": "already_processed", "new_xp": user.profile.xp}
 
-            payment.razorpay_payment_id = payment_id
-            payment.status = "success"
-            payment.save()
+            user.profile.refresh_from_db()
+            return {"status": "success", "new_xp": user.profile.xp}
 
-            new_xp = XPService.add_xp(
-                user=user,
-                amount=payment.xp_amount,
-                source=XPService.SOURCE_PURCHASE,
-            )
+    @staticmethod
+    def verify_webhook_signature(body: bytes, signature: str) -> bool:
+        """Razorpay signs the raw webhook body with HMAC-SHA256 using the webhook secret."""
+        secret = getattr(settings, "RAZORPAY_WEBHOOK_SECRET", "") or ""
+        if not secret or not signature:
+            return False
+        expected = hmac.new(secret.encode("utf-8"), body, sha256).hexdigest()
+        return hmac.compare_digest(expected, signature.strip())
 
-            return {"status": "success", "new_xp": new_xp}
+    @classmethod
+    def handle_webhook(cls, body: bytes, signature: str) -> str:
+        """
+        Server-to-server confirmation from Razorpay. Credits XP even when the
+        browser never called verify-payment (closed tab, network drop).
+
+        Returns a short outcome string; raises PermissionError on a bad signature.
+        """
+        if not cls.verify_webhook_signature(body, signature):
+            raise PermissionError("Invalid webhook signature")
+
+        event = json.loads(body.decode("utf-8"))
+        event_type = event.get("event", "")
+        entity = event.get("payload", {}).get("payment", {}).get("entity", {})
+        order_id = entity.get("order_id")
+        payment_id = entity.get("id")
+
+        if event_type not in {"payment.captured", "order.paid", "payment.failed"} or not order_id:
+            return "ignored"
+
+        with transaction.atomic():
+            payment = Payment.objects.select_for_update().filter(razorpay_order_id=order_id).first()
+            if payment is None:
+                logger.warning(f"Razorpay webhook for unknown order {order_id}")
+                return "unknown_order"
+
+            if event_type == "payment.failed":
+                if payment.status == "pending":
+                    payment.status = "failed"
+                    payment.razorpay_payment_id = payment_id
+                    payment.save(update_fields=["status", "razorpay_payment_id"])
+                return "failed"
+
+            expected_paise = int(payment.amount * 100)
+            if entity.get("amount") is not None and int(entity["amount"]) != expected_paise:
+                logger.error(
+                    f"Razorpay amount mismatch for {order_id}: got {entity.get('amount')}, expected {expected_paise}"
+                )
+                return "amount_mismatch"
+
+            return "credited" if cls._mark_paid(payment, payment_id) else "already_processed"

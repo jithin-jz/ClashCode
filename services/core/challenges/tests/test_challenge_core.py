@@ -9,6 +9,9 @@ from rest_framework.test import APITestCase
 
 from challenges.models import Challenge, UserProgress
 
+PASSED = {"passed": True, "run": {"code": 0, "stderr": "", "stdout": ""}}
+FAILED = {"passed": False, "run": {"code": 1, "stderr": "AssertionError", "stdout": ""}}
+
 
 class ChallengeCoreTests(APITestCase):
     def setUp(self):
@@ -64,9 +67,9 @@ class ChallengeCoreTests(APITestCase):
         self.assertEqual(items[1]["slug"], "l2")
         self.assertEqual(items[1]["status"], UserProgress.Status.LOCKED)
 
-    @patch("learning.views.PistonExecutionService.execute_code")
+    @patch("learning.views.PistonExecutionService.run_challenge_tests")
     def test_unlock_next_level_after_completion(self, mock_execute):
-        mock_execute.return_value = {"run": {"code": 0, "stderr": "", "stdout": ""}}
+        mock_execute.return_value = PASSED
         # Complete Level 1
         url = reverse("challenge-submit", kwargs={"slug": "l1"})
         response = self.client.post(url, {"code": "pass"}, format="json")
@@ -83,7 +86,7 @@ class ChallengeCoreTests(APITestCase):
         self.assertEqual(items[1]["status"], UserProgress.Status.UNLOCKED)
         self.assertEqual(items[2]["status"], UserProgress.Status.LOCKED)
 
-    @patch("learning.views.PistonExecutionService.execute_code")
+    @patch("learning.views.PistonExecutionService.run_challenge_tests")
     def test_submit_requires_code_and_validates_server_side(self, mock_execute):
         url = reverse("challenge-submit", kwargs={"slug": "l1"})
         response = self.client.post(url, {}, format="json")
@@ -95,11 +98,11 @@ class ChallengeCoreTests(APITestCase):
         response = self.client.post(f"{url}?passed=true", {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        mock_execute.return_value = {"run": {"code": 0, "stderr": "", "stdout": ""}}
+        mock_execute.return_value = PASSED
         response = self.client.post(url, {"code": "pass"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        mock_execute.return_value = {"run": {"code": 1, "stderr": "AssertionError", "stdout": ""}}
+        mock_execute.return_value = FAILED
         response = self.client.post(url, {"code": "bad"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -114,9 +117,9 @@ class ChallengeCoreTests(APITestCase):
         response = self.client.post(f"{url}?passed=true", {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch("learning.views.PistonExecutionService.execute_code")
+    @patch("learning.views.PistonExecutionService.run_challenge_tests")
     def test_xp_reward_only_on_first_completion(self, mock_execute):
-        mock_execute.return_value = {"run": {"code": 0, "stderr": "", "stdout": ""}}
+        mock_execute.return_value = PASSED
         initial_xp = self.profile.xp
 
         # First completion of L1
@@ -130,9 +133,9 @@ class ChallengeCoreTests(APITestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.xp, initial_xp + 100)  # Still same XP
 
-    @patch("learning.views.PistonExecutionService.execute_code")
+    @patch("learning.views.PistonExecutionService.run_challenge_tests")
     def test_star_rating_penalties(self, mock_execute):
-        mock_execute.return_value = {"run": {"code": 0, "stderr": "", "stdout": ""}}
+        mock_execute.return_value = PASSED
         # 1. Test 3 Stars (Clean & Fast)
         url = reverse("challenge-submit", kwargs={"slug": "l1"})
         # We need to set started_at to test time penalty
@@ -153,12 +156,16 @@ class ChallengeCoreTests(APITestCase):
         response = self.client.post(url, {"code": "pass"}, format="json")
         self.assertEqual(response.data["stars"], 2)  # Penalized for time
 
-    @patch("learning.views.PistonExecutionService.execute_code")
+    @patch("learning.views.PistonExecutionService.run_challenge_tests")
     def test_ai_hint_purchase_penalty(self, mock_execute):
-        mock_execute.return_value = {"run": {"code": 0, "stderr": "", "stdout": ""}}
+        mock_execute.return_value = PASSED
         # Give user some XP to purchase hints
         self.profile.xp = 100
         self.profile.save()
+
+        # L3 is only playable once L1 and L2 are completed
+        for challenge in (self.c1, self.c2):
+            UserProgress.objects.create(user=self.user, challenge=challenge, status=UserProgress.Status.COMPLETED)
 
         # Purchase 1 hint for L3
         url_purchase = reverse("challenge-purchase-ai-assist", kwargs={"slug": "l3"})

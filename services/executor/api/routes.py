@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from core.auth import verify_internal_auth
+from core.auth import auth_configuration_error, verify_internal_auth
 from models.schemas import ExecuteRequest
 from services.execution_service import ExecutionService
 
@@ -12,30 +12,23 @@ router = APIRouter()
 
 @router.get("/health")
 def health():
-    """Health check endpoint with Docker daemon status."""
-    docker_status = "unknown"
-    try:
-        import docker
-
-        client = docker.from_env()
-        client.ping()
-        docker_status = "connected"
-    except Exception:
-        docker_status = "unavailable"
-
-    return {"status": "ok", "service": "executor", "docker": docker_status}
+    """Liveness/readiness: the process is up and its auth is usable."""
+    auth_ok = auth_configuration_error() is None
+    return {"status": "ok", "service": "executor", "auth": "configured" if auth_ok else "misconfigured"}
 
 
 @router.post("/execute", dependencies=[Depends(verify_internal_auth)])
 async def execute(request: ExecuteRequest):
     """
-    Execute code with optional batch test cases.
-    Requires internal service authentication.
+    Execute learner code. Requires internal service authentication.
 
-    Single execution:
-        {"code": "print('hello')", "stdin": "", "runner": "docker"}
+    Single run:
+        {"code": "print('hello')", "stdin": ""}
 
-    Batch test cases:
+    Challenge tests (harness decides "passed"):
+        {"code": "def f(): return 1", "test_code": "assert f() == 1"}
+
+    Batch stdin/stdout cases:
         {"code": "n = int(input())\\nprint(n*2)", "test_cases": [{"input": "5", "expected_output": "10"}]}
     """
     if request.language.lower() not in {"python", "python3", "py"}:
@@ -43,14 +36,17 @@ async def execute(request: ExecuteRequest):
 
     try:
         return await ExecutionService.execute(request)
-    except Exception as e:
-        logger.error(f"Execution route failed: {e}")
-        return {
+    except Exception:
+        logger.exception("Execution route failed")
+        result = {
             "run": {
                 "stdout": "",
-                "stderr": f"Internal Error: {str(e)}",
+                "stderr": "Internal execution error.",
                 "code": -1,
                 "signal": None,
-                "output": "Internal Error.",
+                "output": "Internal execution error.",
             }
         }
+        if request.test_code is not None:
+            result["passed"] = False
+        return result

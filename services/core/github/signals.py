@@ -10,6 +10,7 @@ Design:
 
 import logging
 
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -75,8 +76,8 @@ def trigger_github_sync_on_completion(sender, instance, **kwargs):
         language=language,
     )
 
-    # Fire async task
-    push_solution_to_github.delay(push_log.id)
+    # Fire async task once the push record is committed
+    transaction.on_commit(lambda: push_solution_to_github.delay(push_log.id))
 
     logger.info(f"Queued GitHub push: {user.username}/{challenge.title} (log={push_log.id})")
 

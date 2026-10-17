@@ -13,11 +13,14 @@ RUN apt-get update && apt-get install -y \
     gcc \
     --no-install-recommends && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --create-home --uid 10001 app
 
 COPY requirements.txt .
 RUN uv pip install --system -r requirements.txt
 
-COPY . .
+COPY --chown=app:app . .
+
+USER app
 
 CMD ["python", "main.py"]

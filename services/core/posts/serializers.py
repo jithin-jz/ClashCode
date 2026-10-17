@@ -1,7 +1,9 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from users.serializers import UserSummarySerializer
 
 from project.media import build_file_url
+from project.validators import validate_image_upload
 
 from .models import Post
 
@@ -35,6 +37,13 @@ class PostSerializer(serializers.ModelSerializer):
             "likes_count",
             "is_liked",
         ]
+
+    def validate_image(self, value):
+        try:
+            validate_image_upload(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages[0]) from None
+        return value
 
     def get_image_url(self, obj):
         return build_file_url(obj.image, self.context.get("request"))

@@ -6,6 +6,18 @@ import { notify } from "../services/notification";
 import { isBoneyard } from "../utils/isBoneyard";
 import { SLog } from "../services/logger";
 
+// Older builds copied JWTs into localStorage for WebSockets, where any XSS could
+// read them. Auth is HttpOnly-cookie only now; WebSockets send the cookie too.
+const LEGACY_TOKEN_KEYS = ["clashcode_access_token", "clashcode_refresh_token"];
+export const purgeLegacyTokens = () => {
+  try {
+    LEGACY_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // Storage can be unavailable (private mode); nothing to purge then.
+  }
+};
+purgeLegacyTokens();
+
 // Helper function to open OAuth in a popup window
 const openOAuthPopup = (url, name = "OAuth Login") => {
   const width = 500;
@@ -115,19 +127,6 @@ const useAuthStore = create((set, get) => ({
           lastAuthCheck: Date.now(),
         });
 
-        // Save tokens to localStorage for WebSocket services if present
-        if (response.data.access_token) {
-          localStorage.setItem(
-            "clashcode_access_token",
-            response.data.access_token,
-          );
-        }
-        if (response.data.refresh_token) {
-          localStorage.setItem(
-            "clashcode_refresh_token",
-            response.data.refresh_token,
-          );
-        }
 
         SLog.setUser(user);
         return user;
@@ -271,19 +270,6 @@ const useAuthStore = create((set, get) => ({
         error: null,
       });
 
-      // Save tokens to localStorage for WebSocket services if present
-      if (response.data.access_token) {
-        localStorage.setItem(
-          "clashcode_access_token",
-          response.data.access_token,
-        );
-      }
-      if (response.data.refresh_token) {
-        localStorage.setItem(
-          "clashcode_refresh_token",
-          response.data.refresh_token,
-        );
-      }
 
       SLog.setUser(user);
       return true;
@@ -396,19 +382,6 @@ const useAuthStore = create((set, get) => ({
         error: null,
       });
 
-      // Save tokens to localStorage for WebSocket services if present
-      if (response.data.access_token) {
-        localStorage.setItem(
-          "clashcode_access_token",
-          response.data.access_token,
-        );
-      }
-      if (response.data.refresh_token) {
-        localStorage.setItem(
-          "clashcode_refresh_token",
-          response.data.refresh_token,
-        );
-      }
 
       SLog.setUser(user);
       return true;
@@ -428,9 +401,8 @@ const useAuthStore = create((set, get) => ({
       // Continue with logout even if API fails
     }
 
-    // Clear tokens from localStorage
-    localStorage.removeItem("clashcode_access_token");
-    localStorage.removeItem("clashcode_refresh_token");
+    // Remove tokens stored by older builds (auth is HttpOnly-cookie only now)
+    purgeLegacyTokens();
 
     // Clear caches
     useChallengesStore.getState().clearCache();

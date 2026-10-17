@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils import timezone
 from xpoint.services import XPService
 
@@ -14,27 +15,31 @@ class SubmissionService(BaseChallengeService):
         if not passed:
             return {"status": "failed"}
 
-        progress, _ = SubmissionService.get_progress(user, challenge)
-        stars = SubmissionService.calculate_stars(progress, challenge)
-
-        newly_completed = progress.status != UserProgress.Status.COMPLETED
         xp_earned = 0
+        with transaction.atomic():
+            # Lock the progress row so concurrent submissions cannot both see
+            # "not completed yet" and award XP twice.
+            progress, _ = UserProgress.objects.select_for_update().get_or_create(user=user, challenge=challenge)
+            stars = SubmissionService.calculate_stars(progress, challenge)
+            newly_completed = progress.status != UserProgress.Status.COMPLETED
 
-        if newly_completed or stars > progress.stars:
-            progress.status = UserProgress.Status.COMPLETED
-            progress.completed_at = timezone.now()
-            progress.stars = max(progress.stars, stars)
-            progress.save()
+            if newly_completed or stars > progress.stars:
+                progress.status = UserProgress.Status.COMPLETED
+                progress.completed_at = timezone.now()
+                progress.stars = max(progress.stars, stars)
+                progress.save()
 
-            if newly_completed:
-                xp_earned = challenge.xp_reward
-                XPService.add_xp(user, xp_earned, source="challenge_completion")
-                SubmissionService.log_activity(
-                    "COMPLETED",
-                    user,
-                    challenge,
-                    details={"stars": stars, "xp": xp_earned},
-                )
+                if newly_completed:
+                    xp_earned = challenge.xp_reward
+                    XPService.add_xp(user, xp_earned, source="challenge_completion")
+
+        if newly_completed:
+            SubmissionService.log_activity(
+                "COMPLETED",
+                user,
+                challenge,
+                details={"stars": stars, "xp": xp_earned},
+            )
 
         from .progression_service import ProgressionService
 

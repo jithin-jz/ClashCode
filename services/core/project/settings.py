@@ -27,9 +27,14 @@ if SENTRY_DSN:
             RedisIntegration(),
         ],
         # Performance Monitoring
-        traces_sample_rate=(1.0 if os.getenv("DEBUG", "false").lower() == "true" else 0.2),
-        # Capture User PII
-        send_default_pii=True,
+        traces_sample_rate=float(
+            os.getenv(
+                "SENTRY_TRACES_SAMPLE_RATE",
+                "1.0" if os.getenv("DEBUG", "false").lower() == "true" else "0.1",
+            )
+        ),
+        # PII (IPs, emails, cookies) is opt-in
+        send_default_pii=os.getenv("SENTRY_SEND_PII", "false").lower() == "true",
         environment=os.getenv(
             "ENVIRONMENT",
             ("development" if os.getenv("DEBUG", "false").lower() == "true" else "production"),
@@ -234,6 +239,10 @@ CACHES = {
 }
 
 # Logging Configuration
+# Containers log to stdout only (the root filesystem is read-only in k8s).
+# LOG_FORMAT=json emits one JSON object per line for log shippers.
+LOG_FORMAT = os.getenv("LOG_FORMAT", "text").lower()
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -246,41 +255,33 @@ LOGGING = {
             "format": "{levelname} {message}",
             "style": "{",
         },
+        "json": {
+            "()": "project.log_formatting.JsonFormatter",
+        },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "json" if LOG_FORMAT == "json" else "verbose",
         },
-        "admin_file": (
-            {
-                "level": "WARNING",
-                "class": "logging.FileHandler",
-                "filename": os.path.join(BASE_DIR, "logs/admin.log"),
-                "formatter": "verbose",
-            }
-            if not DEBUG
-            else {
-                "class": "logging.NullHandler",
-            }
-        ),
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
     },
     "loggers": {
         "django": {
             "handlers": ["console"],
             "level": "INFO",
-            "propagate": True,
+            "propagate": False,
         },
         "clashcode.admin": {
-            "handlers": ["console", "admin_file"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
         },
     },
 }
-
-# Ensure logs directory exists
-os.makedirs(os.path.join(BASE_DIR, "logs"), exist_ok=True)
 
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -349,6 +350,10 @@ SPECTACULAR_SETTINGS = {
     },
     "SORT_OPERATIONS": True,
     "CAMELIZE_NAMES": False,
+    # The schema documents internal endpoints; only staff may read it outside dev.
+    "SERVE_PERMISSIONS": (
+        ["rest_framework.permissions.AllowAny"] if DEBUG else ["rest_framework.permissions.IsAdminUser"]
+    ),
 }
 
 # Django REST Framework
@@ -375,9 +380,14 @@ REST_FRAMEWORK = {
         "sensitive": os.getenv("THROTTLE_SENSITIVE_RATE", "5/minute"),  # Password reset, email change
         "burst": os.getenv("THROTTLE_BURST_RATE", "10/second"),  # Short burst protection
         "code_execution": os.getenv(
-            "THROTTLE_CODE_EXECUTION_RATE", "100/minute"
+            "THROTTLE_CODE_EXECUTION_RATE", "20/minute"
         ),  # Sandbox-backed code run/submission endpoints
+        "ai": os.getenv("THROTTLE_AI_RATE", "10/minute"),  # LLM-backed hint/analysis endpoints
     },
+    # Number of trusted reverse proxies in front of Django (ALB in k8s, nginx in compose).
+    # DRF uses this to pick the real client IP from X-Forwarded-For; without it the
+    # whole client-controlled header is the throttle key and limits can be bypassed.
+    "NUM_PROXIES": int(os.getenv("NUM_PROXIES", "1")),
 }
 
 CODE_EXECUTION_MAX_BYTES = int(os.getenv("CODE_EXECUTION_MAX_BYTES", str(64 * 1024)))
@@ -429,7 +439,17 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = _parse_bool(os.getenv("SECURE_HSTS_INCLUDE_SUBD
 SECURE_HSTS_PRELOAD = _parse_bool(os.getenv("SECURE_HSTS_PRELOAD"), default=not DEBUG)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-USE_X_FORWARDED_HOST = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+# Only trust X-Forwarded-Host when a proxy you control rewrites it; otherwise
+# clients could poison absolute URLs built from the Host header.
+USE_X_FORWARDED_HOST = _parse_bool(os.getenv("USE_X_FORWARDED_HOST"), default=False)
+
+# Django admin lives at a configurable, non-default path in production.
+DJANGO_ADMIN_URL = os.getenv("DJANGO_ADMIN_URL", "admin/").strip("/") + "/"
+
+# Upload limits: request bodies (incl. multipart) and individual image files.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(10 * 1024 * 1024)))
+MAX_IMAGE_UPLOAD_BYTES = int(os.getenv("MAX_IMAGE_UPLOAD_BYTES", str(5 * 1024 * 1024)))
 
 # OAuth
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
@@ -466,6 +486,8 @@ OTP_EMAIL_ASYNC = (os.getenv("OTP_EMAIL_ASYNC") or "true").lower() == "true"
 # Razorpay
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
+# Dashboard -> Webhooks secret for /api/payments/webhook/ (events: payment.captured, order.paid, payment.failed)
+RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -482,6 +504,14 @@ CELERY_RESULT_EXPIRES = 60 * 60 * 24  # Auto-expire results after 24 hours
 CELERY_TASK_TRACK_STARTED = True  # Track STARTED state in result backend
 CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True  # Always persist error tracebacks
 
+# Worker behaviour: no task can hang a worker forever, a slow task cannot hoard
+# prefetched messages, and long-lived child processes are recycled.
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv("CELERY_TASK_SOFT_TIME_LIMIT", "120"))
+CELERY_TASK_TIME_LIMIT = int(os.getenv("CELERY_TASK_TIME_LIMIT", "180"))
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv("CELERY_WORKER_MAX_TASKS_PER_CHILD", "500"))
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 # Celery Beat
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
@@ -493,11 +523,12 @@ CELERY_TASK_QUEUES = {
     "background": {"exchange": "background", "routing_key": "background"},
 }
 
+# Keys must be the registered task names (module path of the @shared_task function).
 CELERY_TASK_ROUTES = {
-    "learning.tasks.generate_ai_hint_task": {"queue": "ai"},
-    "learning.tasks.generate_ai_analysis_task": {"queue": "ai"},
-    "learning.tasks.update_leaderboard_cache": {"queue": "background"},
-    "learning.tasks.prewarm_ai_rag_task": {"queue": "background"},
+    "learning.tasks.ai.generate_ai_hint_task": {"queue": "ai"},
+    "learning.tasks.ai.generate_ai_analysis_task": {"queue": "ai"},
+    "learning.tasks.leaderboard.update_leaderboard_cache": {"queue": "background"},
+    "learning.tasks.ai.prewarm_ai_rag_task": {"queue": "background"},
     "project.tasks.cleanup_old_task_results": {"queue": "background"},
     "github.tasks.push_solution_to_github": {"queue": "background"},
     "github.tasks.retry_failed_pushes": {"queue": "background"},
@@ -510,7 +541,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60 * 60 * 24,  # Every 24 hours
     },
     "prewarm-ai-rag-every-6-hours": {
-        "task": "learning.tasks.prewarm_ai_rag_task",
+        "task": "learning.tasks.ai.prewarm_ai_rag_task",
         "schedule": 60 * 60 * 6,  # Every 6 hours
     },
     "retry-failed-github-pushes-hourly": {
@@ -521,11 +552,13 @@ CELERY_BEAT_SCHEDULE = {
 
 # --- Test Overrides ---
 if "test" in sys.argv:
-    # Use SQLite for tests
-    DATABASES["default"] = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "test_db.sqlite3",
-    }
+    # SQLite by default for fast local runs; TEST_DB=postgres runs against the
+    # configured Postgres (as CI does) so row locks and constraints behave like prod.
+    if os.getenv("TEST_DB", "sqlite").lower() != "postgres":
+        DATABASES["default"] = {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
     # Use memory cache for tests
     CACHES["default"] = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -540,4 +573,6 @@ if "test" in sys.argv:
     STORAGES["default"] = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
     # Disable internal signature for easier testing
     INTERNAL_REQUIRE_SIGNATURE = False
+    # No Redis in unit tests; revocation mirroring is tested with a mocked client
+    AUTH_REVOCATION_REDIS_ENABLED = False
     os.environ["INTERNAL_SIGNING_SECRET"] = ""

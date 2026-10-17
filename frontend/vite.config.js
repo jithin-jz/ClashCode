@@ -51,7 +51,11 @@ export default defineConfig({
           process.env.GITHUB_SHA ||
           process.env.VITE_APP_VERSION,
       },
-      sourcemaps: { assets: "./dist/**" },
+      // Upload maps to Sentry, then delete them so they are never served publicly.
+      sourcemaps: {
+        assets: "./dist/**",
+        filesToDeleteAfterUpload: "./dist/**/*.map",
+      },
       disable: !process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
     }),
@@ -64,7 +68,9 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    // "hidden": maps are generated for Sentry but not referenced from the bundle.
+    // Without a Sentry token there is nowhere to send them, so none are built.
+    sourcemap: process.env.SENTRY_AUTH_TOKEN ? "hidden" : false,
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
@@ -110,10 +116,6 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost",
-        changeOrigin: true,
-      },
-      "/ai": {
         target: "http://localhost",
         changeOrigin: true,
       },

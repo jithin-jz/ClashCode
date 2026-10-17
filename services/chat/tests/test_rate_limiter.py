@@ -1,12 +1,21 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from rate_limiter import RateLimiter
 
 
 @pytest.fixture
-def mock_redis():
-    return AsyncMock()
+def pipe():
+    pipe = MagicMock()
+    pipe.execute = AsyncMock()
+    return pipe
+
+
+@pytest.fixture
+def mock_redis(pipe):
+    redis = AsyncMock()
+    redis.pipeline = MagicMock(return_value=pipe)
+    return redis
 
 
 @pytest.fixture
@@ -15,38 +24,28 @@ def limiter(mock_redis):
 
 
 @pytest.mark.asyncio
-async def test_is_allowed_first_request(limiter, mock_redis):
-    # Mock INCR to return 1 (first request)
-    mock_redis.incr.return_value = 1
+async def test_is_allowed_first_request(limiter, mock_redis, pipe):
+    pipe.execute.return_value = [1, True]
 
     allowed = await limiter.is_allowed("test_key", max_requests=5, window_seconds=60)
 
     assert allowed is True
-    mock_redis.incr.assert_called_with("test_key")
-    mock_redis.expire.assert_called_with("test_key", 60)
+    mock_redis.pipeline.assert_called_with(transaction=True)
+    pipe.incr.assert_called_with("test_key")
+    # TTL is set atomically with the increment, and only once per window
+    pipe.expire.assert_called_with("test_key", 60, nx=True)
 
 
 @pytest.mark.asyncio
-async def test_is_allowed_at_limit(limiter, mock_redis):
-    # Mock INCR to return 5
-    mock_redis.incr.return_value = 5
-
-    allowed = await limiter.is_allowed("test_key", max_requests=5, window_seconds=60)
-
-    assert allowed is True
-    # Should not call expire because current > 1
-    mock_redis.expire.assert_not_called()
+async def test_is_allowed_at_limit(limiter, pipe):
+    pipe.execute.return_value = [5, False]
+    assert await limiter.is_allowed("test_key", max_requests=5, window_seconds=60) is True
 
 
 @pytest.mark.asyncio
-async def test_is_allowed_over_limit(limiter, mock_redis):
-    # Mock INCR to return 6
-    mock_redis.incr.return_value = 6
-
-    allowed = await limiter.is_allowed("test_key", max_requests=5, window_seconds=60)
-
-    assert allowed is False
-    mock_redis.expire.assert_not_called()
+async def test_is_allowed_over_limit(limiter, pipe):
+    pipe.execute.return_value = [6, False]
+    assert await limiter.is_allowed("test_key", max_requests=5, window_seconds=60) is False
 
 
 @pytest.mark.asyncio

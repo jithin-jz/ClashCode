@@ -3,6 +3,7 @@ import logging
 from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from authentication.throttles import StoreRateThrottle
 
@@ -117,3 +118,30 @@ class VerifyPaymentView(generics.GenericAPIView):
                 {"error": "Payment verification failed."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class RazorpayWebhookView(APIView):
+    """
+    POST /api/payments/webhook/
+
+    Razorpay server-to-server events (payment.captured, order.paid, payment.failed).
+    Authenticated by the X-Razorpay-Signature HMAC, not by a user session.
+    """
+
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = []
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT})
+    def post(self, request):
+        signature = request.headers.get("X-Razorpay-Signature", "")
+        try:
+            outcome = PaymentService.handle_webhook(request.body, signature)
+        except PermissionError:
+            logger.warning("Rejected Razorpay webhook with an invalid signature")
+            return Response({"error": "Invalid signature"}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, KeyError):
+            return Response({"error": "Malformed payload"}, status=status.HTTP_400_BAD_REQUEST)
+
+        logger.info(f"Razorpay webhook processed: {outcome}")
+        return Response({"status": outcome}, status=status.HTTP_200_OK)

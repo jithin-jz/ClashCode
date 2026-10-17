@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authentication.throttles import StoreRateThrottle
+from project.validators import validate_image_upload
 
 from .models import Purchase, StoreItem
 from .serializers import (
@@ -189,6 +191,10 @@ class ImageUploadView(APIView):
         file_obj = request.FILES.get("image")
         if not file_obj:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validate_image_upload(file_obj)
+        except DjangoValidationError as exc:
+            return Response({"error": exc.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
 
         url = StoreService.upload_image(file_obj)
         return Response({"url": url}, status=status.HTTP_201_CREATED)

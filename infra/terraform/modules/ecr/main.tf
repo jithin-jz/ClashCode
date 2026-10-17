@@ -1,6 +1,6 @@
 resource "aws_ecr_repository" "core" {
   name                 = "${var.project_name}-core"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE" # deploys pin the commit SHA; tags can never be overwritten
 
   image_scanning_configuration {
     scan_on_push = true
@@ -9,7 +9,7 @@ resource "aws_ecr_repository" "core" {
 
 resource "aws_ecr_repository" "chat" {
   name                 = "${var.project_name}-chat"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE" # deploys pin the commit SHA; tags can never be overwritten
 
   image_scanning_configuration {
     scan_on_push = true
@@ -18,7 +18,7 @@ resource "aws_ecr_repository" "chat" {
 
 resource "aws_ecr_repository" "ai" {
   name                 = "${var.project_name}-ai"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE" # deploys pin the commit SHA; tags can never be overwritten
 
   image_scanning_configuration {
     scan_on_push = true
@@ -27,7 +27,7 @@ resource "aws_ecr_repository" "ai" {
 
 resource "aws_ecr_repository" "analytics" {
   name                 = "${var.project_name}-analytics"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE" # deploys pin the commit SHA; tags can never be overwritten
 
   image_scanning_configuration {
     scan_on_push = true
@@ -36,7 +36,7 @@ resource "aws_ecr_repository" "analytics" {
 
 resource "aws_ecr_repository" "executor" {
   name                 = "${var.project_name}-executor"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE" # deploys pin the commit SHA; tags can never be overwritten
 
   image_scanning_configuration {
     scan_on_push = true

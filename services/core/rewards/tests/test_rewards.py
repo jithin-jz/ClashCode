@@ -45,11 +45,11 @@ class RewardsTests(APITestCase):
     def test_streak_cycle_progression(self):
         # Mock day 1
         self.client.post(self.url)
-        self.user.profile.reward_cycle_start_date = timezone.now().date() - timedelta(days=1)
+        self.user.profile.reward_cycle_start_date = timezone.localdate() - timedelta(days=1)
         self.user.profile.save()
 
         # Delete today's check-in to allow another post (simulating it's now a new day)
-        DailyCheckIn.objects.filter(user=self.user, check_in_date=timezone.now().date()).delete()
+        DailyCheckIn.objects.filter(user=self.user, check_in_date=timezone.localdate()).delete()
 
         # Now it should be day 2
         response = self.client.get(self.url)
@@ -62,7 +62,7 @@ class RewardsTests(APITestCase):
 
     def test_cycle_reset_after_7_days(self):
         # Start cycle 8 days ago
-        self.user.profile.reward_cycle_start_date = timezone.now().date() - timedelta(days=8)
+        self.user.profile.reward_cycle_start_date = timezone.localdate() - timedelta(days=8)
         self.user.profile.save()
 
         # Should reset to day 1
@@ -78,11 +78,11 @@ class RewardsTests(APITestCase):
         self.client.post(self.url)
 
         # Fast forward 2 days (skip day 2, now on day 3)
-        self.user.profile.reward_cycle_start_date = timezone.now().date() - timedelta(days=2)
+        self.user.profile.reward_cycle_start_date = timezone.localdate() - timedelta(days=2)
         self.user.profile.save()
 
         # Delete today's check-in to allow another post
-        DailyCheckIn.objects.filter(user=self.user, check_in_date=timezone.now().date()).delete()
+        DailyCheckIn.objects.filter(user=self.user, check_in_date=timezone.localdate()).delete()
 
         response = self.client.get(self.url)
         self.assertEqual(response.data["cycle_day"], 3)

@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from xpoint.services import XPService
 
+from project.validators import validate_image_upload
+
 from .models import UserFollow, UserProfile
 
 logger = logging.getLogger(__name__)
@@ -53,10 +55,13 @@ class UserService:
             if "bio" in data:
                 profile.bio = str(data.get("bio", ""))
 
-            if "avatar" in files:
-                profile.avatar = files["avatar"]
-            if "banner" in files:
-                profile.banner = files["banner"]
+            for field in ("avatar", "banner"):
+                if field in files:
+                    try:
+                        validate_image_upload(files[field])
+                    except ValidationError as exc:
+                        raise ValueError(f"{field.capitalize()}: {exc.messages[0]}") from None
+                    setattr(profile, field, files[field])
 
             user.save()
             profile.save()

@@ -27,7 +27,7 @@ class RateLimiter:
         """
         Check if a request is allowed under the rate limit.
 
-        Uses Redis INCR with EXPIRE for simple sliding window.
+        Uses an atomic INCR + EXPIRE NX (fixed window per key).
 
         Args:
             key: Unique identifier for this rate limit (e.g., "ratelimit:ws:connect:123")
@@ -37,11 +37,13 @@ class RateLimiter:
         Returns:
             True if request is allowed, False if rate limited
         """
-        current = await self.redis.incr(key)
-
-        if current == 1:
-            # First request in this window, set expiry
-            await self.redis.expire(key, window_seconds)
+        # INCR and EXPIRE in one transaction: a crash between the two used to leave
+        # a counter without TTL, rate-limiting that user forever. NX keeps the window
+        # anchored to the first request.
+        pipe = self.redis.pipeline(transaction=True)
+        pipe.incr(key)
+        pipe.expire(key, window_seconds, nx=True)
+        current, _ = await pipe.execute()
 
         return current <= max_requests
 

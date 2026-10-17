@@ -29,7 +29,6 @@ export const buildWebSocketUrl = ({
   defaultPath,
   legacyPaths = [],
   label = "WebSocket",
-  token = null,
 }) => {
   console.debug(
     `[buildWebSocketUrl] label=${label} apiUrl=${apiUrl} defaultPath=${defaultPath} window.location.host=${window.location.host}`,
@@ -69,15 +68,7 @@ export const buildWebSocketUrl = ({
     wsUrlString = `${getWindowWsProtocol()}//${window.location.host}${defaultPath}`;
   }
 
-  if (token) {
-    try {
-      const url = new URL(wsUrlString);
-      url.searchParams.set("token", token);
-      return url.toString();
-    } catch {
-      return wsUrlString;
-    }
-  }
-
+  // No token in the URL: query strings end up in proxy logs. The browser sends the
+  // HttpOnly access-token cookie with the WebSocket handshake.
   return wsUrlString;
 };

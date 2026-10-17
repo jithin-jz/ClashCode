@@ -20,6 +20,10 @@ module "eks" {
   environment     = var.environment
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
+
+  endpoint_public_access_cidrs = var.eks_public_access_cidrs
+  node_min_size                = 1
+  node_desired_size            = 1
 }
 
 module "elasticache" {
@@ -29,6 +33,10 @@ module "elasticache" {
   vpc_id               = module.vpc.vpc_id
   private_subnet_ids   = module.vpc.private_subnets
   eks_node_cidr_blocks = [var.vpc_cidr] # Simplified for dev, allowing from within VPC
+
+  # Dev: single small node, no replica
+  node_type          = "cache.t4g.micro"
+  num_cache_clusters = 1
 }
 
 output "eks_cluster_name" {

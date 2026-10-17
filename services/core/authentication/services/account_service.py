@@ -14,7 +14,8 @@ class AccountService(BaseAuthService):
     @staticmethod
     def handle_logout(request):
         """
-        Handles user logout by blacklisting current tokens.
+        Handles user logout by blacklisting the current access token and the
+        refresh token, so neither can be used again after logout.
         """
         user = getattr(request, "user", None)
         if user and not user.is_authenticated:
@@ -34,6 +35,16 @@ class AccountService(BaseAuthService):
             payload = decode_token(token_cookie)
             if payload:
                 AccountService.blacklist_token(payload)
+
+        # Blacklist the refresh token (cookie or body), otherwise it stays valid for days
+        refresh_token = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
+        if not refresh_token and hasattr(request, "data"):
+            refresh_token = request.data.get("refresh_token")
+        if refresh_token:
+            payload = decode_token(refresh_token)
+            if payload and payload.get("type") == "refresh":
+                if user is None or payload.get("user_id") == user.id:
+                    AccountService.blacklist_token(payload)
 
         AccountService.log_security_event(action="LOGOUT", user=user, request=request)
 

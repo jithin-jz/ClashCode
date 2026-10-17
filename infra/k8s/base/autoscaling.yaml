@@ -74,7 +74,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: executor
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 5
   metrics:
     - type: Resource
@@ -87,12 +87,31 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: worker
+  name: worker-default
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: worker
+    name: worker-default
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-ai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker-ai
   minReplicas: 1
   maxReplicas: 4
   metrics:
@@ -148,9 +167,21 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: worker
+  name: worker-default
 spec:
   maxUnavailable: 1
   selector:
     matchLabels:
       app: worker
+      worker-queue: default
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: worker-ai
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: worker
+      worker-queue: ai

@@ -84,8 +84,7 @@ services:
     env_file: ./core/.env
     command: >
       sh -c "python manage.py migrate --noinput &&
-             python manage.py collectstatic --noinput &&
-             gunicorn --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-60} project.wsgi:application"
+             gunicorn -c gunicorn.conf.py project.wsgi:application"
     environment:
       DB_HOST: ${DB_HOST:?Set DB_HOST}
       DB_NAME: ${DB_NAME:-postgres}
@@ -96,6 +95,11 @@ services:
       EXECUTOR_URL: http://executor:8011/execute
       INTERNAL_REQUIRE_SIGNATURE: ${INTERNAL_REQUIRE_SIGNATURE:-true}
       INTERNAL_SIGNING_SECRET: ${INTERNAL_SIGNING_SECRET:?Set INTERNAL_SIGNING_SECRET}
+      EXECUTOR_API_KEY: ${EXECUTOR_API_KEY:?Set EXECUTOR_API_KEY}
+      EXECUTOR_SIGNING_SECRET: ${EXECUTOR_SIGNING_SECRET:?Set EXECUTOR_SIGNING_SECRET}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-90}
     depends_on:
       db:
         condition: service_healthy
@@ -115,6 +119,7 @@ services:
       start_period: 30s
     networks:
       - default
+      - sandbox
 
   chat:
     build: ./chat
@@ -151,6 +156,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       INTERNAL_REQUIRE_SIGNATURE: ${INTERNAL_REQUIRE_SIGNATURE:-true}
       INTERNAL_SIGNING_SECRET: ${INTERNAL_SIGNING_SECRET:?Set INTERNAL_SIGNING_SECRET}
+      EXECUTOR_API_KEY: ${EXECUTOR_API_KEY:?Set EXECUTOR_API_KEY}
+      EXECUTOR_SIGNING_SECRET: ${EXECUTOR_SIGNING_SECRET:?Set EXECUTOR_SIGNING_SECRET}
     depends_on:
       core:
         condition: service_healthy
@@ -168,6 +175,7 @@ services:
       start_period: 20s
     networks:
       - default
+      - sandbox
 
   # ---------------- CELERY WORKERS ----------------
   worker:
@@ -183,6 +191,9 @@ services:
       start_period: 30s
     environment:
       AI_HINT_MODE: ${AI_HINT_MODE:-agent}
+      EXECUTOR_URL: http://executor:8011/execute
+      EXECUTOR_API_KEY: ${EXECUTOR_API_KEY:?Set EXECUTOR_API_KEY}
+      EXECUTOR_SIGNING_SECRET: ${EXECUTOR_SIGNING_SECRET:?Set EXECUTOR_SIGNING_SECRET}
       DB_HOST: ${DB_HOST:?Set DB_HOST}
       DB_NAME: ${DB_NAME:-postgres}
       DB_USER: ${DB_USER:-postgres}
@@ -200,6 +211,7 @@ services:
         condition: service_healthy
     networks:
       - default
+      - sandbox
 
   beat:
     build: ./core
@@ -276,7 +288,9 @@ services:
       EXECUTOR_TIMEOUT_SECONDS: ${EXECUTOR_TIMEOUT_SECONDS:-5}
       EXECUTOR_MEMORY_LIMIT_MB: ${EXECUTOR_MEMORY_LIMIT_MB:-128}
       EXECUTOR_OUTPUT_LIMIT_BYTES: ${EXECUTOR_OUTPUT_LIMIT_BYTES:-32768}
-      EXECUTOR_BLOCK_DANGEROUS_IMPORTS: ${EXECUTOR_BLOCK_DANGEROUS_IMPORTS:-true}
+      EXECUTOR_MAX_CONCURRENT_RUNS: ${EXECUTOR_MAX_CONCURRENT_RUNS:-4}
+      EXECUTOR_API_KEY: ${EXECUTOR_API_KEY:?Set EXECUTOR_API_KEY}
+      EXECUTOR_SIGNING_SECRET: ${EXECUTOR_SIGNING_SECRET:?Set EXECUTOR_SIGNING_SECRET}
     tmpfs:
       - /tmp:size=64m,noexec,nosuid,nodev
     healthcheck:
@@ -289,12 +303,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    # Only reachable from core/worker/ai; no route to db, redis or the internet.
     networks:
-      - default
+      - sandbox
 
 networks:
   default:
     name: clashcode_network
+  sandbox:
+    name: clashcode_sandbox
+    internal: true
 
 volumes:
   postgres_data:

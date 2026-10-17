@@ -1,3 +1,5 @@
+# Requires a CNI that enforces NetworkPolicy (EKS: VPC CNI with enableNetworkPolicy,
+# set in infra/terraform/modules/eks).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -10,7 +12,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Only allow traffic from core service (and worker pods)
+    # Only callers of /execute: core (API), Celery workers (code runs) and the AI agent.
     - from:
         - podSelector:
             matchLabels:
@@ -18,19 +20,11 @@ spec:
         - podSelector:
             matchLabels:
               app: worker
+        - podSelector:
+            matchLabels:
+              app: ai
       ports:
         - protocol: TCP
           port: 8011
-  egress:
-    # Allow DNS resolution
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-    # Deny all other egress (no internet access for executor)
+  # No egress rules: learner code gets no network at all (not even DNS).
+  egress: []

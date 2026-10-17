@@ -17,6 +17,7 @@ concurrency:
 env:
   AWS_REGION: ap-south-1
   EKS_CLUSTER_NAME: clashcode-eks
+  NAMESPACE: clashcode
 
 jobs:
   ci:
@@ -25,6 +26,8 @@ jobs:
   build-and-push:
     needs: ci
     runs-on: ubuntu-latest
+    # The AWS role trusts only this environment; add required reviewers to it in GitHub settings.
+    environment: production
     strategy:
       fail-fast: true
       matrix:
@@ -46,30 +49,36 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push ${{ matrix.service }}
+      # Build locally first: an image that fails the scan never reaches the registry.
+      - name: Build ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
           context: ./services/${{ matrix.service }}
-          push: true
+          load: true
+          push: false
           provenance: false
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:prod
+          tags: ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
       - name: Scan image (Trivy)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:${{ github.sha }}
           format: table
           exit-code: "1"
-          severity: CRITICAL
+          severity: CRITICAL,HIGH
           ignore-unfixed: true
+
+      # Only the immutable commit-SHA tag is pushed (ECR repositories are IMMUTABLE).
+      - name: Push ${{ matrix.service }}
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/clashcode-${{ matrix.service }}:${{ github.sha }}
 
   rollout:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # The AWS role trusts only this environment; add required reviewers to it in GitHub settings.
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -90,27 +99,52 @@ jobs:
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
 
-      - name: Pin images to immutable SHA tag and apply
+      - name: Pin images to the commit SHA
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
-          cd infra/k8s/overlays/prod
-          for svc in core chat ai analytics executor; do
+          (cd infra/k8s/overlays/prod && for svc in core chat ai analytics executor; do
             kustomize edit set image $svc=$ECR_REGISTRY/clashcode-$svc:$TAG
+          done)
+          (cd infra/k8s/jobs && kustomize edit set image core=$ECR_REGISTRY/clashcode-core:$TAG)
+
+      # Migrations run once, before any new pod starts. Keep them backward compatible
+      # (expand/contract): a failed rollout below rolls pods back, not the schema.
+      - name: Run database migrations
+        run: |
+          set -euo pipefail
+          kubectl -n $NAMESPACE delete job core-migrate --ignore-not-found --wait=true
+          kustomize build infra/k8s/jobs | kubectl apply -f -
+          for _ in $(seq 1 120); do
+            succeeded=$(kubectl -n $NAMESPACE get job core-migrate -o jsonpath='{.status.succeeded}')
+            failed=$(kubectl -n $NAMESPACE get job core-migrate -o jsonpath='{.status.failed}')
+            if [ "${succeeded:-0}" -ge 1 ]; then echo "✅ Migrations applied"; exit 0; fi
+            if [ "${failed:-0}" -ge 3 ]; then break; fi
+            sleep 5
           done
-          kustomize build . | kubectl apply -f -
+          echo "❌ Migrations failed or timed out"
+          kubectl -n $NAMESPACE logs job/core-migrate --tail=200 || true
+          exit 1
+
+      - name: Apply manifests
+        run: |
+          set -euo pipefail
+          kustomize build infra/k8s/overlays/prod | kubectl apply -f -
+          # The single "worker" deployment was split into one per queue.
+          kubectl -n $NAMESPACE delete deployment/worker hpa/worker pdb/worker --ignore-not-found
 
       - name: Wait for rollout
         run: |
           set -euo pipefail
-          for deploy in core chat ai analytics executor worker beat; do
+          deploys="core chat ai analytics executor worker-default worker-ai worker-background beat"
+          for deploy in $deploys; do
             timeout=5m
             [[ "$deploy" == "beat" ]] && timeout=3m
-            if ! kubectl -n clashcode rollout status deploy/$deploy --timeout=$timeout; then
-              echo "❌ Rollout failed for $deploy — rolling back"
-              kubectl -n clashcode rollout undo deploy/$deploy
+            if ! kubectl -n $NAMESPACE rollout status deploy/$deploy --timeout=$timeout; then
+              echo "❌ Rollout failed for $deploy — rolling back every deployment to keep versions consistent"
+              for d in $deploys; do kubectl -n $NAMESPACE rollout undo deploy/$d || true; done
               exit 1
             fi
           done

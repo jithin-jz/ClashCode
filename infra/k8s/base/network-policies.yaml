@@ -1,0 +1,43 @@
+# Ingress allowlists for the internal services. Requires a CNI that enforces
+# NetworkPolicy (EKS: VPC CNI with enableNetworkPolicy).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only core (streaming proxy) and Celery workers call the AI service.
+    - from:
+        - podSelector:
+            matchLabels:
+              app: core
+        - podSelector:
+            matchLabels:
+              app: worker
+      ports:
+        - protocol: TCP
+          port: 8002
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: analytics
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: core
+      ports:
+        - protocol: TCP
+          port: 8004

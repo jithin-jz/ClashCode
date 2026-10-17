@@ -1,0 +1,14 @@
+# Separate from the app overlay because Jobs are immutable: the deploy workflow
+# deletes and re-creates this Job with the release image before each rollout.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: clashcode
+
+resources:
+  - migrate-job.yaml
+
+images:
+  - name: core
+    newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-core
+    newTag: set-by-ci

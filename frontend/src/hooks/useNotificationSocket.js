@@ -38,7 +38,6 @@ export const useNotificationSocket = (userId) => {
       defaultPath: "/ws/notifications",
       legacyPaths: ["/notifications", "/ws"],
       label: "Notifications",
-      token: localStorage.getItem("clashcode_access_token"),
     });
 
     console.info(`[Notifications] Connecting for user ${id}...`);

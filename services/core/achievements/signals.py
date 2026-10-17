@@ -107,7 +107,7 @@ def check_streak_achievements(sender, instance, created, **kwargs):
 
     from django.utils import timezone
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     consecutive_streak = 0
     check_date = today
 

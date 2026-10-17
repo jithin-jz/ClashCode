@@ -1,3 +1,9 @@
+# Runs untrusted learner code. Treat this pod as hostile:
+# - only its own key (executor-secrets), never backend-secrets
+# - no Kubernetes API token, no service links
+# - non-root, read-only root filesystem, no capabilities, RuntimeDefault seccomp
+# - deny-all egress (executor-network-policy.yaml)
+# - gVisor runtime in production (infra/k8s/components/gvisor)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,7 +11,7 @@ metadata:
   labels:
     app: executor
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -15,6 +21,15 @@ spec:
       labels:
         app: executor
     spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: executor
           image: executor:latest
@@ -23,9 +38,21 @@ spec:
           env:
             - name: PORT
               value: "8011"
+            - name: EXECUTOR_WORK_DIR
+              value: /tmp
+            - name: EXECUTOR_MAX_CONCURRENT_RUNS
+              value: "4"
           envFrom:
             - secretRef:
-                name: backend-secrets
+                name: executor-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /health
@@ -40,11 +67,16 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "1000m"
+              memory: "1Gi"
             requests:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "250m"
+              memory: "256Mi"
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
 ---
 apiVersion: v1
 kind: Service

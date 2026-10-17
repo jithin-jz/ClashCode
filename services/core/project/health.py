@@ -1,3 +1,5 @@
+import logging
+
 from django.core.cache import cache
 from django.db import connection
 from drf_spectacular.utils import OpenApiTypes, extend_schema
@@ -5,11 +7,29 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+logger = logging.getLogger(__name__)
+
+
+class LivenessView(APIView):
+    """
+    Liveness probe: the process is up and serving requests.
+    Deliberately checks no dependencies, so a DB/Redis outage does not make
+    Kubernetes restart every pod.
+    """
+
+    permission_classes = []
+    authentication_classes = []
+    throttle_classes = []
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT}, description="Liveness probe (no dependency checks).")
+    def get(self, request):
+        return Response({"status": "alive", "service": "core"}, status=status.HTTP_200_OK)
+
 
 class HealthCheckView(APIView):
     """
-    Health check endpoint for monitoring service status.
-    Checks database, cache, and Redis connectivity.
+    Readiness check: database and cache connectivity.
+    Failure details are logged, never returned (the endpoint is public).
     """
 
     permission_classes = []  # Public endpoint
@@ -30,22 +50,23 @@ class HealthCheckView(APIView):
         try:
             connection.ensure_connection()
             health_status["checks"]["database"] = "ok"
-        except Exception as e:
+        except Exception:
+            logger.exception("Readiness check: database unavailable")
             health_status["status"] = "unhealthy"
-            health_status["checks"]["database"] = f"error: {str(e)}"
+            health_status["checks"]["database"] = "error"
 
         # Check cache (Redis)
         try:
             cache.set("health_check", "ok", 10)
-            cache_value = cache.get("health_check")
-            if cache_value == "ok":
+            if cache.get("health_check") == "ok":
                 health_status["checks"]["cache"] = "ok"
             else:
                 health_status["status"] = "unhealthy"
-                health_status["checks"]["cache"] = "error: cache read/write failed"
-        except Exception as e:
+                health_status["checks"]["cache"] = "error"
+        except Exception:
+            logger.exception("Readiness check: cache unavailable")
             health_status["status"] = "unhealthy"
-            health_status["checks"]["cache"] = f"error: {str(e)}"
+            health_status["checks"]["cache"] = "error"
 
         # Determine HTTP status code
         status_code = (

@@ -1,0 +1,54 @@
+# Applied by the deploy workflow BEFORE the new core/worker images roll out:
+#   kubectl -n clashcode delete job core-migrate --ignore-not-found
+#   kustomize build infra/k8s/jobs | kubectl apply -f -
+#   kubectl -n clashcode wait --for=condition=complete job/core-migrate --timeout=5m
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: core-migrate
+  labels:
+    app: core-migrate
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: core-migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: core:latest
+          command: ["python", "manage.py", "migrate", "--noinput"]
+          envFrom:
+            - secretRef:
+                name: backend-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

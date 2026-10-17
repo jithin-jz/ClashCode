@@ -2,14 +2,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
 
-from project.health import HealthCheckView
+from project.health import HealthCheckView, LivenessView
 from project.views import ServiceIndexView, TaskResultsListView, TaskStatusView
 
 admin.site.site_header = "CLASHCODE Admin Portal"
@@ -17,12 +16,11 @@ admin.site.site_title = "CLASHCODE Admin"
 admin.site.index_title = "Welcome to CLASHCODE Admin Portal"
 
 urlpatterns = [
-    # Flower Redirect
-    path("admin/flower/", RedirectView.as_view(url="http://localhost:5555"), name="admin-flower"),
-    # Health check
+    # Health checks: liveness (process only) and readiness (DB + cache)
     path("", ServiceIndexView.as_view(), name="service-index"),
+    path("health/live/", LivenessView.as_view(), name="health-live"),
     path("health/", HealthCheckView.as_view(), name="health-check"),
-    path("admin/", admin.site.urls),
+    path(settings.DJANGO_ADMIN_URL, admin.site.urls),
     path("api/auth/", include("authentication.urls")),
     path("api/rewards/", include("rewards.urls")),
     path("api/profiles/", include("users.urls")),

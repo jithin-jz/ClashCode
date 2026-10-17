@@ -11,9 +11,40 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   # --------------------------------------------------------------------------
-  # Backend: lint + tests for each Python service
+  # Secrets: block committed credentials
+  # --------------------------------------------------------------------------
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+
+      - name: Scan files in the repository
+        run: gitleaks dir . --redact --no-banner
+
+      - name: Scan commits in this pull request
+        if: github.event_name == 'pull_request'
+        run: |
+          gitleaks git --redact --no-banner \
+            --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+  # --------------------------------------------------------------------------
+  # Backend: lint, dependency audit and tests for each Python service.
+  # Python versions match each service's Docker image.
   # --------------------------------------------------------------------------
   backend:
     name: Backend (${{ matrix.service }})
@@ -21,10 +52,107 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [core, ai, chat, executor]
+        include:
+          - service: core
+            python: "3.11"
+          - service: ai
+            python: "3.11"
+          - service: chat
+            python: "3.11"
+          - service: executor
+            python: "3.12"
+          - service: analytics
+            python: "3.11"
     defaults:
       run:
         working-directory: services/${{ matrix.service }}
+    env:
+      DEBUG: "true"
+      SECRET_KEY: "ci-test-secret-key-not-for-prod"
+      JWT_SHARED_SECRET: "ci-test-jwt-secret"
+      DB_NAME: "postgres"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "localhost"
+      DB_PORT: "5432"
+      REDIS_URL: "redis://localhost:6379/0"
+      INTERNAL_SIGNING_SECRET: "ci-test-internal-secret"
+      INTERNAL_REQUIRE_SIGNATURE: "false"
+      GROQ_API_KEY: "ci-fake-key"
+      CORE_SERVICE_URL: "http://localhost:8000"
+      INTERNAL_API_KEY: "ci-test-internal-secret"
+      LLM_PROVIDER: "groq"
+      PYTHONPATH: "."
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+          cache-dependency-path: services/${{ matrix.service }}/requirements.txt
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip uv
+          uv pip install --system -r requirements.txt
+          uv pip install --system pytest pytest-cov pytest-asyncio httpx ruff pip-audit
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit -r requirements.txt --progress-spinner off
+
+      - name: Migrations are in sync
+        if: matrix.service == 'core'
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests (Django)
+        if: matrix.service == 'core'
+        run: python manage.py test --noinput
+
+      - name: Run tests (pytest)
+        if: matrix.service != 'core'
+        run: |
+          if [ -d tests ]; then
+            pytest -q
+          else
+            echo "No tests directory; skipping."
+          fi
+
+  # Core against real Postgres: SQLite ignores select_for_update and some constraints.
+  # Informational until it has been green once; then drop continue-on-error.
+  core-postgres:
+    name: Backend (core on Postgres)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: services/core
+    env:
+      DEBUG: "true"
+      TEST_DB: "postgres"
+      SECRET_KEY: "ci-test-secret-key-not-for-prod"
+      JWT_SHARED_SECRET: "ci-test-jwt-secret"
+      DB_NAME: "postgres"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "localhost"
+      DB_PORT: "5432"
+      DB_SSLMODE: "disable"
+      REDIS_URL: "redis://localhost:6379/0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,44 +162,18 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-          cache-dependency-path: services/${{ matrix.service }}/requirements.txt
+          cache-dependency-path: services/core/requirements.txt
 
       - name: Install deps
         run: |
           python -m pip install --upgrade pip uv
           uv pip install --system -r requirements.txt
-          uv pip install --system pytest pytest-cov pytest-asyncio httpx ruff
-
-      - name: Lint (ruff)
-        run: ruff check .
 
       - name: Run tests
-        env:
-          DEBUG: "true"
-          SECRET_KEY: "ci-test-secret-key-not-for-prod"
-          JWT_SHARED_SECRET: "ci-test-jwt-secret"
-          DB_NAME: "postgres"
-          DB_USER: "postgres"
-          DB_PASSWORD: "postgres"
-          DB_HOST: "localhost"
-          DB_PORT: "5432"
-          INTERNAL_SIGNING_SECRET: "ci-test-internal-secret"
-          INTERNAL_REQUIRE_SIGNATURE: "false"
-          GROQ_API_KEY: "ci-fake-key"
-          CORE_SERVICE_URL: "http://localhost:8000"
-          INTERNAL_API_KEY: "ci-test-internal-secret"
-          LLM_PROVIDER: "groq"
-          PYTHONPATH: "."
-        run: |
-          if [ -d tests ]; then
-            pytest -q --maxfail=1 || exit_code=$?
-            exit ${exit_code:-0}
-          else
-            echo "No tests directory; skipping."
-          fi
+        run: python manage.py test --noinput
 
   # --------------------------------------------------------------------------
-  # Frontend: lint + build
+  # Frontend: lint, test, audit, build
   # --------------------------------------------------------------------------
   frontend:
     name: Frontend
@@ -86,7 +188,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -99,7 +201,64 @@ jobs:
       - name: Test
         run: npm run test:run
 
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
       - name: Build
         env:
           VITE_API_URL: "http://localhost"
         run: npm run build
+
+  # --------------------------------------------------------------------------
+  # Infrastructure: manifests render and validate, Terraform is well-formed
+  # --------------------------------------------------------------------------
+  infra:
+    name: Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSfL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz \
+            | tar -xz kubeconform
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
+      - name: Render and validate Kubernetes manifests
+        working-directory: infra/k8s
+        run: |
+          set -euo pipefail
+          cp overlays/dev/secrets.example.yaml overlays/dev/secrets.yaml
+          for dir in base overlays/dev overlays/prod jobs monitoring external-secrets components/gvisor; do
+            if [ -f "$dir/kustomization.yaml" ]; then
+              [ "$dir" = "components/gvisor" ] && continue  # a Component, rendered via the prod check below
+              echo "::group::$dir"
+              kubectl kustomize "$dir" | kubeconform -strict -summary -ignore-missing-schemas
+              echo "::endgroup::"
+            else
+              kubeconform -strict -summary -ignore-missing-schemas "$dir"
+            fi
+          done
+          # The optional gVisor component must apply cleanly on top of prod.
+          mkdir -p overlays/_gvisor_check
+          printf 'resources: [../prod]\ncomponents: [../../components/gvisor]\n' > overlays/_gvisor_check/kustomization.yaml
+          kubectl kustomize overlays/_gvisor_check | grep -q "runtimeClassName: gvisor"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Terraform fmt
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        working-directory: infra/terraform
+        run: |
+          set -euo pipefail
+          for dir in bootstrap environments/prod environments/dev; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done

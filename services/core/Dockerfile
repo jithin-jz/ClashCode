@@ -37,15 +37,21 @@ WORKDIR /app
 COPY --from=builder /install /install
 COPY --chown=app:app . /app/
 
-# Writable directories for runtime artifacts (logs, uploaded media, collected static)
-RUN mkdir -p /app/logs /app/media /app/staticfiles \
-    && chown -R app:app /app/logs /app/media /app/staticfiles
+# Writable directories for runtime artifacts (uploaded media, collected static)
+RUN mkdir -p /app/media /app/staticfiles \
+    && chown -R app:app /app/media /app/staticfiles
 
 USER app
+
+# Collect static files at build time so the read-only runtime image serves them via
+# WhiteNoise. Settings require these variables; the values are build-only placeholders.
+RUN SECRET_KEY=collectstatic-build-only DEBUG=true JWT_SHARED_SECRET=build-only \
+    DB_NAME=build DB_USER=build DB_PASSWORD=build DB_HOST=build DB_PORT=5432 \
+    python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
-    CMD curl -fsS http://127.0.0.1:8000/health/ || exit 1
+    CMD curl -fsS http://127.0.0.1:8000/health/live/ || exit 1
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "project.wsgi:application"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "project.wsgi:application"]

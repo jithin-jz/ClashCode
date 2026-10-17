@@ -1,9 +1,5 @@
-fastapi==0.115.6
-uvicorn==0.34.0
-pydantic==2.10.6
-sentry-sdk[fastapi]==2.16.0
-python-dotenv==1.0.1
-docker==7.1.0
-pytest==8.3.4
-pytest-asyncio==0.24.0
-httpx==0.28.1
+fastapi==0.143.3
+uvicorn==0.54.0
+pydantic==2.14.1
+sentry-sdk[fastapi]==2.72.0
+python-dotenv==1.2.4

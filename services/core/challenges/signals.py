@@ -1,6 +1,7 @@
 import logging
 
 from certificates.services import CertificateService
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -65,4 +66,4 @@ def trigger_leaderboard_update_on_progress(sender, instance, created, **kwargs):
     Trigger real-time leaderboard update when a challenge is completed.
     """
     if instance.status == UserProgress.Status.COMPLETED:
-        update_leaderboard_cache.delay()
+        transaction.on_commit(update_leaderboard_cache.delay)

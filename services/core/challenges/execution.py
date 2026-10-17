@@ -1,9 +1,22 @@
 import logging
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
 
+from project.internal_auth import build_executor_headers
+
 logger = logging.getLogger(__name__)
+
+
+def _error_run(message: str) -> dict:
+    return {
+        "stdout": "",
+        "stderr": message,
+        "code": -1,
+        "signal": None,
+        "output": "",
+    }
 
 
 class PistonExecutionService:
@@ -18,84 +31,54 @@ class PistonExecutionService:
     TIMEOUT_SECONDS = float(getattr(settings, "CODE_EXECUTION_TIMEOUT_SECONDS", 15))
 
     @classmethod
+    def _too_large(cls, code: str) -> bool:
+        return len((code or "").encode("utf-8")) > cls.MAX_CODE_BYTES
+
+    @classmethod
+    def _post(cls, payload: dict) -> dict:
+        """POST to the executor with signed headers. Raises requests.RequestException on transport errors."""
+        path = urlparse(cls.EXECUTOR_URL).path or "/execute"
+        response = requests.post(
+            cls.EXECUTOR_URL,
+            json=payload,
+            headers=build_executor_headers(path),
+            timeout=cls.TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    @classmethod
     def execute_code(cls, language, code, version="*", stdin="", args=None):
         """
         Executes Python code and returns a Piston-compatible result shape.
         """
         if language.lower() not in {"python", "python3", "py"}:
-            return {
-                "run": {
-                    "stdout": "",
-                    "stderr": "Only Python execution is supported.",
-                    "code": -1,
-                    "signal": None,
-                    "output": "Only Python execution is supported.",
-                }
-            }
+            return {"run": _error_run("Only Python execution is supported.")}
 
-        encoded_size = len((code or "").encode("utf-8"))
-        if encoded_size > cls.MAX_CODE_BYTES:
-            return {
-                "run": {
-                    "stdout": "",
-                    "stderr": (f"Code is too large to execute. Maximum size is {cls.MAX_CODE_BYTES} bytes."),
-                    "code": -1,
-                    "signal": None,
-                    "output": "",
-                }
-            }
-
-        payload = {
-            "language": "python",
-            "code": code,
-            "stdin": stdin,
-        }
+        if cls._too_large(code):
+            return {"run": _error_run(f"Code is too large to execute. Maximum size is {cls.MAX_CODE_BYTES} bytes.")}
 
         try:
-            response = requests.post(cls.EXECUTOR_URL, json=payload, timeout=cls.TIMEOUT_SECONDS)
-            response.raise_for_status()
-            return response.json()
+            return cls._post({"language": "python", "code": code, "stdin": stdin})
         except requests.exceptions.RequestException as e:
             logger.error(f"Python executor request failed: {str(e)}")
-            return {
-                "run": {
-                    "stdout": "",
-                    "stderr": f"System Error: Could not connect to Python execution engine. {str(e)}",
-                    "code": -1,
-                    "signal": None,
-                    "output": "",
-                }
-            }
+            return {"run": _error_run("System Error: Could not connect to Python execution engine.")}
 
     @classmethod
-    def run_tests(cls, language, code, test_cases, version="*"):
+    def run_challenge_tests(cls, code: str, test_code: str) -> dict:
         """
-        Runs code against a set of test cases.
-        Expects test_cases to be a list of dicts with 'input' and 'expected_output'.
+        Runs learner code against a challenge's tests in the executor's harness.
+
+        Returns {"passed": bool, "run": {...}}. "passed" comes only from the
+        executor's harness token, never from exit code or stderr heuristics.
+        Raises requests.RequestException when the executor is unreachable so
+        callers can record circuit-breaker failures.
         """
-        results = []
-        all_passed = True
+        if cls._too_large(code):
+            return {
+                "passed": False,
+                "run": _error_run(f"Code is too large to execute. Maximum size is {cls.MAX_CODE_BYTES} bytes."),
+            }
 
-        for tc in test_cases:
-            res = cls.execute_code(language, code, version=version, stdin=tc.get("input", ""))
-
-            # Simple string comparison for now.
-            # In a real app, you might want to strip trailing whitespace or handle precision.
-            actual_output = res.get("run", {}).get("stdout", "").strip()
-            expected_output = tc.get("expected_output", "").strip()
-
-            passed = actual_output == expected_output
-            if not passed:
-                all_passed = False
-
-            results.append(
-                {
-                    "input": tc.get("input"),
-                    "expected": expected_output,
-                    "actual": actual_output,
-                    "passed": passed,
-                    "stderr": res.get("run", {}).get("stderr", ""),
-                }
-            )
-
-        return {"all_passed": all_passed, "test_results": results}
+        result = cls._post({"language": "python", "code": code, "test_code": test_code or ""})
+        return {"passed": result.get("passed") is True, "run": result.get("run", {})}

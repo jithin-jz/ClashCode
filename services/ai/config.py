@@ -8,10 +8,12 @@ class Settings(BaseSettings):
     EXECUTOR_SERVICE_URL: str = "http://executor-service:8011"
 
     # API Keys & Auth
-    # API Keys & Auth
     INTERNAL_API_KEY: str
     INTERNAL_SIGNING_SECRET: str | None = None
     INTERNAL_REQUIRE_SIGNATURE: bool = True
+    # The executor has its own credentials; fall back to INTERNAL_* when unset (local dev).
+    EXECUTOR_API_KEY: str | None = None
+    EXECUTOR_SIGNING_SECRET: str | None = None
     GROQ_API_KEY: str | None = None
     HUGGINGFACE_API_KEY: str | None = None
 

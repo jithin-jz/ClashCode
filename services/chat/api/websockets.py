@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from schemas import IncomingMessage
 
-from core.auth import JWT_ACCESS_COOKIE_NAME, get_token, verify_jwt
+from core.auth import get_token, is_origin_allowed, is_revoked, verify_jwt
 from core.managers import notification_manager
 from services.chat_service import ChatService
 
@@ -12,24 +12,31 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def _authenticate(ws: WebSocket) -> dict | None:
+    """Origin allowlist, token signature/expiry, then core's revocation list. Closes on failure."""
+    if not is_origin_allowed(ws):
+        logger.warning(f"Rejected WebSocket from disallowed origin: {ws.headers.get('origin')}")
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+
+    payload = verify_jwt(get_token(ws) or "")
+    if not payload or await is_revoked(payload):
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+    return payload
+
+
 @router.websocket("/ws/chat/{room}")
 @router.websocket("/ws/chat/{room}/")
 async def chat_ws(ws: WebSocket, room: str):
-    # Basic validation for room name
-    if not room or len(room) > 50 or not room.isalnum() and room != "global":
-        if room != "global":  # Allow global even if it doesn't match isalnum logic in some cases
-            logger.warning(f"Invalid room access attempt: {room}")
-            await ws.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-
-    token = get_token(ws)
-    if not token:
+    # Room names: "global" or short alphanumeric identifiers
+    if not room or len(room) > 50 or not (room == "global" or room.isalnum()):
+        logger.warning(f"Invalid room access attempt: {room}")
         await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    payload = verify_jwt(token)
+    payload = await _authenticate(ws)
     if not payload:
-        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     # Handle connection and join presence
@@ -73,21 +80,12 @@ async def chat_ws(ws: WebSocket, room: str):
         await ChatService.handle_disconnect(ws, room, payload)
 
 
-@router.websocket("/ws/tasks")
-@router.websocket("/ws/tasks/")
-async def tasks_ws(ws: WebSocket):
-    token = ws.query_params.get("token") or ws.cookies.get(JWT_ACCESS_COOKIE_NAME)
-    if not token:
-        auth = ws.headers.get("authorization")
-        if auth and auth.lower().startswith("bearer "):
-            token = auth.split(" ", 1)[1]
-
-    payload = verify_jwt(token or "")
+async def _user_push_ws(ws: WebSocket, label: str):
+    payload = await _authenticate(ws)
     if not payload:
-        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    user_id = int(payload.get("user_id"))
+    user_id = int(payload["user_id"])
     await notification_manager.connect(ws, user_id)
     try:
         while True:
@@ -95,26 +93,17 @@ async def tasks_ws(ws: WebSocket):
     except WebSocketDisconnect:
         await notification_manager.disconnect(ws, user_id)
     except Exception as e:
-        logger.error(f"Task Hub WS error: {e}")
+        logger.error(f"{label} WS error: {e}")
         await notification_manager.disconnect(ws, user_id)
+
+
+@router.websocket("/ws/tasks")
+@router.websocket("/ws/tasks/")
+async def tasks_ws(ws: WebSocket):
+    await _user_push_ws(ws, "Task Hub")
 
 
 @router.websocket("/ws/notifications")
 @router.websocket("/ws/notifications/")
 async def notifications_ws(ws: WebSocket):
-    token = get_token(ws)
-    payload = verify_jwt(token or "")
-    if not payload:
-        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-
-    user_id = payload["user_id"]
-    await notification_manager.connect(ws, user_id)
-    try:
-        while True:
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        await notification_manager.disconnect(ws, user_id)
-    except Exception as e:
-        logger.error(f"Notifications WS error: {e}")
-        await notification_manager.disconnect(ws, user_id)
+    await _user_push_ws(ws, "Notifications")

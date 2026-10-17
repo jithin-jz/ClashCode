@@ -77,7 +77,7 @@ class StreakService:
         Determines the current cycle day and handles resets.
         Returns: (current_day_index, cycle_start_date, is_reset)
         """
-        today = timezone.now().date()
+        today = timezone.localdate()
         profile = user.profile
 
         # Case 1: New user or first time using system

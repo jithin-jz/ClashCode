@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "chat_messages" {
-  name           = "${var.project_name}-${var.environment}-chat-messages"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "room_id"
-  range_key      = "timestamp"
+  name         = "${var.project_name}-${var.environment}-chat-messages"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "room_id"
+  range_key    = "timestamp"
 
   attribute {
     name = "room_id"
@@ -12,6 +12,17 @@ resource "aws_dynamodb_table" "chat_messages" {
   attribute {
     name = "timestamp"
     type = "N"
+  }
+
+  # Chat history is user data: keep 35 days of point-in-time restore and block accidental deletes.
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  deletion_protection_enabled = true
+
+  server_side_encryption {
+    enabled = true
   }
 
   tags = {

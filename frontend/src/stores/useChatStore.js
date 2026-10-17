@@ -72,7 +72,6 @@ const useChatStore = create(
           defaultPath: `/ws/chat/${roomName}`,
           legacyPaths: ["/chat", "/ws", "/ws/chat"],
           label: "Chat",
-          token: localStorage.getItem("clashcode_access_token"),
         });
 
         const socket = new WebSocket(wsUrl);

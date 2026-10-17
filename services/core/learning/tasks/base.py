@@ -1,11 +1,11 @@
-import hmac
 import json
 import logging
 import os
-import time
 from hashlib import sha256
 
 import redis
+
+from project.internal_auth import build_internal_headers
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +38,7 @@ def _publish_task_result(user_id: int, task_id: str, task_type: str, result: dic
 
 
 def _build_internal_headers(path: str) -> dict[str, str]:
-    headers = {
-        "X-Internal-API-Key": os.getenv("INTERNAL_API_KEY", ""),
-        "Content-Type": "application/json",
-    }
-    signing_secret = os.getenv("INTERNAL_SIGNING_SECRET", "").strip()
-    if signing_secret:
-        timestamp = str(int(time.time()))
-        signature = hmac.new(
-            signing_secret.encode("utf-8"),
-            f"{timestamp}:{path}".encode(),
-            sha256,
-        ).hexdigest()
-        headers["X-Internal-Timestamp"] = timestamp
-        headers["X-Internal-Signature"] = signature
-    return headers
+    return build_internal_headers(path)
 
 
 def _analysis_cache_key(challenge_id: int, user_code: str) -> str:

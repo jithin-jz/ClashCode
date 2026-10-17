@@ -122,8 +122,8 @@ class AuthViewSet(viewsets.ViewSet):
     """
 
     def get_permissions(self):
-        if self.action == "logout":
-            return [IsAuthenticated()]
+        # Logout is open on purpose: a user whose access token already expired must
+        # still be able to revoke their refresh token and clear the cookies.
         return [AllowAny()]
 
     @extend_schema(

@@ -11,7 +11,7 @@ import logging
 from langchain_core.tools import StructuredTool
 
 from core.rag import get_rag_context
-from utils.executor_client import run_code_in_sandbox
+from utils.executor_client import run_tests_in_sandbox
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +32,12 @@ def build_tools(
         if not test_code:
             return "No hidden tests are available for this challenge."
 
-        full_code = f"{user_code}\n\n{test_code}"
-        result = await run_code_in_sandbox(full_code)
+        result = await run_tests_in_sandbox(user_code, test_code)
 
         if not result["ok"]:
             return f"Could not run the tests: {result['stderr']}"
 
-        passed = result["exit_code"] == 0 and not result["stderr"].strip()
-        if passed:
+        if result["passed"]:
             return "All tests PASSED. The solution is correct."
 
         parts = ["Tests FAILED."]

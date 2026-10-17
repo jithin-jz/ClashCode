@@ -8,12 +8,12 @@
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
-        "StringLike": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
           "token.actions.githubusercontent.com:sub": [
-            "repo:jithin-jz/ClashCode:*",
-            "repo:jithin-jz/clashcode:*"
-          ],
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+            "repo:jithin-jz/ClashCode:environment:production",
+            "repo:jithin-jz/clashcode:environment:production"
+          ]
         }
       }
     }

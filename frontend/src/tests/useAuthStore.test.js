@@ -3,7 +3,7 @@ import { act } from "@testing-library/react";
 import useAuthStore from "../stores/useAuthStore";
 
 // Mock dependencies
-vi.mock("../../services/api", () => ({
+vi.mock("../services/api", () => ({
   authAPI: {
     getCurrentUser: vi.fn(),
     logout: vi.fn(),
@@ -12,28 +12,30 @@ vi.mock("../../services/api", () => ({
   },
 }));
 
-vi.mock("../../stores/useChallengesStore", () => ({
+vi.mock("../stores/useChallengesStore", () => ({
   default: { getState: () => ({ clearCache: vi.fn() }) },
 }));
 
-vi.mock("../../stores/useNotificationStore", () => ({
+vi.mock("../stores/useNotificationStore", () => ({
   default: { getState: () => ({ clearCache: vi.fn() }) },
 }));
 
-vi.mock("../../services/notification", () => ({
+vi.mock("../services/notification", () => ({
   notify: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("../../utils/isBoneyard", () => ({
+vi.mock("../utils/isBoneyard", () => ({
   isBoneyard: () => false,
 }));
 
-vi.mock("../../services/logger", () => ({
+vi.mock("../services/logger", () => ({
   SLog: { setUser: vi.fn(), init: vi.fn() },
 }));
 
 describe("useAuthStore", () => {
   beforeEach(() => {
+    // Call counts must not leak between tests
+    vi.clearAllMocks();
     // Reset store state before each test
     useAuthStore.setState({
       user: null,
@@ -78,7 +80,7 @@ describe("useAuthStore", () => {
   });
 
   it("checkAuth sets user when API succeeds", async () => {
-    const { authAPI } = await import("../../services/api");
+    const { authAPI } = await import("../services/api");
     const mockUser = { id: 1, username: "testuser", email: "test@test.com" };
     authAPI.getCurrentUser.mockResolvedValueOnce({ data: mockUser });
 
@@ -94,7 +96,7 @@ describe("useAuthStore", () => {
   });
 
   it("checkAuth clears user when API fails", async () => {
-    const { authAPI } = await import("../../services/api");
+    const { authAPI } = await import("../services/api");
     authAPI.getCurrentUser.mockRejectedValueOnce(new Error("Unauthorized"));
 
     await act(async () => {
@@ -108,7 +110,7 @@ describe("useAuthStore", () => {
   });
 
   it("logout clears all state", async () => {
-    const { authAPI } = await import("../../services/api");
+    const { authAPI } = await import("../services/api");
     authAPI.logout.mockResolvedValueOnce({});
 
     useAuthStore.setState({
@@ -128,7 +130,7 @@ describe("useAuthStore", () => {
   });
 
   it("deduplicates concurrent checkAuth calls", async () => {
-    const { authAPI } = await import("../../services/api");
+    const { authAPI } = await import("../services/api");
     const mockUser = { id: 1, username: "testuser" };
     authAPI.getCurrentUser.mockResolvedValue({ data: mockUser });
 

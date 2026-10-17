@@ -1,0 +1,78 @@
+# Baseline alerts built on kube-state-metrics (shipped with kube-prometheus-stack).
+# Route them in Alertmanager (Slack/email/PagerDuty) by the `severity` label.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: clashcode-alerts
+  labels:
+    release: prometheus # must match the kube-prometheus-stack release name
+spec:
+  groups:
+    - name: clashcode.workloads
+      rules:
+        - alert: ExecutorUnavailable
+          expr: kube_deployment_status_replicas_available{namespace="clashcode", deployment="executor"} < 1
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: No executor pods are available
+            description: Code runs and submissions are failing for every user.
+
+        - alert: DeploymentReplicasUnavailable
+          expr: kube_deployment_status_replicas_unavailable{namespace="clashcode"} > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.deployment }} has unavailable replicas"
+            description: "{{ $value }} replica(s) of {{ $labels.deployment }} have been unavailable for 10 minutes."
+
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="clashcode"}[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.pod }} is restarting repeatedly"
+            description: "Container {{ $labels.container }} restarted more than 3 times in 15 minutes."
+
+        - alert: ContainerOOMKilled
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="clashcode"}[10m]) > 0
+            and on (namespace, pod, container)
+            kube_pod_container_status_last_terminated_reason{namespace="clashcode", reason="OOMKilled"} == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.container }} in {{ $labels.pod }} was OOM-killed"
+            description: Raise its memory limit or investigate a leak.
+
+        - alert: HPAAtMaxReplicas
+          expr: |
+            kube_horizontalpodautoscaler_status_current_replicas{namespace="clashcode"}
+              >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="clashcode"}
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.horizontalpodautoscaler }} is pinned at max replicas"
+            description: Capacity is exhausted; raise maxReplicas or add nodes.
+
+        - alert: MigrationJobFailed
+          expr: kube_job_status_failed{namespace="clashcode", job_name="core-migrate"} > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: Database migration job failed
+            description: The release did not roll out; check `kubectl -n clashcode logs job/core-migrate`.
+
+    - name: clashcode.nodes
+      rules:
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready", status="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} is not Ready"

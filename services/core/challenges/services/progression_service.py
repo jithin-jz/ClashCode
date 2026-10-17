@@ -43,6 +43,27 @@ class ProgressionService(BaseChallengeService):
         return results
 
     @staticmethod
+    def is_unlocked(user, challenge):
+        """
+        Server-side version of the map's locking rule: a level is playable when it
+        already has non-locked progress, or when the previous published level is completed.
+        """
+        if user.is_staff:
+            return True
+
+        progress = UserProgress.objects.filter(user=user, challenge=challenge).only("status").first()
+        if progress and progress.status != UserProgress.Status.LOCKED:
+            return True
+
+        previous = Challenge.objects.filter(is_published=True, order__lt=challenge.order).order_by("-order").first()
+        if previous is None:
+            return True
+
+        return UserProgress.objects.filter(
+            user=user, challenge=previous, status=UserProgress.Status.COMPLETED
+        ).exists()
+
+    @staticmethod
     def get_challenge_details(user, challenge):
         """Retrieves detailed challenge info and ensures start time is tracked."""
         progress, _ = ProgressionService.get_progress(user, challenge)

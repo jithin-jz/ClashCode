@@ -2,7 +2,7 @@ resources:
   - ../../base
   - ./secrets.yaml
   - ./ingress.yaml
-  - ../../base/cluster-issuer.yaml
+  - ./cluster-issuer.yaml
 
 images:
   - name: core

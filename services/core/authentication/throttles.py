@@ -100,6 +100,27 @@ class NotificationRateThrottle(SimpleRateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
+class AIRequestRateThrottle(SimpleRateThrottle):
+    """
+    Throttle AI hint/analysis endpoints.
+
+    Every call can reach a paid LLM, so this is much tighter than the general
+    user limit and keyed per user.
+
+    Rate: Configured in settings.DEFAULT_THROTTLE_RATES['ai']
+    """
+
+    scope = "ai"
+
+    def get_cache_key(self, request, _view):
+        if request.user.is_authenticated:
+            ident = request.user.pk
+        else:
+            ident = self.get_ident(request)
+
+        return self.cache_format % {"scope": self.scope, "ident": ident}
+
+
 class CodeExecutionRateThrottle(SimpleRateThrottle):
     """
     Throttle code execution and submission endpoints.

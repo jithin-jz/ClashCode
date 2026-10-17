@@ -54,3 +54,8 @@ variable "ecr_repository_url" {
   description = "ECR repository URL"
   type        = string
 }
+
+variable "eks_public_access_cidrs" {
+  description = "CIDRs allowed to reach the public EKS API"
+  type        = list(string)
+}

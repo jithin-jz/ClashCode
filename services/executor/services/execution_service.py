@@ -1,8 +1,8 @@
 import logging
 from typing import Any
 
-from core.docker_runner import DockerRunner
-from core.runner import run_python_code
+from core.harness import run_challenge_tests
+from core.sandbox import run_code
 from core.security import validate_code_safety
 from models.schemas import ExecuteRequest
 
@@ -13,14 +13,18 @@ class ExecutionService:
     @staticmethod
     async def execute(request: ExecuteRequest) -> dict[str, Any]:
         """
-        Orchestrates code execution by validating security and selecting the appropriate runner.
-        Supports single execution and batch test cases.
+        Validates learner code and runs it in the sandbox.
+
+        Modes:
+        - ``test_code`` set: learner code + challenge tests in the harness (adds ``passed``)
+        - ``test_cases`` set: one sandboxed run per stdin/expected-output pair
+        - otherwise: a single run with optional stdin
         """
-        # 1. Security Validation (AST)
+        # 1. Static pre-check (early rejection, not the security boundary)
         is_safe, errors = validate_code_safety(request.code)
         if not is_safe:
             error_msg = "; ".join(errors)
-            return {
+            result = {
                 "run": {
                     "stdout": "",
                     "stderr": f"Security Error: {error_msg}",
@@ -29,27 +33,42 @@ class ExecutionService:
                     "output": f"Security Violation: {error_msg}",
                 }
             }
+            if request.test_code is not None:
+                result["passed"] = False
+            return result
 
-        # 2. Batch test case execution
-        if request.test_cases and len(request.test_cases) > 0:
-            test_cases_data = [{"input": tc.input, "expected_output": tc.expected_output} for tc in request.test_cases]
-            results = await DockerRunner.run_batch(request.code, test_cases_data)
-            total = len(results)
-            passed = sum(1 for r in results if r.get("passed") is True)
-            failed = sum(1 for r in results if r.get("passed") is False)
+        # 2. Challenge tests
+        if request.test_code is not None:
+            return await run_challenge_tests(request.code, request.test_code)
+
+        # 3. Batch stdin/stdout test cases
+        if request.test_cases:
+            results = []
+            for i, tc in enumerate(request.test_cases):
+                run = await run_code(request.code, tc.input)
+                passed = None
+                if tc.expected_output is not None:
+                    passed = run["code"] == 0 and run["stdout"].strip() == tc.expected_output.strip()
+                results.append(
+                    {
+                        "test_case": i + 1,
+                        "input": tc.input,
+                        "stdout": run["stdout"],
+                        "stderr": run["stderr"],
+                        "code": run["code"],
+                        "passed": passed,
+                        "output": run["output"],
+                    }
+                )
 
             return {
                 "summary": {
-                    "total": total,
-                    "passed": passed,
-                    "failed": failed,
+                    "total": len(results),
+                    "passed": sum(1 for r in results if r["passed"] is True),
+                    "failed": sum(1 for r in results if r["passed"] is False),
                 },
                 "results": results,
             }
 
-        # 3. Single execution - select runner
-        if request.runner == "docker":
-            return await DockerRunner.run_code(request.code, request.stdin)
-
-        # Default: Host execution
-        return await run_python_code(request.code, request.stdin)
+        # 4. Single run
+        return {"run": await run_code(request.code, request.stdin)}

@@ -113,7 +113,12 @@ def get_github_user(access_token):
 
 
 def get_github_user_email(access_token):
-    """Get GitHub user's primary email."""
+    """
+    Get the GitHub user's verified email (primary first).
+
+    Unverified addresses are ignored: anyone can add any address to a GitHub
+    account, and accounts are linked by email.
+    """
     response = requests.get(
         "https://api.github.com/user/emails",
         headers={
@@ -123,10 +128,13 @@ def get_github_user_email(access_token):
         timeout=10,
     )
     emails = response.json()
-    for email in emails:
-        if email.get("primary"):
-            return email.get("email")
-    return emails[0].get("email") if emails else None
+    if not isinstance(emails, list):
+        return None
+    verified = [item for item in emails if isinstance(item, dict) and item.get("verified") is True]
+    for item in verified:
+        if item.get("primary"):
+            return item.get("email")
+    return verified[0].get("email") if verified else None
 
 
 # Google OAuth helpers

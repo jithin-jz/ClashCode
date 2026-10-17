@@ -5,13 +5,11 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
 from administration.models import AdminAuditLog
+from project.client_ip import get_client_ip
 
 
 def _request_ip(request):
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
+    return get_client_ip(request)
 
 
 def _request_id(request):

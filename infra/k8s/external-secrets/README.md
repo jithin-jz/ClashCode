@@ -5,38 +5,51 @@
 | Operator | External Secrets (ESO) |
 | Identity | IAM Roles for Service Accounts (IRSA) |
 
-Infrastructure layer for secure, dynamic secret synchronization between AWS Secrets Manager and Kubernetes.
+Syncs credentials from AWS Secrets Manager into Kubernetes Secrets.
 
 ## Architecture
 
-1. Secret Definition | Credentials stored in AWS Secrets Manager (AP-SOUTH-1).
-2. Store | ClusterSecretStore abstracts the cloud provider connection using OIDC pod identity.
-3. Sync | ExternalSecret resource defines the mapping and refresh interval.
-4. Consumption | Standard Kubernetes Secret (`backend-secrets`) created and managed by ESO.
+1. **Source:** one JSON document in Secrets Manager, `clashcode/prod/backend`.
+2. **Store:** `ClusterSecretStore` connects to AWS using the IRSA role of the `external-secrets` service account.
+3. **Sync:** `external-secret.yaml` builds one Kubernetes Secret per service. Each service only receives the keys it needs:
+
+| Secret | Used by | Contents |
+| --- | --- | --- |
+| `backend-secrets` | core, Celery workers, beat, migrate job | whole document |
+| `executor-secrets` | executor | `EXECUTOR_API_KEY`, `EXECUTOR_SIGNING_SECRET`, `SENTRY_DSN` |
+| `chat-secrets` | chat | JWT public key, Redis URL, DynamoDB table, region, CORS origins |
+| `ai-secrets` | ai | internal + executor keys, LLM and Pinecone settings |
+
+Every property referenced in `external-secret.yaml` must exist in the JSON document. Use `""` for values you don't use, such as `SENTRY_DSN`. Besides the backend keys, the document needs:
+
+* `EXECUTOR_API_KEY`
+* `EXECUTOR_SIGNING_SECRET`
+* `CHAT_CORS_ORIGINS`
+* `AI_CORS_ORIGINS`
+* `RAZORPAY_WEBHOOK_SECRET`
+* `SENTRY_DSN`
 
 ## Provisioning
 
-### 1. Data Ingestion
-Populate Secrets Manager with the required service credentials (JSON format).
-* Path: `clashcode/prod/backend`
+1. **Data:** create or update `clashcode/prod/backend` (JSON) in `ap-south-1`.
+2. **Identity:** `terraform apply` in `infra/terraform/environments/prod` creates the IRSA role. It allows `secretsmanager:GetSecretValue` and `secretsmanager:DescribeSecret` on `clashcode/prod/*`. Read its ARN with:
+   ```bash
+   terraform output external_secrets_irsa_role_arn
+   ```
+3. **Cluster:**
+   ```bash
+   # Deploy the operator
+   kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.10.7/external-secrets.yaml
+   kubectl -n external-secrets annotate serviceaccount external-secrets \
+     eks.amazonaws.com/role-arn=<external_secrets_irsa_role_arn> --overwrite
 
-### 2. Identity & Access (IAM)
-Attach the following policy to the EKS Service Account role:
-* Action: `secretsmanager:GetSecretValue`, `secretsmanager:DescribeSecret`
-* Resource: `arn:aws:secretsmanager:ap-south-1:*:secret:clashcode/prod/*`
+   # Store and per-service secrets
+   kubectl apply -f cluster-secret-store.yaml
+   kubectl apply -f external-secret.yaml
+   ```
 
-### 3. Cluster Configuration
-```bash
-# Deploy operator
-kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.10.7/external-secrets.yaml
+## Security rationale
 
-# Apply store and synchronization manifests
-kubectl apply -f cluster-secret-store.yaml
-kubectl apply -f external-secret.yaml
-```
-
-## Security Rationale
-* Elimination of static, long-lived AWS credentials within the cluster.
-* Automated credential rotation support.
-* Granular audit logging via AWS CloudTrail.
-* AES-256 encryption at rest within AWS Secrets Manager.
+* No static, long-lived AWS credentials in the cluster.
+* A compromised pod only exposes its own service's secrets. The executor, which runs untrusted code, holds nothing but its own key.
+* Rotation is automatic (`refreshInterval: 1h`), and every read is audited in CloudTrail.

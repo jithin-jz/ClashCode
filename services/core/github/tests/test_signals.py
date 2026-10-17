@@ -42,11 +42,13 @@ class GitHubSyncSignalTest(TestCase):
             timeout=300,
         )
 
-        UserProgress.objects.create(
-            user=self.user,
-            challenge=self.challenge,
-            status=UserProgress.Status.COMPLETED,
-        )
+        # The push is queued on commit, so the task never sees an uncommitted push log.
+        with self.captureOnCommitCallbacks(execute=True):
+            UserProgress.objects.create(
+                user=self.user,
+                challenge=self.challenge,
+                status=UserProgress.Status.COMPLETED,
+            )
 
         self.assertTrue(mock_delay.called)
         push_log = GitHubPushLog.objects.get(connection=self.connection)

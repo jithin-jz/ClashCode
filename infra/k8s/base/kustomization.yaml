@@ -6,4 +6,6 @@ resources:
   - service.yaml
   - workers.yaml
   - executor.yaml
+  - executor-network-policy.yaml
+  - network-policies.yaml
   - autoscaling.yaml

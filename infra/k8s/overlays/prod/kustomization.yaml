@@ -4,22 +4,44 @@ resources:
   - ../../base
   - ./ingress.yaml
 
+# Secrets (backend-secrets, executor-secrets, chat-secrets, ai-secrets) come from
+# External Secrets Operator: kubectl apply -f infra/k8s/external-secrets/
+# For a manual bootstrap, copy secrets.example.yaml to secrets.yaml (gitignored)
+# and apply it separately.
+
+# Enable once the node group has the gVisor (runsc) containerd shim installed:
+# components:
+#   - ../../components/gvisor
+
+patches:
+  # IRSA: chat reaches DynamoDB with a scoped IAM role instead of static AWS keys.
+  # The role is created by infra/terraform (module "irsa_chat").
+  - target:
+      kind: ServiceAccount
+      name: chat
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          eks.amazonaws.com/role-arn: arn:aws:iam::317451122305:role/clashcode-prod-chat-irsa
+
+# Tags are pinned to the commit SHA by the deploy workflow (kustomize edit set image).
 images:
   - name: core
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-core
-    newTag: prod
+    newTag: set-by-ci
   - name: chat
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-chat
-    newTag: prod
+    newTag: set-by-ci
   - name: ai
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-ai
-    newTag: prod
+    newTag: set-by-ci
   - name: analytics
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-analytics
-    newTag: prod
+    newTag: set-by-ci
   - name: executor
     newName: 317451122305.dkr.ecr.ap-south-1.amazonaws.com/clashcode-executor
-    newTag: prod
+    newTag: set-by-ci
 
 labels:
   - pairs:

@@ -10,7 +10,8 @@ from rest_framework import decorators, status, viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from authentication.throttles import CodeExecutionRateThrottle
+from authentication.throttles import AIRequestRateThrottle, CodeExecutionRateThrottle
+from challenges.execution import PistonExecutionService
 from challenges.models import Challenge, UserProgress
 from challenges.serializers import (
     AIAnalysisRequestSerializer,
@@ -42,6 +43,24 @@ from .base import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _locked_response():
+    return Response(
+        {"error": "This level is locked. Complete the previous level first."},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _code_too_large(code) -> bool:
+    return len(str(code or "").encode("utf-8")) > PistonExecutionService.MAX_CODE_BYTES
+
+
+def _too_large_response():
+    return Response(
+        {"error": f"Code is too large. Maximum size is {PistonExecutionService.MAX_CODE_BYTES} bytes."},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 class ChallengeViewSet(viewsets.ModelViewSet):
@@ -166,8 +185,13 @@ class ChallengeViewSet(viewsets.ModelViewSet):
                 {"error": "Code content is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if _code_too_large(user_code):
+            return _too_large_response()
+        if not ChallengeService.is_unlocked(request.user, challenge):
+            return _locked_response()
 
         task = submit_code_task.delay(request.user.id, challenge.id, user_code)
+        _store_ai_task_meta(task.id, request.user.id, "submit")
 
         if task.ready():
             try:
@@ -187,8 +211,13 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     def execute(self, request, slug=None):
         challenge = self.get_object()
         user_code = request.data.get("code", "")
+        if _code_too_large(user_code):
+            return _too_large_response()
+        if not ChallengeService.is_unlocked(request.user, challenge):
+            return _locked_response()
 
         task = execute_code_task.delay(request.user.id, challenge.id, user_code)
+        _store_ai_task_meta(task.id, request.user.id, "execute")
 
         if task.ready():
             try:
@@ -211,6 +240,8 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=["post"])
     def purchase_ai_assist(self, request, slug=None):
         challenge = self.get_object()
+        if not ChallengeService.is_unlocked(request.user, challenge):
+            return _locked_response()
         try:
             remaining_xp = ChallengeService.purchase_ai_assist(request.user, challenge)
             progress, _ = UserProgress.objects.get_or_create(user=request.user, challenge=challenge)
@@ -235,10 +266,14 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         responses={202: OpenApiTypes.OBJECT, 402: OpenApiTypes.OBJECT},
         description="Request an AI-generated hint. Requires corresponding assistance level to be purchased.",
     )
-    @decorators.action(detail=True, methods=["post"], url_path="ai-hint")
+    @decorators.action(detail=True, methods=["post"], url_path="ai-hint", throttle_classes=[AIRequestRateThrottle])
     def ai_hint(self, request, slug=None):
         challenge = self.get_object()
         user = request.user
+        if _code_too_large(request.data.get("user_code", "")):
+            return _too_large_response()
+        if not ChallengeService.is_unlocked(user, challenge):
+            return _locked_response()
         progress, _ = UserProgress.objects.get_or_create(user=user, challenge=challenge)
 
         try:
@@ -299,16 +334,24 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         responses={200: OpenApiTypes.STR, 402: OpenApiTypes.OBJECT},
         description="INTERNAL PROXY: Request a streaming AI hint. Requires assistance level to be purchased.",
     )
-    @decorators.action(detail=True, methods=["post"], url_path="ai-hint-stream")
+    @decorators.action(
+        detail=True, methods=["post"], url_path="ai-hint-stream", throttle_classes=[AIRequestRateThrottle]
+    )
     def ai_hint_stream(self, request, slug=None):
         challenge = self.get_object()
         user = request.user
+        if _code_too_large(request.data.get("user_code", "")):
+            return _too_large_response()
+        if not ChallengeService.is_unlocked(user, challenge):
+            return _locked_response()
         progress, _ = UserProgress.objects.get_or_create(user=user, challenge=challenge)
 
         try:
             hint_level = int(request.data.get("hint_level", 1))
         except (TypeError, ValueError):
             return Response({"error": "hint_level must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+        if not (1 <= hint_level <= 3):
+            return Response({"error": "hint_level must be between 1 and 3."}, status=status.HTTP_400_BAD_REQUEST)
 
         if progress.ai_hints_purchased < hint_level:
             return Response(
@@ -337,7 +380,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
                             yield chunk
             except Exception as e:
                 logger.error(f"AI hint streaming proxy failed: {e}")
-                yield f"data: Error in AI proxy: {str(e)}\n\n".encode()
+                yield b"data: The AI tutor is unavailable right now. Please try again.\n\n"
 
         return StreamingHttpResponse(stream_generator(), content_type="text/event-stream")
 
@@ -346,10 +389,14 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         responses={202: OpenApiTypes.OBJECT},
         description="Request deep AI analysis and feedback for the current code implementation.",
     )
-    @decorators.action(detail=True, methods=["post"], url_path="ai-analyze")
+    @decorators.action(detail=True, methods=["post"], url_path="ai-analyze", throttle_classes=[AIRequestRateThrottle])
     def ai_analyze(self, request, slug=None):
         challenge = self.get_object()
         user_code = request.data.get("user_code", "")
+        if _code_too_large(user_code):
+            return _too_large_response()
+        if not ChallengeService.is_unlocked(request.user, challenge):
+            return _locked_response()
 
         # Check cache for identical code to avoid redundant AI calls
         cache_key = _analysis_cache_key(challenge.id, user_code)

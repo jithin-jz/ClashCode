@@ -64,46 +64,76 @@ class ConnectionManager:
 
 
 class NotificationManager:
+    """
+    Per-user push (task results, notifications).
+
+    One Redis pattern subscription per process, shared by every connected user,
+    instead of one Redis connection per online user.
+    """
+
+    CHANNEL_PATTERN = "notifications_*"
+    _RESTART_DELAY_SECONDS = 1.0
+
     def __init__(self):
         self.active: dict[int, list[WebSocket]] = {}
-        self.tasks: dict[int, asyncio.Task] = {}
+        self._task: asyncio.Task | None = None
 
     async def connect(self, ws: WebSocket, user_id: int):
         await ws.accept()
         self.active.setdefault(user_id, []).append(ws)
 
-        if len(self.active[user_id]) == 1 and user_id not in self.tasks:
-            self.tasks[user_id] = asyncio.create_task(self.notification_subscriber(user_id))
-            logger.info(f"Started notification subscriber for user {user_id}")
+        if self._task is None or self._task.done():
+            self._task = asyncio.create_task(self._run_subscriber())
+            logger.info("Started shared notification subscriber")
 
     async def disconnect(self, ws: WebSocket, user_id: int):
         if user_id in self.active and ws in self.active[user_id]:
             self.active[user_id].remove(ws)
             if not self.active[user_id]:
                 self.active.pop(user_id, None)
-                if user_id in self.tasks:
-                    self.tasks[user_id].cancel()
-                    with contextlib.suppress(asyncio.CancelledError):
-                        await self.tasks[user_id]
-                    self.tasks.pop(user_id, None)
-                    logger.info(f"Stopped notification subscriber for user {user_id}")
 
-    async def notification_subscriber(self, user_id: int):
+        if not self.active and self._task is not None:
+            self._task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
+            logger.info("Stopped shared notification subscriber")
+
+    @staticmethod
+    def _user_id_from_channel(channel) -> int | None:
+        if isinstance(channel, bytes):
+            channel = channel.decode()
+        try:
+            return int(str(channel).rsplit("_", 1)[1])
+        except (IndexError, ValueError):
+            return None
+
+    async def _run_subscriber(self):
+        # Keep a single subscription alive while anyone is connected; reconnect on Redis errors.
+        while self.active:
+            try:
+                await self.notification_subscriber()
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.error(f"Notification subscriber failed, restarting: {e}")
+                await asyncio.sleep(self._RESTART_DELAY_SECONDS)
+
+    async def notification_subscriber(self):
         pubsub = redis_client.pubsub()
-        channel = f"notifications_{user_id}"
-        await pubsub.subscribe(channel)
-
+        await pubsub.psubscribe(self.CHANNEL_PATTERN)
         try:
             async for event in pubsub.listen():
-                if event["type"] == "message":
-                    payload = json.loads(event["data"])
-                    await self.broadcast_user(user_id, payload)
-        except asyncio.CancelledError:
-            await pubsub.unsubscribe(channel)
-            raise
-        except Exception as e:
-            logger.error(f"Error in notification subscriber for user {user_id}: {e}")
-            await pubsub.unsubscribe(channel)
+                if event["type"] != "pmessage":
+                    continue
+                user_id = self._user_id_from_channel(event["channel"])
+                if user_id is None or user_id not in self.active:
+                    continue
+                await self.broadcast_user(user_id, json.loads(event["data"]))
+        finally:
+            with contextlib.suppress(Exception):
+                await pubsub.punsubscribe(self.CHANNEL_PATTERN)
+                await pubsub.aclose()
 
     async def broadcast_user(self, user_id: int, payload: dict):
         dead = []

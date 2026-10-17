@@ -1,3 +1,5 @@
+# All pods run non-root with a read-only root filesystem, no Kubernetes API
+# token and only the secrets their service needs (see secrets in the overlays).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +17,23 @@ spec:
       labels:
         app: core
     spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: core
       containers:
       - name: core
         image: core:latest
@@ -23,28 +42,61 @@ spec:
         env:
         - name: EXECUTOR_URL
           value: "http://executor-service:8011/execute"
+        - name: AI_SERVICE_URL
+          value: "http://ai-service:8002"
         envFrom:
         - secretRef:
             name: backend-secrets
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: media
+          mountPath: /app/media
+        startupProbe:
+          httpGet:
+            path: /health/live/
+            port: 8000
+          periodSeconds: 5
+          failureThreshold: 24
+        # Liveness only checks the process; a DB/Redis blip must not restart every pod.
         livenessProbe:
           httpGet:
-            path: /health/
+            path: /health/live/
             port: 8000
-          initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /health/
             port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         resources:
           limits:
-            cpu: "500m"
-            memory: "512Mi"
+            cpu: "1000m"
+            memory: "768Mi"
           requests:
             cpu: "250m"
-            memory: "256Mi"
+            memory: "384Mi"
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 256Mi
+      - name: media
+        emptyDir:
+          sizeLimit: 512Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chat
+automountServiceAccountToken: false
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,7 +105,7 @@ metadata:
   labels:
     app: chat
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -63,6 +115,18 @@ spec:
       labels:
         app: chat
     spec:
+      # IRSA (DynamoDB access) works through the projected aws-iam-token volume,
+      # so the default Kubernetes API token stays unmounted.
+      serviceAccountName: chat
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: chat
         image: chat:latest
@@ -70,7 +134,15 @@ spec:
         - containerPort: 8001
         envFrom:
         - secretRef:
-            name: backend-secrets
+            name: chat-secrets
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         livenessProbe:
           httpGet:
             path: /health
@@ -90,6 +162,10 @@ spec:
           requests:
             cpu: "150m"
             memory: "128Mi"
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -108,6 +184,15 @@ spec:
       labels:
         app: ai
     spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: ai
         image: ai:latest
@@ -116,9 +201,22 @@ spec:
         env:
         - name: CORE_SERVICE_URL
           value: "http://core-service:8000"
+        - name: EXECUTOR_SERVICE_URL
+          value: "http://executor-service:8011"
+        # Library caches (tokenizers, HTTP clients) need a writable home.
+        - name: HOME
+          value: /tmp
         envFrom:
         - secretRef:
-            name: backend-secrets
+            name: ai-secrets
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         livenessProbe:
           httpGet:
             path: /health
@@ -138,6 +236,10 @@ spec:
           requests:
             cpu: "500m"
             memory: "512Mi"
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 512Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -156,14 +258,31 @@ spec:
       labels:
         app: analytics
     spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: analytics
           image: analytics:latest
           ports:
             - containerPort: 8004
-          envFrom:
-            - secretRef:
-                name: backend-secrets
+          # Needs no secrets: it only proxies queries to in-cluster Prometheus.
+          env:
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-server.monitoring.svc.cluster.local"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /health
@@ -183,3 +302,7 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
